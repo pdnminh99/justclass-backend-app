@@ -6,6 +6,7 @@ target/
 src/main/appengine/
 src/main/resources/application.yml
 src/main/resources/application.properties
+credentials/
 
 ### STS ###
 .apt_generated
