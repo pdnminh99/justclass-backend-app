@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
 @DisplayName("Unit Tests for UserResponseBody")
-public class UserResponseBodyTest {
+public class UserRequestBodyTest {
 
     protected final String sampleLocalId = UUID.randomUUID().toString();
     protected final String sampleFirstName = "John";
@@ -88,7 +88,7 @@ public class UserResponseBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_LocalId_shall_throw_NullPointerException() {
+    void Constructor_Create_instance_with_null_localId_shall_not_throw_exception() {
         assertInitiateUserDoesNotThrowAnyException(
                 null,
                 sampleFirstName,
@@ -117,7 +117,7 @@ public class UserResponseBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_first_name_is_considered_as_empty_string() {
+    void Constructor_Create_instance_with_null_first_name_shall_return_null_getter() {
         User user = new User(sampleLocalId,
                 null,
                 sampleLastName,
@@ -127,7 +127,7 @@ public class UserResponseBodyTest {
                 sampleEmail,
                 sampleAssignDatetime,
                 sampleIsNewUser);
-        assertEquals("", user.getFirstName());
+        assertNull(user.getFirstName());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class UserResponseBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_last_name_is_considered_as_empty_string() {
+    void Constructor_Create_instance_with_Null_last_name_shall_returns_null_getter() {
         User user = new User(
                 sampleLocalId,
                 sampleFirstName,
@@ -184,7 +184,7 @@ public class UserResponseBodyTest {
                 sampleEmail,
                 sampleAssignDatetime,
                 sampleIsNewUser);
-        assertEquals("", user.getLastName());
+        assertNull(user.getLastName());
     }
 
     @Test
@@ -318,7 +318,7 @@ public class UserResponseBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_null_display_name_shall_return_empty_string() {
+    void Constructor_Create_instance_with_null_display_name_shall_return_null_getter() {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
@@ -328,7 +328,7 @@ public class UserResponseBodyTest {
                 sampleEmail,
                 sampleAssignDatetime,
                 sampleIsNewUser);
-        assertEquals("", user.getDisplayName());
+        assertNull(user.getDisplayName());
     }
 
     @Test
@@ -377,7 +377,7 @@ public class UserResponseBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_photoUrl_shall_return_empty_string() {
+    void Constructor_Create_instance_with_null_photoUrl_shall_return_null_getter() {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
@@ -387,7 +387,7 @@ public class UserResponseBodyTest {
                 sampleEmail,
                 sampleAssignDatetime,
                 sampleIsNewUser);
-        assertEquals("", user.getPhotoUrl());
+        assertNull(user.getPhotoUrl());
     }
 
     @Test
@@ -435,7 +435,7 @@ public class UserResponseBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_email_shall_return_empty_string() {
+    void Constructor_Create_instance_with_null_email_shall_return_null_getter() {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
@@ -445,7 +445,7 @@ public class UserResponseBodyTest {
                 null,
                 sampleAssignDatetime,
                 sampleIsNewUser);
-        assertEquals("", user.getEmail());
+        assertNull(user.getEmail());
     }
 
     @Test

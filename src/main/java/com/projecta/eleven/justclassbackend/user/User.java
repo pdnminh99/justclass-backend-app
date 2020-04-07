@@ -2,11 +2,14 @@ package com.projecta.eleven.justclassbackend.user;
 
 import com.google.cloud.Timestamp;
 
-public class User extends UserResponseBody {
+import java.util.HashMap;
+import java.util.Objects;
 
-    private final Timestamp assignDatetime;
+public class User extends UserRequestBody {
 
     private boolean isNewUser;
+
+    private Timestamp assignTimestamp;
 
     public User(String localId,
                 String firstName,
@@ -15,15 +18,11 @@ public class User extends UserResponseBody {
                 String displayName,
                 String photoUrl,
                 String email,
-                Timestamp assignDatetime,
+                Timestamp assignTimestamp,
                 boolean isNewUser) {
         super(localId, firstName, lastName, fullName, displayName, photoUrl, email);
-        this.assignDatetime = assignDatetime;
         this.isNewUser = isNewUser;
-    }
-
-    public Timestamp getAssignDatetime() {
-        return assignDatetime;
+        this.assignTimestamp = assignTimestamp;
     }
 
     public boolean isNewUser() {
@@ -32,5 +31,19 @@ public class User extends UserResponseBody {
 
     public void setIsNewUser(boolean state) {
         isNewUser = state;
+    }
+
+    public Timestamp getAssignTimestamp() {
+        return assignTimestamp;
+    }
+
+    @Override
+    public HashMap<String, Object> toMap() {
+        HashMap<String, Object> map = super.toMap();
+        if (Objects.nonNull(getAssignTimestamp())) {
+            map.put("assignTimestamp", getAssignTimestamp());
+        }
+        map.put("isNewUser", isNewUser());
+        return map;
     }
 }

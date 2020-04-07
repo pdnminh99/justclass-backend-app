@@ -3,8 +3,8 @@ package com.projecta.eleven.justclassbackend.user;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-public interface IUserRepository {
-    Optional<User> createUser(UserResponseBody user) throws ExecutionException, InterruptedException;
+interface IUserRepository {
+    Optional<User> createUser(UserRequestBody user) throws ExecutionException, InterruptedException;
 
     Iterable<MinifiedUser> getUsers(Iterable<String> localIds);
 

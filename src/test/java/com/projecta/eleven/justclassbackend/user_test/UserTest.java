@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("Unit Tests for UserResponseBody")
-public class UserTest extends UserResponseBodyTest {
+public class UserTest extends UserRequestBodyTest {
 
 
     @Test

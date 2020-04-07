@@ -58,7 +58,7 @@ public class MinifiedUserTest {
     void Constructor_Create_instance_with_Null_display_name_value_is_considered_as_empty_string() {
         var minifiedUser = new MinifiedUser(sampleLocalId, null, samplePhotoURL);
 
-        assertEquals("", minifiedUser.getDisplayName());
+        assertNull(minifiedUser.getDisplayName());
     }
 
     @Test
@@ -75,7 +75,7 @@ public class MinifiedUserTest {
     void Constructor_Create_instance_with_Null_photoURL_value_is_considered_as_empty_string() {
         var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, null);
 
-        assertEquals("", minifiedUser.getPhotoUrl());
+        assertNull(minifiedUser.getPhotoUrl());
     }
 
     /**
@@ -114,10 +114,10 @@ public class MinifiedUserTest {
     }
 
     @Test
-    void setName_Set_Null_value_is_considered_as_empty_string() {
+    void setName_Set_null_value_shall_return_null_getter() {
         var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
         minifiedUser.setDisplayName(null);
-        assertEquals("", minifiedUser.getDisplayName());
+        assertNull(minifiedUser.getDisplayName());
     }
 
     @Test

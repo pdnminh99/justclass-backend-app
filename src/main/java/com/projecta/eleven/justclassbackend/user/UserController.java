@@ -26,8 +26,13 @@ public class UserController {
         currentUser = user;
     }
 
+//    @GetMapping("{userId}")
+//    public ResponseEntity<MinifiedUser> getMinifiedUser(@PathVariable String userId) {
+//
+//    }
+
     @PostMapping
-    public ResponseEntity<User> assignUser(@RequestBody UserResponseBody requestUser) throws ExecutionException, InterruptedException {
+    public ResponseEntity<User> assignUser(@RequestBody UserRequestBody requestUser) throws InvalidUserInformationException, ExecutionException, InterruptedException {
         userService.assignUser(requestUser)
                 .ifPresent(this::setCurrentUser);
         return Optional.ofNullable(currentUser).isPresent() ?
@@ -36,9 +41,14 @@ public class UserController {
     }
 
     @ExceptionHandler({ExecutionException.class, InterruptedException.class})
-    public ResponseEntity<String> handleException() {
+    public ResponseEntity<String> handleFirestoreException() {
         return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
                 .body("Fail to create new user. Please try again.");
+    }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public ResponseEntity<String> handleInvalidUserResponseBody() {
+        return ResponseEntity.badRequest().body("LocalId and Email should not be null. Or at least one of user's name (firstName, lastName or displayName) must not be null.");
     }
 
 //    @GetMapping

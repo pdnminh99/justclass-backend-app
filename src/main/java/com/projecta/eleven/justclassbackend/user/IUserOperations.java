@@ -4,5 +4,5 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public interface IUserOperations {
-    Optional<User> assignUser(UserResponseBody user) throws ExecutionException, InterruptedException;
+    Optional<User> assignUser(UserRequestBody user) throws ExecutionException, InterruptedException, InvalidUserInformationException;
 }

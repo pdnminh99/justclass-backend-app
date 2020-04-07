@@ -1,16 +1,18 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @Repository("firestoreRepository")
-public class UserRepository implements IUserRepository {
+class UserRepository implements IUserRepository {
 
     private final Firestore firestore;
 
@@ -20,31 +22,15 @@ public class UserRepository implements IUserRepository {
     }
 
     @Override
-    public Optional<User> createUser(UserResponseBody user) throws ExecutionException, InterruptedException {
-        var createdUserMap = firestore.collection("user")
-                .add(user)
-                .get()
-                .get()
-                .get();
-        var localId = createdUserMap.getId();
-        var firstName = createdUserMap.getString("firstName");
-        var lastName = createdUserMap.getString("lastName");
-        var fullName = createdUserMap.getString("fullName");
-        var displayName = createdUserMap.getString("displayName");
-        var photoUrl = createdUserMap.getString("photoUrl");
-        var email = createdUserMap.getString("email");
-        var assignDatetime = createdUserMap.getTimestamp("assignDatetime");
-        var userInstance = new User(
-                localId,
-                firstName,
-                lastName,
-                fullName,
-                displayName,
-                photoUrl,
-                email,
-                assignDatetime,
-                true);
-        return Optional.of(userInstance);
+    public Optional<User> createUser(UserRequestBody user) {
+        DocumentReference documentReference = firestore.collection("user")
+                .document(user.getLocalId());
+        HashMap<String, Object> userMap = user.toMap();
+        Timestamp now = Timestamp.now();
+
+        userMap.put("assignTimestamp", now);
+        documentReference.set(userMap);
+        return Optional.of(user.toUser(now, true));
     }
 
     @Override
@@ -59,22 +45,15 @@ public class UserRepository implements IUserRepository {
                 .get()
                 .get();
         if (document.exists()) {
-            String firstName = document.getString("firstName");
-            String lastName = document.getString("lastName");
-            String fullName = document.getString("fullName");
-            String displayName = document.getString("displayName");
-            String photoUrl = document.getString("photoUrl");
-            String email = document.getString("email");
-            Timestamp assignDatetime = document.getTimestamp("assignDatetime");
             return Optional.of(new User(
                     localId,
-                    firstName,
-                    lastName,
-                    fullName,
-                    displayName,
-                    photoUrl,
-                    email,
-                    assignDatetime,
+                    document.getString("firstName"),
+                    document.getString("lastName"),
+                    document.getString("fullName"),
+                    document.getString("displayName"),
+                    document.getString("photoUrl"),
+                    document.getString("email"),
+                    document.getTimestamp("assignTimestamp"),
                     false
             ));
         }
