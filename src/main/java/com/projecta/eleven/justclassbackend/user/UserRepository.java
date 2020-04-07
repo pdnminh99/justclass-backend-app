@@ -16,6 +16,16 @@ class UserRepository implements IUserRepository {
 
     private final Firestore firestore;
 
+    private boolean isTestMode = false;
+
+    public void enableTestMode() {
+        isTestMode = true;
+    }
+
+    private String getUserCollection() {
+        return isTestMode ? "user_test" : "user";
+    }
+
     @Autowired
     public UserRepository(Firestore firestore) {
         this.firestore = firestore;
@@ -23,7 +33,7 @@ class UserRepository implements IUserRepository {
 
     @Override
     public Optional<User> createUser(UserRequestBody user) {
-        DocumentReference documentReference = firestore.collection("user")
+        DocumentReference documentReference = firestore.collection(getUserCollection())
                 .document(user.getLocalId());
         HashMap<String, Object> userMap = user.toMap();
         Timestamp now = Timestamp.now();
@@ -40,7 +50,7 @@ class UserRepository implements IUserRepository {
 
     @Override
     public Optional<User> getUser(String localId) throws ExecutionException, InterruptedException {
-        DocumentSnapshot document = firestore.collection("user")
+        DocumentSnapshot document = firestore.collection(getUserCollection())
                 .document(localId)
                 .get()
                 .get();
