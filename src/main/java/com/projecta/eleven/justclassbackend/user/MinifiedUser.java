@@ -10,10 +10,7 @@ public class MinifiedUser {
     private String photoUrl;
 
     public MinifiedUser(String localId, String displayName, String photoUrl) {
-        this.localId = Objects.requireNonNullElseGet(localId,
-                () -> {
-                    throw new NullPointerException("Initiate UUID for user " + displayName + " should not be NULL.");
-                });
+        this.localId = localId;
         this.displayName = Objects.requireNonNullElse(displayName, "");
         this.photoUrl = Objects.requireNonNullElse(photoUrl, "");
     }

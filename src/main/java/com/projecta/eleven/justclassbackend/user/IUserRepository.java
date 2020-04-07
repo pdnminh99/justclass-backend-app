@@ -1,15 +1,16 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public interface IUserRepository {
-    Optional<User> createUser(UserResponseBody user);
+    Optional<User> createUser(UserResponseBody user) throws ExecutionException, InterruptedException;
 
     Iterable<MinifiedUser> getUsers(Iterable<String> localIds);
 
-    Optional<MinifiedUser> getUser(String localId);
+    Optional<User> getUser(String localId) throws ExecutionException, InterruptedException;
 
-    default Optional<MinifiedUser> getUser(MinifiedUser sampleUser) {
+    default Optional<User> getUser(MinifiedUser sampleUser) throws ExecutionException, InterruptedException {
         return getUser(sampleUser.getLocalId());
     }
 //    User deleteUser(MinifiedUser user);

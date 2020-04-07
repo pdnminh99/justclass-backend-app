@@ -34,9 +34,7 @@ public class MinifiedUserTest {
 
     @Test
     void Constructor_Create_instance_with_Null_LocalId_shall_throws_invalid_userId_exception() {
-        assertThrows(NullPointerException.class,
-                () -> new MinifiedUser(null, sampleName, samplePhotoURL),
-                "Create minified user with null LocalId does not throw NullPointerException.");
+        assertDoesNotThrow(() -> new MinifiedUser(null, sampleName, samplePhotoURL));
     }
 
     @Test

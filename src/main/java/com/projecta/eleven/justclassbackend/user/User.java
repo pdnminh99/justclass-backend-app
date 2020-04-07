@@ -1,10 +1,10 @@
 package com.projecta.eleven.justclassbackend.user;
 
-import java.time.LocalDateTime;
+import com.google.cloud.Timestamp;
 
 public class User extends UserResponseBody {
 
-    private final LocalDateTime assignDatetime;
+    private final Timestamp assignDatetime;
 
     private boolean isNewUser;
 
@@ -15,14 +15,14 @@ public class User extends UserResponseBody {
                 String displayName,
                 String photoUrl,
                 String email,
-                LocalDateTime assignDatetime,
+                Timestamp assignDatetime,
                 boolean isNewUser) {
         super(localId, firstName, lastName, fullName, displayName, photoUrl, email);
         this.assignDatetime = assignDatetime;
         this.isNewUser = isNewUser;
     }
 
-    public LocalDateTime getAssignDatetime() {
+    public Timestamp getAssignDatetime() {
         return assignDatetime;
     }
 

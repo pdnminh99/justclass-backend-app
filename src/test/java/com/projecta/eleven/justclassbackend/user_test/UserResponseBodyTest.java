@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.user_test;
 
+import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.user.User;
@@ -8,7 +9,6 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +25,7 @@ public class UserResponseBodyTest {
     protected final String sampleDisplayName = "John Wick";
     protected final String samplePhotoUrl = "http://path.to.his.favourite.dog.jpg";
     protected final String sampleEmail = "i_love_pets@yahoo.com";
-    protected final LocalDateTime sampleAssignDatetime = LocalDateTime.now();
+    protected final Timestamp sampleAssignDatetime = Timestamp.now();
     protected final boolean sampleIsNewUser = false;
 
     private void assertInitiateUserDoesNotThrowAnyException(
@@ -36,7 +36,7 @@ public class UserResponseBodyTest {
             String displayName,
             String photoUrl,
             String email,
-            LocalDateTime assignDatetime,
+            Timestamp assignDatetime,
             boolean isNewUser
     ) {
         assertDoesNotThrow(() -> new User(
@@ -89,7 +89,8 @@ public class UserResponseBodyTest {
 
     @Test
     void Constructor_Create_instance_with_Null_LocalId_shall_throw_NullPointerException() {
-        assertThrows(NullPointerException.class, () -> new User(null,
+        assertInitiateUserDoesNotThrowAnyException(
+                null,
                 sampleFirstName,
                 sampleLastName,
                 sampleFullName,
@@ -97,7 +98,8 @@ public class UserResponseBodyTest {
                 samplePhotoUrl,
                 sampleEmail,
                 sampleAssignDatetime,
-                sampleIsNewUser));
+                sampleIsNewUser
+        );
     }
 
     @Test
