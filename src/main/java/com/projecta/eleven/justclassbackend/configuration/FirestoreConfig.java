@@ -5,6 +5,7 @@ import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.util.Objects;
 public class FirestoreConfig {
 
     @Bean
+    @Scope("singleton")
     public Firestore getFirestore() throws IOException {
         FirestoreOptions firestoreOptions;
         String projectId = System.getenv("GOOGLE_CLOUD_PROJECT");

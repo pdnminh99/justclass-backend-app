@@ -19,27 +19,25 @@ public class UserService extends AbstractUserService {
 
     @Override
     public Optional<User> assignUser(UserRequestBody user) throws ExecutionException, InterruptedException, InvalidUserInformationException {
-        if (Objects.isNull(user.getLocalId())) {
+        if (!verifyValidStringField(user.getLocalId())) {
             throw new InvalidUserInformationException("LocalId field not found");
         }
         var existingUser = repository.getUser(user);
         if (existingUser.isPresent()) {
             return existingUser;
         }
-        var firstName = Optional.ofNullable(user.getFirstName());
-        var lastName = Optional.ofNullable(user.getLastName());
-        var fullName = Optional.ofNullable(user.getFullName());
-        var displayName = Optional.ofNullable(user.getDisplayName());
-        var email = Optional.ofNullable(user.getEmail());
-        if (email.isEmpty() || email.get().length() == 0) {
-            throw new InvalidUserInformationException("User must have an email address.", new NullPointerException("Email field is null."));
+        if (verifyValidStringField(user.getEmail()) && (verifyValidStringField(user.getFirstName()) ||
+                verifyValidStringField(user.getLastName()) ||
+                verifyValidStringField(user.getFullName()) ||
+                verifyValidStringField(user.getDisplayName()))
+        ) {
+            return repository.createUser(user);
         }
-        if ((firstName.isEmpty() || firstName.get().trim().length() == 0)
-                && (lastName.isEmpty() || lastName.get().trim().length() == 0)
-                && fullName.isEmpty() && displayName.isEmpty()) {
-            throw new InvalidUserInformationException("You must specify user name.", new NullPointerException("firstName, lastName and fullName is null."));
-        }
-        return repository.createUser(user);
+        throw new InvalidUserInformationException("At least one of the name fields (firstName, lastName, fullName or displayName) and email field must not be null.", new NullPointerException("Email field is null."));
+    }
+
+    private boolean verifyValidStringField(String value) {
+        return Objects.nonNull(value) && value.trim().length() != 0;
     }
 
     @Override
