@@ -1,44 +1,42 @@
-package com.projecta.eleven.justclassbackend.Repositories;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+package com.projecta.eleven.justclassbackend.user;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
-import com.projecta.eleven.justclassbackend.Models.User;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 @Repository
-public class FirestoreRepository {
+public class UserRepository {
 
     private final Firestore firestore;
 
     @Autowired
-    public FirestoreRepository(Firestore firestore) {
+    public UserRepository(Firestore firestore) {
         this.firestore = firestore;
     }
 
-    public List<User> getUsers() throws ExecutionException, InterruptedException {
-        ArrayList<User> users = new ArrayList<>();
+    public List<MinifiedUser> getUsers() throws ExecutionException, InterruptedException {
+        ArrayList<MinifiedUser> minifiedUsers = new ArrayList<>();
         ApiFuture<QuerySnapshot> query = firestore.collection("user").get();
         QuerySnapshot querySnapshot = query.get();
         List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
         String userId, name, address;
         Long age;
-        User currentUser;
+        MinifiedUser currentMinifiedUser;
         for (QueryDocumentSnapshot document : documents) {
             userId = document.getId();
             name = document.getString("name");
             address = document.getString("address");
             age = document.getLong("age");
-            currentUser = new User(userId, name, age, address);
-            users.add(currentUser);
+//            currentMinifiedUser = new MinifiedUser(userId, name, age, address);
+//            minifiedUsers.add(currentMinifiedUser);
         }
-        return users;
+        return minifiedUsers;
     }
 }

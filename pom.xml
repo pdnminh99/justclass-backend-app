@@ -32,9 +32,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!--  Using libraries-bom to manage versions.
-See https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/The-Google-Cloud-Platform-Libraries-BOM -->
-
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-firestore</artifactId>
@@ -57,15 +54,11 @@ See https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/The-Google
             <version>2.2.5.RELEASE</version>
         </dependency>
 
-        <!--		<dependency>-->
-        <!--			<groupId>org.postgresql</groupId>-->
-        <!--			<artifactId>postgresql</artifactId>-->
-        <!--			<scope>runtime</scope>-->
-        <!--		</dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <version>2.2.5.RELEASE</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.junit.vintage</groupId>
@@ -73,6 +66,7 @@ See https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/The-Google
                 </exclusion>
             </exclusions>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -99,7 +93,7 @@ See https://github.com/GoogleCloudPlatform/cloud-opensource-java/wiki/The-Google
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.projecta.eleven.justclassbackend.JustClassBackendApplication</mainClass>
+                            <mainClass>com.projecta.eleven.justclassbackend.Application</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

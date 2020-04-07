@@ -1,4 +1,4 @@
-package com.projecta.eleven.justclassbackend.Configuration;
+package com.projecta.eleven.justclassbackend.configuration;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
