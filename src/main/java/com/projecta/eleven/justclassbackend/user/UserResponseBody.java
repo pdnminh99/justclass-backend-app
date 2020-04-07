@@ -41,7 +41,7 @@ class UserResponseBody extends MinifiedUser {
     }
 
     public String getFullName() {
-        return fullName;
+        return fullName.length() == 0 ? firstName + " " + lastName : fullName;
     }
 
     @Override

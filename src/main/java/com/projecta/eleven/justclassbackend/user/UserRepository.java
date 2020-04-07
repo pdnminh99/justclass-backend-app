@@ -4,6 +4,8 @@ import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository("firestoreRepository")
 public class UserRepository implements IUserRepository {
 
@@ -15,10 +17,22 @@ public class UserRepository implements IUserRepository {
     }
 
     @Override
-    public User createUser(MinifiedUser user) {
+    public Optional<User> createUser(UserResponseBody user) {
         return null;
     }
-//
+
+    @Override
+    public Iterable<MinifiedUser> getUsers(Iterable<String> localIds) {
+        return null;
+    }
+
+    @Override
+    public Optional<MinifiedUser> getUser(String localId) {
+        return Optional.empty();
+    }
+
+
+    //
 //    public List<MinifiedUser> getUsers() throws ExecutionException, InterruptedException {
 //        ArrayList<MinifiedUser> minifiedUsers = new ArrayList<>();
 //        ApiFuture<QuerySnapshot> query = firestore.collection("user").get();
