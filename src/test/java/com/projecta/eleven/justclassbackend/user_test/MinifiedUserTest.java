@@ -20,111 +20,128 @@ public class MinifiedUserTest {
 
     private final String sampleName = "Mr.Bean";
 
-    private final String sampleUUID = UUID.randomUUID().toString();
+    private final String sampleLocalId = UUID.randomUUID().toString();
 
+    /**
+     * Constructor testing methods
+     */
     @Test
     void Constructor_Create_instance_should_not_Null() {
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, samplePhotoURL);
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
 
         assertNotNull(minifiedUser, "An instance created from MinifiedUser class is null.");
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_UUID_shall_throws_invalid_userId_exception() {
+    void Constructor_Create_instance_with_Null_LocalId_shall_throws_invalid_userId_exception() {
         assertThrows(NullPointerException.class,
                 () -> new MinifiedUser(null, sampleName, samplePhotoURL),
-                "Create minified user with null uuid does not throw NullPointerException.");
+                "Create minified user with null LocalId does not throw NullPointerException.");
     }
 
     @Test
-    void Constructor_Create_instance_with_empty_UUID_string_is_acceptable() {
+    void Constructor_Create_instance_with_empty_LocalId_string_is_acceptable() {
         assertDoesNotThrow(() -> new MinifiedUser("", sampleName, samplePhotoURL));
     }
 
     @Test
-    void Constructor_Create_instance_with_empty_UUID_string_shall_returns_empty_UUID_in_getter_method() {
+    void Constructor_Create_instance_with_empty_LocalId_string_shall_returns_empty_LocalId_in_getter_method() {
         var minifiedUser = new MinifiedUser("", sampleName, samplePhotoURL);
 
-        assertEquals("", minifiedUser.getUUID());
+        assertEquals("", minifiedUser.getLocalId());
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_name_value_is_acceptable() {
-        assertDoesNotThrow(() -> new MinifiedUser(sampleUUID, null, samplePhotoURL));
+    void Constructor_Create_instance_with_Null_display_name_value_is_acceptable() {
+        assertDoesNotThrow(() -> new MinifiedUser(sampleLocalId, null, samplePhotoURL));
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_name_value_is_considered_as_empty_string() {
-        var minifiedUser = new MinifiedUser(sampleUUID, null, samplePhotoURL);
+    void Constructor_Create_instance_with_Null_display_name_value_is_considered_as_empty_string() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, null, samplePhotoURL);
 
-        assertEquals("", minifiedUser.getName());
+        assertEquals("", minifiedUser.getDisplayName());
     }
 
     @Test
-    void Constructor_Create_instance_with_empty_name_value_is_acceptable() {
-        assertDoesNotThrow(() -> new MinifiedUser(sampleUUID, "", samplePhotoURL));
+    void Constructor_Create_instance_with_empty_display_name_value_is_acceptable() {
+        assertDoesNotThrow(() -> new MinifiedUser(sampleLocalId, "", samplePhotoURL));
     }
 
     @Test
     void Constructor_Create_instance_with_Null_photoURL_value_is_acceptable() {
-        assertDoesNotThrow(() -> new MinifiedUser(sampleUUID, sampleName, null));
+        assertDoesNotThrow(() -> new MinifiedUser(sampleLocalId, sampleName, null));
     }
 
     @Test
     void Constructor_Create_instance_with_Null_photoURL_value_is_considered_as_empty_string() {
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, null);
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, null);
 
-        assertEquals("", minifiedUser.getPhotoURL());
+        assertEquals("", minifiedUser.getPhotoUrl());
+    }
+
+    /**
+     * getLocalId testing methods
+     */
+    @Test
+    void getLocalId_LocalId_does_not_change_after_initiate_constructor() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
+
+        assertEquals(sampleLocalId, minifiedUser.getLocalId(), String.format("LocalId should be %s, but returns %s instead", sampleLocalId, minifiedUser.getLocalId()));
+    }
+
+    /**
+     * getName testing methods
+     */
+    @Test
+    void getName_Display_name_does_not_change_after_initiate_constructor() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
+
+        assertEquals(sampleName, minifiedUser.getDisplayName(), String.format("Name should be %s, but returns %s instead", sampleName, minifiedUser.getDisplayName()));
     }
 
     @Test
-    void getUUID_UUID_does_not_change_after_initiate_constructor() {
-        var UUIDString = UUID.randomUUID().toString();
-        var minifiedUser = new MinifiedUser(UUIDString, sampleName, samplePhotoURL);
-
-        assertEquals(UUIDString, minifiedUser.getUUID(), String.format("UUID should be %s, but returns %s instead", UUIDString, minifiedUser.getUUID()));
-    }
-
-    @Test
-    void getName_Name_does_not_change_after_initiate_constructor() {
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, samplePhotoURL);
-
-        assertEquals(sampleName, minifiedUser.getName(), String.format("Name should be %s, but returns %s instead", sampleName, minifiedUser.getName()));
-    }
-
-    @Test
-    void setName_Set_name_does_change_the_value() {
+    void setName_Set_display_name_does_change_the_value() {
         String newName = "Mr.John";
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, samplePhotoURL);
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
 
-        minifiedUser.setName(newName);
-        assertEquals(newName, minifiedUser.getName(), String.format("Name should be %s, but returns %s instead", newName, minifiedUser.getName()));
+        minifiedUser.setDisplayName(newName);
+        assertEquals(newName, minifiedUser.getDisplayName(), String.format("Name should be %s, but returns %s instead", newName, minifiedUser.getDisplayName()));
     }
 
     @Test
     void setName_Set_Null_value_is_acceptable() {
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, samplePhotoURL);
-        assertDoesNotThrow(() -> minifiedUser.setName(null));
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
+        assertDoesNotThrow(() -> minifiedUser.setDisplayName(null));
     }
 
     @Test
     void setName_Set_Null_value_is_considered_as_empty_string() {
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, samplePhotoURL);
-        minifiedUser.setName(null);
-        assertEquals("", minifiedUser.getName());
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
+        minifiedUser.setDisplayName(null);
+        assertEquals("", minifiedUser.getDisplayName());
     }
 
     @Test
     void setName_Set_empty_value_is_acceptable() {
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, samplePhotoURL);
-        assertDoesNotThrow(() -> minifiedUser.setName(""));
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
+        assertDoesNotThrow(() -> minifiedUser.setDisplayName(""));
     }
 
     @Test
     void setName_Set_empty_value_shall_returns_empty_string() {
-        var minifiedUser = new MinifiedUser(sampleUUID, sampleName, samplePhotoURL);
-        minifiedUser.setName("");
-        assertEquals("", minifiedUser.getName());
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
+        minifiedUser.setDisplayName("");
+        assertEquals("", minifiedUser.getDisplayName());
     }
 
+    /**
+     * getPhotoUrl testing methods
+     */
+    @Test
+    void getPhotoUrl_Get_photoUrl_does_not_change_after_initiate_constructor() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleName, samplePhotoURL);
+
+        assertEquals(samplePhotoURL, minifiedUser.getPhotoUrl());
+    }
 }

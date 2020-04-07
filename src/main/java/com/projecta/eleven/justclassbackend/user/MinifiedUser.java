@@ -3,34 +3,43 @@ package com.projecta.eleven.justclassbackend.user;
 import java.util.Objects;
 
 public class MinifiedUser {
-    private final String uuid;
+    private final String localId;
 
-    private String name;
+    private String displayName;
 
-    private String photoURL;
+    private String photoUrl;
 
-    public MinifiedUser(String uuid, String name, String photoURL) {
-        this.uuid = Objects.requireNonNullElseGet(uuid,
+    public MinifiedUser(String localId, String displayName, String photoUrl) {
+        this.localId = Objects.requireNonNullElseGet(localId,
                 () -> {
-                    throw new NullPointerException("Initiate UUID for user " + name + " should not be NULL.");
+                    throw new NullPointerException("Initiate UUID for user " + displayName + " should not be NULL.");
                 });
-        this.name = Objects.requireNonNullElse(name, "");
-        this.photoURL = Objects.requireNonNullElse(photoURL, "");
+        this.displayName = Objects.requireNonNullElse(displayName, "");
+        this.photoUrl = Objects.requireNonNullElse(photoUrl, "");
     }
 
-    public String getUUID() {
-        return uuid;
+    public String getLocalId() {
+        return localId;
     }
 
-    public String getName() {
-        return name;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setName(String name) {
-        this.name = Objects.requireNonNullElse(name, "");
+    public void setDisplayName(String displayName) {
+        this.displayName = Objects.requireNonNullElse(displayName, "");
     }
 
-    public String getPhotoURL() {
-        return photoURL;
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    @Override
+    public String toString() {
+        return "MinifiedUser{" +
+                "localId='" + localId + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", photoUrl='" + photoUrl + '\'' +
+                '}';
     }
 }
