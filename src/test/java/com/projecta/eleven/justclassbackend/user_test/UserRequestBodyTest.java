@@ -702,112 +702,291 @@ public class UserRequestBodyTest {
 
     @Test
     void toUser_It_should_has_the_same_localId_not_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals(sampleLocalId, user.toUser(sampleAssignDatetime, sampleIsNewUser).getLocalId());
     }
 
     @Test
     void toUser_It_should_has_the_same_localId_and_null() {
-
+        User user = new User(null,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNull(user.toUser(sampleAssignDatetime, sampleIsNewUser).getLocalId());
     }
 
     @Test
     void toUser_It_should_has_the_same_localId_and_empty() {
-
+        User user = new User("",
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals("", user.toUser(sampleAssignDatetime, sampleIsNewUser).getLocalId());
     }
 
     @Test
     void toUser_It_should_has_the_same_firstName_not_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals(sampleFirstName, user.toUser(sampleAssignDatetime, sampleIsNewUser).getFirstName());
     }
 
     @Test
     void toUser_It_should_has_the_same_firstName_and_null() {
-
+        User user = new User(sampleLocalId,
+                null,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNull(user.toUser(sampleAssignDatetime, sampleIsNewUser).getFirstName());
     }
 
     @Test
     void toUser_It_should_has_the_same_firstName_and_empty() {
-
+        User user = new User(sampleLocalId,
+                "",
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals("", user.toUser(sampleAssignDatetime, sampleIsNewUser).getFirstName());
     }
 
     @Test
     void toUser_It_should_has_the_same_lastName_not_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals(sampleLastName, user.toUser(sampleAssignDatetime, sampleIsNewUser).getLastName());
     }
 
     @Test
     void toUser_It_should_has_the_same_lastName_and_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                null,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNull(user.toUser(sampleAssignDatetime, sampleIsNewUser).getLastName());
     }
 
     @Test
     void toUser_It_should_has_the_same_lastName_and_empty() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                "",
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals("", user.toUser(sampleAssignDatetime, sampleIsNewUser).getLastName());
     }
 
     @Test
     void toUser_It_should_has_the_same_displayName_not_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals(sampleDisplayName, user.toUser(sampleAssignDatetime, sampleIsNewUser).getDisplayName());
     }
 
     @Test
     void toUser_It_should_has_the_same_displayName_and_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                null,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNull(user.toUser(sampleAssignDatetime, sampleIsNewUser).getDisplayName());
     }
 
     @Test
     void toUser_It_should_has_the_same_displayName_and_empty() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                "",
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals("", user.toUser(sampleAssignDatetime, sampleIsNewUser).getDisplayName());
     }
 
     @Test
     void toUser_It_should_has_the_same_photoUrl_not_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals(samplePhotoUrl, user.toUser(sampleAssignDatetime, sampleIsNewUser).getPhotoUrl());
     }
 
     @Test
     void toUser_It_should_has_the_same_photoUrl_and_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                null,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNull(user.toUser(sampleAssignDatetime, sampleIsNewUser).getPhotoUrl());
     }
 
     @Test
     void toUser_It_should_has_the_same_photoUrl_and_empty() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                "",
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals("", user.toUser(sampleAssignDatetime, sampleIsNewUser).getPhotoUrl());
     }
 
     @Test
     void toUser_It_should_has_the_same_email_not_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals(sampleEmail, user.toUser(sampleAssignDatetime, sampleIsNewUser).getEmail());
     }
 
     @Test
     void toUser_It_should_has_the_same_email_and_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                null,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNull(user.toUser(sampleAssignDatetime, sampleIsNewUser).getEmail());
     }
 
     @Test
     void toUser_It_should_has_the_same_email_and_empty() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                "",
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals("", user.toUser(sampleAssignDatetime, sampleIsNewUser).getEmail());
     }
 
     @Test
     void toUser_It_should_update_new_assign_timestamp_not_null() {
-
+        var now = Timestamp.now();
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertEquals(now, user.toUser(now, sampleIsNewUser).getAssignTimestamp());
     }
 
     @Test
     void toUser_It_should_update_new_assign_timestamp_and_null() {
-
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNull(user.toUser(null, sampleIsNewUser).getAssignTimestamp());
     }
 
     @Test
     void toUser_It_should_update_new_is_new_user_state_and_true() {
-
+        var now = Timestamp.now();
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                false);
+        assertTrue(user.toUser(now, true).isNewUser());
     }
 
     @Test
     void toUser_It_should_update_new_is_new_user_state_and_false() {
-
+        var now = Timestamp.now();
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                true);
+        assertFalse(user.toUser(now, false).isNewUser());
     }
 
 }

@@ -40,7 +40,13 @@ public class FriendController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public Iterable<MinifiedUser> getFriends(@RequestBody String[] localIds) {
+    public Iterable<MinifiedUser> getFriends(@RequestBody String[] localIds,
+                                             @Nullable
+                                             @RequestParam("count") Integer count,
+                                             @Nullable
+                                             @RequestParam("sortByField") String sortByField,
+                                             @Nullable
+                                             @RequestParam("isAscending") Boolean isAscending) {
         return null;
     }
 
