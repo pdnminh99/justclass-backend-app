@@ -8,18 +8,15 @@ import java.util.Objects;
 
 class UserRequestBody extends MinifiedUser {
 
-    private final String email;
+    private String email;
 
-    private final String firstName;
+    private String firstName;
 
-    private final String lastName;
-
-    private final String fullName;
+    private String lastName;
 
     public UserRequestBody(@JsonProperty("localId") String localId,
                            @JsonProperty("firstName") String firstName,
                            @JsonProperty("lastName") String lastName,
-                           @JsonProperty("fullName") String fullName,
                            @JsonProperty("displayName") String displayName,
                            @JsonProperty("photoUrl") String photoUrl,
                            @JsonProperty("email") String email) {
@@ -27,27 +24,33 @@ class UserRequestBody extends MinifiedUser {
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.fullName = fullName;
     }
 
     public String getEmail() {
         return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getFirstName() {
         return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {
         return lastName;
     }
 
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
     public String getFullName() {
-        var firstName = getFirstName();
-        var lastName = getLastName();
-        if (isValidName(fullName)) {
-            return fullName;
-        }
         if (isValidName(firstName) && isValidName(lastName)) {
             return firstName + " " + lastName;
         }
@@ -69,7 +72,6 @@ class UserRequestBody extends MinifiedUser {
                 getLocalId(),
                 getFirstName(),
                 getLastName(),
-                getFullName(),
                 getDisplayName(),
                 getPhotoUrl(),
                 getEmail(),
@@ -88,22 +90,9 @@ class UserRequestBody extends MinifiedUser {
         if (Objects.nonNull(getLastName())) {
             map.put("lastName", getLastName());
         }
-        if (Objects.nonNull(getFullName())) {
-            map.put("fullName", getFullName());
-        }
         if (Objects.nonNull(getEmail())) {
             map.put("email", getEmail());
         }
         return map;
-    }
-
-    @Override
-    public String toString() {
-        return "UserResponseBody{" +
-                "email='" + email + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", fullName='" + fullName + '\'' +
-                '}';
     }
 }

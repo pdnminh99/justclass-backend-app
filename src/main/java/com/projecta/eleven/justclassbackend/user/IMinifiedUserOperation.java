@@ -1,11 +1,14 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public interface IMinifiedUserOperation {
-    Optional<MinifiedUser> getMinifiedUser(String localId);
+    Optional<MinifiedUser> getUser(String localId);
 
-    Iterable<MinifiedUser> getMinifiedUsers(String keyword);
+    Iterable<MinifiedUser> getUsers(String keyword);
 
-    Iterable<MinifiedUser> getMinifiedUsers(Iterable<String> localIds);
+    Iterable<MinifiedUser> getUsers(Iterable<String> localIds) throws ExecutionException, InterruptedException;
+
+    Iterable<MinifiedUser> getFriends(String hostId) throws ExecutionException, InterruptedException;
 }

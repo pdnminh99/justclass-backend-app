@@ -21,7 +21,6 @@ public class UserRequestBodyTest {
     protected final String sampleLocalId = UUID.randomUUID().toString();
     protected final String sampleFirstName = "John";
     protected final String sampleLastName = "Wick";
-    protected final String sampleFullName = "John Wick";
     protected final String sampleDisplayName = "John Wick";
     protected final String samplePhotoUrl = "http://path.to.his.favourite.dog.jpg";
     protected final String sampleEmail = "i_love_pets@yahoo.com";
@@ -32,7 +31,6 @@ public class UserRequestBodyTest {
             String localId,
             String firstName,
             String lastName,
-            String fullName,
             String displayName,
             String photoUrl,
             String email,
@@ -43,7 +41,6 @@ public class UserRequestBodyTest {
                 localId,
                 firstName,
                 lastName,
-                fullName,
                 displayName,
                 photoUrl,
                 email,
@@ -60,7 +57,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -78,7 +74,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -93,7 +88,6 @@ public class UserRequestBodyTest {
                 null,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -108,7 +102,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 null,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -121,7 +114,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 null,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -136,7 +128,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 "",
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -149,7 +140,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 "",
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -164,7 +154,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 null,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -178,7 +167,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 null,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -193,7 +181,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 "",
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -206,7 +193,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 "",
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 sampleEmail,
@@ -216,84 +202,11 @@ public class UserRequestBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_full_name_is_acceptable() {
-        assertInitiateUserDoesNotThrowAnyException(
-                sampleLocalId,
-                sampleFirstName,
-                sampleLastName,
-                null,
-                sampleDisplayName,
-                samplePhotoUrl,
-                sampleEmail,
-                sampleAssignDatetime,
-                sampleIsNewUser);
-    }
-
-    @Test
-    void Constructor_Create_instance_with_Null_full_name_is_considered_as_first_and_last_name_concatenated_together() {
-        User user = new User(sampleLocalId,
-                sampleFirstName,
-                sampleLastName,
-                null,
-                sampleDisplayName,
-                samplePhotoUrl,
-                sampleEmail,
-                sampleAssignDatetime,
-                sampleIsNewUser);
-        String expectedFullName = user.getFirstName() + " " + user.getLastName();
-        assertEquals(expectedFullName, user.getFullName());
-    }
-
-    @Test
-    void Constructor_Create_instance_with_empty_string_full_name_is_acceptable() {
-        assertInitiateUserDoesNotThrowAnyException(
-                sampleLocalId,
-                sampleFirstName,
-                sampleLastName,
-                "",
-                sampleDisplayName,
-                samplePhotoUrl,
-                sampleEmail,
-                sampleAssignDatetime,
-                sampleIsNewUser);
-    }
-
-    @Test
-    void Constructor_Create_instance_with_empty_string_full_name_is_considered_as_first_and_last_name_concatenated_together() {
-        User user = new User(sampleLocalId,
-                sampleFirstName,
-                sampleLastName,
-                "",
-                sampleDisplayName,
-                samplePhotoUrl,
-                sampleEmail,
-                sampleAssignDatetime,
-                sampleIsNewUser);
-        String expectedFullName = user.getFirstName() + " " + user.getLastName();
-        assertEquals(expectedFullName, user.getFullName());
-    }
-
-    @Test
-    void Constructor_Full_name_shall_take_precedence_over_first_and_last_names_concatenated_together() {
-        User user = new User(sampleLocalId,
-                "John",
-                "Wick",
-                "Mr.Bean",
-                sampleDisplayName,
-                samplePhotoUrl,
-                sampleEmail,
-                sampleAssignDatetime,
-                sampleIsNewUser);
-        assertEquals("Mr.Bean", user.getFullName());
-    }
-
-    @Test
     void Constructor_Create_instance_with_null_display_name_is_acceptable() {
         assertInitiateUserDoesNotThrowAnyException(
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 null,
                 samplePhotoUrl,
                 sampleEmail,
@@ -308,7 +221,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 "",
                 samplePhotoUrl,
                 sampleEmail,
@@ -322,7 +234,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 null,
                 samplePhotoUrl,
                 sampleEmail,
@@ -336,7 +247,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 "",
                 samplePhotoUrl,
                 sampleEmail,
@@ -351,7 +261,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 null,
                 sampleEmail,
@@ -367,7 +276,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 "",
                 sampleEmail,
@@ -381,7 +289,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 null,
                 sampleEmail,
@@ -395,7 +302,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 "",
                 sampleEmail,
@@ -410,7 +316,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 null,
@@ -425,7 +330,6 @@ public class UserRequestBodyTest {
                 sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 "",
@@ -439,7 +343,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 null,
@@ -453,7 +356,6 @@ public class UserRequestBodyTest {
         User user = new User(sampleLocalId,
                 sampleFirstName,
                 sampleLastName,
-                sampleFullName,
                 sampleDisplayName,
                 samplePhotoUrl,
                 "",

@@ -14,13 +14,12 @@ public class User extends UserRequestBody {
     public User(String localId,
                 String firstName,
                 String lastName,
-                String fullName,
                 String displayName,
                 String photoUrl,
                 String email,
                 Timestamp assignTimestamp,
                 boolean isNewUser) {
-        super(localId, firstName, lastName, fullName, displayName, photoUrl, email);
+        super(localId, firstName, lastName, displayName, photoUrl, email);
         this.isNewUser = isNewUser;
         this.assignTimestamp = assignTimestamp;
     }
@@ -35,6 +34,10 @@ public class User extends UserRequestBody {
 
     public Timestamp getAssignTimestamp() {
         return assignTimestamp;
+    }
+
+    public void setAssignTimestamp(Timestamp newTimestamp) {
+        assignTimestamp = newTimestamp;
     }
 
     @Override

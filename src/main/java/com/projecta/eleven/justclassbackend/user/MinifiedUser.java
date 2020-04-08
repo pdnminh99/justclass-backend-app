@@ -32,8 +32,13 @@ public class MinifiedUser {
         return photoUrl;
     }
 
+    // TODO: implement Tests
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
     public HashMap<String, Object> toMap() {
-        HashMap<String, Object> map = new HashMap<>();
+        var map = new HashMap<String, Object>();
 
         if (Objects.nonNull(getLocalId())) {
             map.put("localId", getLocalId());
