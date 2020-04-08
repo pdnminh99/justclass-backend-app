@@ -1,13 +1,11 @@
 package com.projecta.eleven.justclassbackend.configuration;
 
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.Primary;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,25 +16,23 @@ import java.util.Optional;
 @Configuration
 public class FirestoreConfig {
 
-    private Firestore firestore;
-
     @Bean("firestore")
-    public void getFirestore() {
+    @Primary
+    public Firestore getFirestore() {
         var projectId = Optional.ofNullable(System.getenv("GOOGLE_CLOUD_PROJECT"));
-        projectId.ifPresentOrElse(
-                this::initializeFirebaseUsingDefaultCredential,
-                this::initializeFirebaseUsingLocalCredential);
+        return projectId.map(this::initializeFirebaseUsingDefaultCredential)
+                .orElseGet(this::initializeFirebaseUsingLocalCredential);
     }
 
-    private void initializeFirebaseUsingDefaultCredential(String projectId) {
-        firestore = FirestoreOptions.getDefaultInstance()
+    private Firestore initializeFirebaseUsingDefaultCredential(String projectId) {
+        return FirestoreOptions.getDefaultInstance()
                 .toBuilder()
                 .setProjectId(projectId)
                 .build()
                 .getService();
     }
 
-    private void initializeFirebaseUsingLocalCredential() {
+    private Firestore initializeFirebaseUsingLocalCredential() {
         String pathToCredential = Paths.get(".")
                 .toAbsolutePath()
                 .normalize()
@@ -46,23 +42,14 @@ public class FirestoreConfig {
             System.err.println("Local development environment detected. Attempting to initialize Firestore using local credentials.");
             InputStream credentialFile = new FileInputStream(pathToCredential);
             GoogleCredentials credentials = GoogleCredentials.fromStream(credentialFile);
-            firestore = FirestoreOptions.newBuilder()
+            return FirestoreOptions.newBuilder()
                     .setCredentials(credentials)
                     .build()
                     .getService();
         } catch (IOException exception) {
             System.err.println("Cannot initialize Firebase using local credentials.");
-            firestore = null;
+            return null;
         }
-    }
-
-    @Bean("user")
-    @DependsOn("firestore")
-    @Scope("singleton")
-    public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
-        return Optional.ofNullable(firestore)
-                .map(db -> db.collection("user"))
-                .orElseThrow(DatabaseFailedToInitializeException::new);
     }
 
 }

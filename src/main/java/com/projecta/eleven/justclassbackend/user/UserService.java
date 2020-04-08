@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service("defaultUserService")
+@Primary
 public class UserService extends AbstractUserService {
 
     private final IUserRepository repository;

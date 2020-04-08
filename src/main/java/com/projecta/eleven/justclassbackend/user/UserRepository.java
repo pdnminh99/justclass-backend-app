@@ -5,6 +5,7 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
@@ -22,7 +23,7 @@ class UserRepository implements IUserRepository {
     private final CollectionReference userCollection;
 
     @Autowired
-    public UserRepository(CollectionReference userCollection) {
+    public UserRepository(@Qualifier("userCollection") CollectionReference userCollection) {
         this.userCollection = userCollection;
     }
 
