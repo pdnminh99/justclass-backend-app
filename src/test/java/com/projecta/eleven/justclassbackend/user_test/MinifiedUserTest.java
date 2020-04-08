@@ -212,4 +212,76 @@ public class MinifiedUserTest {
 
         assertNotNull(minifiedUser.toMap());
     }
+
+    @Test
+    void toMap_localId_value_remain_the_same() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleDisplayName, samplePhotoURL);
+        var map = minifiedUser.toMap();
+
+        assertEquals(sampleLocalId, map.get("localId"));
+    }
+
+    @Test
+    void toMap_localId_should_be_empty() {
+        var minifiedUser = new MinifiedUser("", sampleDisplayName, samplePhotoURL);
+        var map = minifiedUser.toMap();
+
+        assertEquals("", map.get("localId"));
+    }
+
+    @Test
+    void toMap_DisplayName_value_remain_the_same() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleDisplayName, samplePhotoURL);
+        var map = minifiedUser.toMap();
+
+        assertEquals(sampleDisplayName, map.get("displayName"));
+    }
+
+    @Test
+    void toMap_DisplayName_should_be_empty() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, "", samplePhotoURL);
+        var map = minifiedUser.toMap();
+
+        assertEquals("", map.get("displayName"));
+    }
+
+    @Test
+    void toMap_PhotoUrl_value_remain_the_same() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleDisplayName, samplePhotoURL);
+        var map = minifiedUser.toMap();
+
+        assertEquals(samplePhotoURL, map.get("photoUrl"));
+    }
+
+    @Test
+    void toMap_PhotoUrl_should_be_empty() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleDisplayName, "");
+        var map = minifiedUser.toMap();
+
+        assertEquals("", map.get("photoUrl"));
+    }
+
+    @Test
+    void toMap_LocalId_should_be_null() {
+        var minifiedUser = new MinifiedUser(null, sampleDisplayName, samplePhotoURL);
+        var map = minifiedUser.toMap();
+
+        assertNull(map.get("localId"));
+    }
+
+    @Test
+    void toMap_DisplayName_should_be_null() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, null, samplePhotoURL);
+        var map = minifiedUser.toMap();
+
+        assertNull(map.get("displayName"));
+    }
+
+    @Test
+    void toMap_PhotoUrl_should_be_null() {
+        var minifiedUser = new MinifiedUser(sampleLocalId, sampleDisplayName, null);
+        var map = minifiedUser.toMap();
+
+        assertNull(map.get("photoUrl"));
+    }
 }

@@ -69,7 +69,7 @@ public class UserRequestBodyTest {
      * Constructor test methods
      */
     @Test
-    void Constructor_Create_instance_with_no_Null() {
+    void Constructor_Create_instance_should_not_null() {
         User user = new User(
                 sampleLocalId,
                 sampleFirstName,
@@ -97,7 +97,7 @@ public class UserRequestBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_first_name_is_acceptable() {
+    void Constructor_Create_instance_with_null_first_name_is_acceptable() {
         assertInitiateUserDoesNotThrowAnyException(
                 sampleLocalId,
                 null,
@@ -149,7 +149,7 @@ public class UserRequestBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_last_name_is_acceptable() {
+    void Constructor_Create_instance_with_null_last_name_is_acceptable() {
         assertInitiateUserDoesNotThrowAnyException(
                 sampleLocalId,
                 sampleFirstName,
@@ -162,7 +162,7 @@ public class UserRequestBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_last_name_shall_returns_null_getter() {
+    void Constructor_Create_instance_with_null_last_name_shall_returns_null_getter() {
         User user = new User(
                 sampleLocalId,
                 sampleFirstName,
@@ -256,7 +256,7 @@ public class UserRequestBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_photoUrl_is_acceptable() {
+    void Constructor_Create_instance_with_null_photoUrl_is_acceptable() {
         assertInitiateUserDoesNotThrowAnyException(
                 sampleLocalId,
                 sampleFirstName,
@@ -268,7 +268,6 @@ public class UserRequestBodyTest {
                 sampleIsNewUser
         );
     }
-
 
     @Test
     void Constructor_Create_instance_with_empty_string_photoUrl_is_acceptable() {
@@ -311,7 +310,7 @@ public class UserRequestBodyTest {
     }
 
     @Test
-    void Constructor_Create_instance_with_Null_email_is_acceptable() {
+    void Constructor_Create_instance_with_null_email_is_acceptable() {
         assertInitiateUserDoesNotThrowAnyException(
                 sampleLocalId,
                 sampleFirstName,
@@ -362,6 +361,453 @@ public class UserRequestBodyTest {
                 sampleAssignDatetime,
                 sampleIsNewUser);
         assertEquals("", user.getEmail());
+    }
+
+    /**
+     * Tests on setters
+     */
+    @Test
+    void setEmail_Set_normal_string_should_return_normal_string_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setEmail("another@me.com");
+        assertEquals("another@me.com", user.getEmail());
+    }
+
+    @Test
+    void setEmail_Set_null_should_return_null_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setEmail(null);
+        assertNull(user.getEmail());
+    }
+
+    @Test
+    void setEmail_Set_empty_string_should_return_empty_string_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setEmail("");
+        assertEquals("", user.getEmail());
+    }
+
+    @Test
+    void setFirstName_Set_normal_string_should_return_normal_string_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setFirstName("another");
+        assertEquals("another", user.getFirstName());
+    }
+
+    @Test
+    void setFirstName_Set_null_should_return_null_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setFirstName(null);
+        assertNull(user.getFirstName());
+    }
+
+    @Test
+    void setFirstName_Set_empty_string_should_return_empty_string_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setFirstName("");
+        assertEquals("", user.getFirstName());
+    }
+
+    @Test
+    void setLastName_Set_normal_string_should_return_normal_string_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setLastName("another");
+        assertEquals("another", user.getLastName());
+    }
+
+    @Test
+    void setLastName_Set_null_should_return_null_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setLastName(null);
+        assertNull(user.getLastName());
+    }
+
+    @Test
+    void setLastName_Set_empty_string_should_return_empty_string_getter() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        user.setLastName("");
+        assertEquals("", user.getLastName());
+    }
+
+    @Test
+    void getFullName_It_should_return_firstName_and_lastName_concatenated_together() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+
+        assertEquals(sampleFirstName + " " + sampleLastName, user.getFullName());
+    }
+
+    @Test
+    void getFullName_It_should_return_firstName_when_lastName_is_null() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                null,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+
+        assertEquals(sampleFirstName, user.getFullName());
+    }
+
+    @Test
+    void getFullName_It_should_return_lastName_when_firstName_is_null() {
+        User user = new User(sampleLocalId,
+                null,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+
+        assertEquals(sampleLastName, user.getFullName());
+    }
+
+    @Test
+    void getFullName_It_should_return_null_when_firstName_and_lastName_is_null() {
+        User user = new User(sampleLocalId,
+                null,
+                null,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+
+        assertNull(user.getFullName());
+    }
+
+    @Test
+    void toMap_It_should_not_return_null() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNotNull(user.toMap());
+    }
+
+    @Test
+    void toMap_It_should_return_same_firstName() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertEquals(sampleFirstName, map.get("firstName"));
+    }
+
+    @Test
+    void toMap_It_should_return_same_lastName() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertEquals(sampleLastName, map.get("lastName"));
+    }
+
+    @Test
+    void toMap_It_should_return_same_email() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertEquals(sampleEmail, map.get("email"));
+    }
+
+    @Test
+    void toMap_It_should_return_null_first_name() {
+        User user = new User(sampleLocalId,
+                null,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertNull(map.get("firstName"));
+    }
+
+    @Test
+    void toMap_It_should_return_null_last_name() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                null,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertNull(map.get("lastName"));
+    }
+
+    @Test
+    void toMap_It_should_return_null_email() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                null,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertNull(map.get("email"));
+    }
+
+    @Test
+    void toMap_It_should_return_empty_first_name() {
+        User user = new User(sampleLocalId,
+                "",
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertEquals("", map.get("firstName"));
+    }
+
+    @Test
+    void toMap_It_should_return_empty_last_name() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                "",
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertEquals("", map.get("lastName"));
+    }
+
+    @Test
+    void toMap_It_should_return_empty_email() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                "",
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        var map = user.toMap();
+        assertEquals("", map.get("email"));
+    }
+
+    @Test
+    void toUser_It_should_not_return_null() {
+        User user = new User(sampleLocalId,
+                sampleFirstName,
+                sampleLastName,
+                sampleDisplayName,
+                samplePhotoUrl,
+                sampleEmail,
+                sampleAssignDatetime,
+                sampleIsNewUser);
+        assertNotNull(user.toUser(sampleAssignDatetime, sampleIsNewUser));
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_localId_not_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_localId_and_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_localId_and_empty() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_firstName_not_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_firstName_and_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_firstName_and_empty() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_lastName_not_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_lastName_and_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_lastName_and_empty() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_displayName_not_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_displayName_and_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_displayName_and_empty() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_photoUrl_not_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_photoUrl_and_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_photoUrl_and_empty() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_email_not_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_email_and_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_has_the_same_email_and_empty() {
+
+    }
+
+    @Test
+    void toUser_It_should_update_new_assign_timestamp_not_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_update_new_assign_timestamp_and_null() {
+
+    }
+
+    @Test
+    void toUser_It_should_update_new_is_new_user_state_and_true() {
+
+    }
+
+    @Test
+    void toUser_It_should_update_new_is_new_user_state_and_false() {
+
     }
 
 }
