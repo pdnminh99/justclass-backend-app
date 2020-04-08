@@ -4,7 +4,6 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -20,26 +19,16 @@ import java.util.stream.StreamSupport;
 @Repository("firestoreRepository")
 class UserRepository implements IUserRepository {
 
-    private final Firestore firestore;
-
-    private boolean isTestMode = false;
-
-    public void enableTestMode() {
-        isTestMode = true;
-    }
-
-    private CollectionReference getUserCollection() {
-        return firestore.collection(isTestMode ? "user_test" : "user");
-    }
+    private final CollectionReference userCollection;
 
     @Autowired
-    public UserRepository(Firestore firestore) {
-        this.firestore = firestore;
+    public UserRepository(CollectionReference userCollection) {
+        this.userCollection = userCollection;
     }
 
     @Override
     public Optional<User> createUser(UserRequestBody user) {
-        DocumentReference documentReference = getUserCollection()
+        DocumentReference documentReference = userCollection
                 .document(user.getLocalId());
         HashMap<String, Object> userMap = user.toMap();
         userMap.remove("localId");
@@ -62,7 +51,7 @@ class UserRepository implements IUserRepository {
 
     @Override
     public Optional<MinifiedUser> getMinifiedUser(String localId) {
-        DocumentReference documentReference = getUserCollection()
+        DocumentReference documentReference = userCollection
                 .document(localId);
         try {
             DocumentSnapshot snapshot = documentReference
@@ -80,21 +69,21 @@ class UserRepository implements IUserRepository {
 
     @Override
     public boolean isUserExist(String localId) throws ExecutionException, InterruptedException {
-        DocumentReference documentReference = getUserCollection()
+        DocumentReference documentReference = userCollection
                 .document(localId);
         return documentReference.get().get().exists();
     }
 
     @Override
     public void edit(String localId, HashMap<String, Object> changesMap) {
-        DocumentReference documentReference = getUserCollection()
+        DocumentReference documentReference = userCollection
                 .document(localId);
         documentReference.update(changesMap);
     }
 
     @Override
     public Optional<User> getUser(String localId) throws ExecutionException, InterruptedException {
-        DocumentSnapshot document = getUserCollection()
+        DocumentSnapshot document = userCollection
                 .document(localId)
                 .get()
                 .get();
@@ -115,7 +104,7 @@ class UserRepository implements IUserRepository {
 
     @Override
     public Stream<String> getFriends(String hostLocalId) throws ExecutionException, InterruptedException {
-        DocumentSnapshot documentSnapshot = getUserCollection()
+        DocumentSnapshot documentSnapshot = userCollection
                 .document(hostLocalId)
                 .get()
                 .get();
