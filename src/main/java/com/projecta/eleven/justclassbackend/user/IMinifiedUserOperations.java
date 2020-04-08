@@ -3,7 +3,7 @@ package com.projecta.eleven.justclassbackend.user;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-public interface IMinifiedUserOperation {
+public interface IMinifiedUserOperations {
     Optional<MinifiedUser> getUser(String localId);
 
     Iterable<MinifiedUser> getUsers(String keyword);

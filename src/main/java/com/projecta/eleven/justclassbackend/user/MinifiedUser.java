@@ -32,7 +32,6 @@ public class MinifiedUser {
         return photoUrl;
     }
 
-    // TODO: implement Tests
     public void setPhotoUrl(String photoUrl) {
         this.photoUrl = photoUrl;
     }
