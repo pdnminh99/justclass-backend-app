@@ -1,32 +1,29 @@
 package com.projecta.eleven.justclassbackend.user_test;
 
 import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.Firestore;
-import com.projecta.eleven.justclassbackend.configuration.DatabaseFailedToInitializeException;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
+import com.projecta.eleven.justclassbackend.junit_config.TestCollectionsConfig;
 import com.projecta.eleven.justclassbackend.user.IMinifiedUserOperations;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.user.User;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.Import;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
 @DisplayName("Unit Tests for IMinifiedUserOperations interface.")
+@Import(TestCollectionsConfig.class)
 @SpringBootTest
 public class IMinifiedUserOperationsTest {
 
@@ -34,7 +31,7 @@ public class IMinifiedUserOperationsTest {
 
     private final IMinifiedUserOperations service;
     private MinifiedUser[] sampleUsers = new User[3];
-    private String[] sampleLocalIds = new String[3];
+    private Collection<String> sampleLocalIds = new ArrayList<>();
 
     @Autowired
     IMinifiedUserOperationsTest(IMinifiedUserOperations service,
@@ -60,7 +57,7 @@ public class IMinifiedUserOperationsTest {
         userCollection.document(localId)
                 .set(map).get();
         sampleUsers[0] = user;
-        sampleLocalIds[0] = localId;
+        sampleLocalIds.add(localId);
 
         // second
         localId = "8667dadc-aecf-4678-bf14-b1a6611aa0c4";
@@ -78,7 +75,7 @@ public class IMinifiedUserOperationsTest {
         userCollection.document(localId)
                 .set(map).get();
         sampleUsers[1] = user;
-        sampleLocalIds[1] = localId;
+        sampleLocalIds.add(localId);
 
         // third
         localId = "982da0a1-673e-4c7d-8fb8-ff3e51f74408";
@@ -96,7 +93,12 @@ public class IMinifiedUserOperationsTest {
         userCollection.document(localId)
                 .set(map).get();
         sampleUsers[2] = user;
-        sampleLocalIds[2] = localId;
+        sampleLocalIds.add(localId);
+    }
+
+    @AfterAll
+    void clearSampleUsers() {
+        userCollection.document().delete();
     }
 
     @Test
@@ -106,27 +108,112 @@ public class IMinifiedUserOperationsTest {
 
     @Test
     void getUsersWithIterableOfStrings_Method_should_not_throw_any_exception() {
-        assertDoesNotThrow(() -> service.getUsers(Arrays.asList(sampleLocalIds)));
+        assertDoesNotThrow(() -> service.getUsers(sampleLocalIds));
     }
 
-    @TestConfiguration
-    static class FirestoreTestConfig {
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_null_should_return_empty_list() throws ExecutionException, InterruptedException {
+        var results = service.getUsers((Iterable<String>) null);
 
-        private final Firestore firestore;
+        assertEquals(0, results.size());
+    }
 
-        @Autowired
-        FirestoreTestConfig(Firestore firestore) {
-            this.firestore = firestore;
-        }
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_null_should_not_throw_exception() {
+        assertDoesNotThrow(() -> service.getUsers((Iterable<String>) null));
+    }
 
-        @Bean("userCollectionTest")
-        @DependsOn("firestore")
-        @Scope("singleton")
-        public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
-            return Optional.ofNullable(firestore)
-                    .map(db -> db.collection("user_test"))
-                    .orElseThrow(DatabaseFailedToInitializeException::new);
-        }
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_empty_list_should_return_empty_list() throws ExecutionException, InterruptedException {
+        var results = service.getUsers(Lists.emptyList());
 
+        assertEquals(0, results.size());
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_one_element_not_null_but_no_match_should_return_empty_list() throws ExecutionException, InterruptedException {
+        var results = service.getUsers(Lists.list("982da0az-673e-4c7d-8fb8-ff3e51f74402"));
+
+        assertEquals(0, results.size());
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_one_element_null_should_return_empty_list() throws ExecutionException, InterruptedException {
+        var results = service.getUsers(Lists.list(null));
+
+        assertEquals(0, results.size());
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_one_element_null_should_not_throw_exception() {
+        assertDoesNotThrow(() -> service.getUsers(Lists.list(null)));
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_one_element_not_null_should_return_one_result() throws ExecutionException, InterruptedException {
+        var results = service.getUsers(Lists.list("51b5b274-8142-46d2-bccc-e2e894061e7f"));
+
+        assertEquals(1, results.size());
+        assertEquals(sampleUsers[0], results.get(0));
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_not_null_and_first_one_match_should_return_one_result() {
+        // TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_not_null_and_later_one_match_should_return_one_result() {
+        // TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_not_null_and_two_matches_should_return_two_results() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_first_one_null_and_latter_one_match_should_return_one_result() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_first_one_null_and_latter_one_is_empty_should_return_one_result() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_first_one_null_and_latter_one_is_not_match_should_return_empty() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_nulls_should_return_empty_result() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_first_one_matches_and_latter_one_null_should_return_one_result() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_first_one_empty_and_later_one_null_should_return_empty_result() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_first_one_not_matches_and_later_one_null_should_return_empty_result() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_both_match_should_return_two_results() {
+// TODO implement this.
+    }
+
+    @Test
+    void getUsersWithIterableOfStrings_Pass_param_of_two_elements_both_not_match_should_return_empty() {
+// TODO implement this.
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -127,17 +128,17 @@ public class UserService extends AbstractUserService {
     }
 
     @Override
-    public Iterable<MinifiedUser> getUsers(String keyword) {
+    public List<MinifiedUser> getUsers(String keyword) {
         return null;
     }
 
     @Override
-    public Iterable<MinifiedUser> getUsers(Iterable<String> localIds) throws ExecutionException, InterruptedException {
+    public List<MinifiedUser> getUsers(Iterable<String> localIds) throws ExecutionException, InterruptedException {
         return repository.getUsers(localIds);
     }
 
     @Override
-    public Iterable<MinifiedUser> getFriends(String hostLocalId) throws ExecutionException, InterruptedException {
+    public List<MinifiedUser> getFriends(String hostLocalId) throws ExecutionException, InterruptedException {
         if (!repository.isUserExist(hostLocalId)) {
             return null;
         }
