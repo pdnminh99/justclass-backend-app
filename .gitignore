@@ -3,10 +3,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**
 !**/src/test/**
-src/main/appengine/
-src/main/resources/application.yml
-src/main/resources/application.properties
-credentials/
+key.json
 src/main/resources/static/*
 
 ### STS ###

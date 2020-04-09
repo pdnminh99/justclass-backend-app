@@ -25,27 +25,18 @@ public class FirestoreConfig {
     }
 
     private Firestore initializeFirebaseUsingDefaultCredential(String projectId) {
-        return FirestoreOptions.getDefaultInstance()
-                .toBuilder()
-                .setProjectId(projectId)
-                .build()
-                .getService();
+        return FirestoreOptions.getDefaultInstance().toBuilder().setProjectId(projectId).build().getService();
     }
 
     private Firestore initializeFirebaseUsingLocalCredential() {
-        String pathToCredential = Paths.get(".")
-                .toAbsolutePath()
-                .normalize()
-                .toString() + "//credentials//JustClass-b81fef18281d.json";
+        String pathToCredential = Paths.get(".").toAbsolutePath().normalize().toString() + "//key.json";
 
         try {
-            System.err.println("Local development environment detected. Attempting to initialize Firestore using local credentials.");
+            System.err.println(
+                    "Local development environment detected. Attempting to initialize Firestore using local credentials.");
             InputStream credentialFile = new FileInputStream(pathToCredential);
             GoogleCredentials credentials = GoogleCredentials.fromStream(credentialFile);
-            return FirestoreOptions.newBuilder()
-                    .setCredentials(credentials)
-                    .build()
-                    .getService();
+            return FirestoreOptions.newBuilder().setCredentials(credentials).build().getService();
         } catch (IOException exception) {
             System.err.println("Cannot initialize Firebase using local credentials.");
             return null;
