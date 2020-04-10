@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.user;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -24,6 +25,13 @@ class UserRequestBody extends MinifiedUser {
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
+    }
+
+    public UserRequestBody(DocumentSnapshot snapshot) {
+        super(snapshot);
+        this.email = snapshot.getString("email");
+        this.firstName = snapshot.getString("firstName");
+        this.lastName = snapshot.getString("lastName");
     }
 
     public String getEmail() {

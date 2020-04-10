@@ -31,10 +31,9 @@ public class FriendController {
     public Map<String, Timestamp> getFriendsLocalIds(
             @PathVariable String localId,
             @Nullable
-            @RequestParam(value = "count", required = false) Integer count,
-            @Nullable
-            @RequestParam(value = "sortByMostRecentAccess", required = false) Boolean sortByMostRecentAccess) {
-        return userService.getLocalIdsOfFriends(localId, count, sortByMostRecentAccess);
+            @RequestParam(value = "count", required = false) Integer count)
+            throws ExecutionException, InterruptedException {
+        return userService.getLocalIdsOfFriends(localId, count);
     }
 
 //    @GetMapping("{localId}/all")
@@ -51,7 +50,6 @@ public class FriendController {
 //    }
 
     @PostMapping("map")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<MinifiedUser>> getFriendsFromMap(
             @Nullable
             @RequestBody Map<String, Timestamp> requestMap,
@@ -65,7 +63,6 @@ public class FriendController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<MinifiedUser>> getFriendsFromLocalIds(
             @Nullable
             @RequestBody String[] localIds,

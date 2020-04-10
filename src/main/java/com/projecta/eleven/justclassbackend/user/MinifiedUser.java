@@ -1,5 +1,7 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.google.cloud.firestore.DocumentSnapshot;
+
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -14,6 +16,12 @@ public class MinifiedUser {
         this.localId = localId;
         this.displayName = displayName;
         this.photoUrl = photoUrl;
+    }
+
+    public MinifiedUser(DocumentSnapshot snapshot) {
+        this.localId = snapshot.getId();
+        this.displayName = snapshot.getString("displayName");
+        this.photoUrl = snapshot.getString("photoUrl");
     }
 
     public String getLocalId() {

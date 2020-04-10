@@ -25,5 +25,5 @@ public interface IMinifiedUserOperations {
 
 //    List<MinifiedUser> getFriends(String hostId) throws ExecutionException, InterruptedException;
 
-    Map<String, Timestamp> getLocalIdsOfFriends(String localId, Integer count, Boolean sortByMostRecentAccess);
+    Map<String, Timestamp> getLocalIdsOfFriends(String localId, Integer count) throws ExecutionException, InterruptedException;
 }

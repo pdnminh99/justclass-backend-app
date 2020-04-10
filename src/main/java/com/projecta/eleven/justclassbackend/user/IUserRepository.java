@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
 
 interface IUserRepository {
     Optional<User> createUser(UserRequestBody user) throws ExecutionException, InterruptedException;
@@ -17,7 +16,8 @@ interface IUserRepository {
         return getUser(sampleUser.getLocalId());
     }
 
-    Stream<String> getFriends(String hostLocalId) throws ExecutionException, InterruptedException;
+    List<FriendReference> getRelationshipReference(String hostLocalId, Integer count)
+            throws ExecutionException, InterruptedException;
 
     Optional<MinifiedUser> getMinifiedUser(String localId);
 

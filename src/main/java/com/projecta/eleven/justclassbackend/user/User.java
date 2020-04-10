@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -22,6 +23,12 @@ public class User extends UserRequestBody {
         super(localId, firstName, lastName, displayName, photoUrl, email);
         this.isNewUser = isNewUser;
         this.assignTimestamp = assignTimestamp;
+    }
+
+    public User(DocumentSnapshot snapshot, boolean isNewUser) {
+        super(snapshot);
+        this.assignTimestamp = snapshot.getTimestamp("assignTimestamp");
+        this.isNewUser = isNewUser;
     }
 
     public boolean isNewUser() {

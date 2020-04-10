@@ -150,7 +150,16 @@ public class UserService extends AbstractUserService {
 //    }
 
     @Override
-    public Map<String, Timestamp> getLocalIdsOfFriends(String localId, Integer count, Boolean sortByMostRecentAccess) {
+    public Map<String, Timestamp> getLocalIdsOfFriends(String localId, Integer count)
+            throws ExecutionException, InterruptedException {
+        if (!verifyValidStringField(localId)) {
+            return Collections.emptyMap();
+        }
+        var references = repository.getRelationshipReference(localId, count);
+        if (references == null) {
+            return null;
+        }
+        references.forEach(System.out::println);
         return null;
     }
 }
