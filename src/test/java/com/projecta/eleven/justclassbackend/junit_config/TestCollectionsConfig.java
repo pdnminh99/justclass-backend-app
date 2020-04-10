@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.annotation.Scope;
 
 import java.util.Optional;
 
@@ -23,7 +22,6 @@ public class TestCollectionsConfig {
 
     @Bean("userCollectionTest")
     @DependsOn("firestore")
-    @Scope("singleton")
     public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
                 .map(db -> db.collection("user_test"))

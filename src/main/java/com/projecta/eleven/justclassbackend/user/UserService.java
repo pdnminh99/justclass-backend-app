@@ -26,6 +26,9 @@ public class UserService extends AbstractUserService {
     @Override
     public Optional<User> assignUser(UserRequestBody requestUser, Boolean autoUpdate)
             throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        if (Objects.isNull(requestUser)) {
+            return Optional.empty();
+        }
         if (!verifyValidStringField(requestUser.getLocalId())) {
             throw new InvalidUserInformationException("LocalId must not be null or empty.");
         }
