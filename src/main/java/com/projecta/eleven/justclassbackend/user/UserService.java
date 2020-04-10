@@ -1,16 +1,12 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.google.cloud.Timestamp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service("defaultUserService")
 @Primary
@@ -136,20 +132,25 @@ public class UserService extends AbstractUserService {
     }
 
     @Override
-    public List<MinifiedUser> getUsers(Iterable<String> localIds) throws ExecutionException, InterruptedException {
+    public List<MinifiedUser> getUsers(Iterable<String> localIds, String sortByField, Boolean isAscending) throws ExecutionException, InterruptedException {
         return repository.getUsers(localIds);
     }
 
-    @Override
-    public List<MinifiedUser> getFriends(String hostLocalId) throws ExecutionException, InterruptedException {
-        if (!repository.isUserExist(hostLocalId)) {
-            return null;
-        }
-        Stream<String> friendsIndexes = repository.getFriends(hostLocalId);
+//    @Override
+//    public List<MinifiedUser> getFriends(String hostLocalId) throws ExecutionException, InterruptedException {
+//        if (!repository.isUserExist(hostLocalId)) {
+//            return null;
+//        }
+//        Stream<String> friendsIndexes = repository.getFriends(hostLocalId);
+//
+//        if (friendsIndexes.count() == 0) {
+//            return null;
+//        }
+//        return getUsers(friendsIndexes.collect(Collectors.toList()), );
+//    }
 
-        if (friendsIndexes.count() == 0) {
-            return null;
-        }
-        return getUsers(friendsIndexes.collect(Collectors.toList()));
+    @Override
+    public Map<String, Timestamp> getLocalIdsOfFriends(String localId, Integer count, Boolean sortByMostRecentAccess) {
+        return null;
     }
 }

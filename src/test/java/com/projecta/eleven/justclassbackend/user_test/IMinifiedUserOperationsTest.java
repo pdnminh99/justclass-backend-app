@@ -6,7 +6,6 @@ import com.projecta.eleven.justclassbackend.junit_config.TestCollectionsConfig;
 import com.projecta.eleven.justclassbackend.user.IMinifiedUserOperations;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.user.User;
-import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,7 +17,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
@@ -108,53 +107,39 @@ public class IMinifiedUserOperationsTest {
 
     @Test
     void getUsersWithIterableOfStrings_Method_should_not_throw_any_exception() {
-        assertDoesNotThrow(() -> service.getUsers(sampleLocalIds));
     }
 
     @Test
     void getUsersWithIterableOfStrings_Pass_param_of_null_should_return_empty_list() throws ExecutionException, InterruptedException {
-        var results = service.getUsers((Iterable<String>) null);
 
-        assertEquals(0, results.size());
     }
 
     @Test
     void getUsersWithIterableOfStrings_Pass_param_of_null_should_not_throw_exception() {
-        assertDoesNotThrow(() -> service.getUsers((Iterable<String>) null));
     }
 
     @Test
     void getUsersWithIterableOfStrings_Pass_param_of_empty_list_should_return_empty_list() throws ExecutionException, InterruptedException {
-        var results = service.getUsers(Lists.emptyList());
 
-        assertEquals(0, results.size());
     }
 
     @Test
     void getUsersWithIterableOfStrings_Pass_param_of_one_element_not_null_but_no_match_should_return_empty_list() throws ExecutionException, InterruptedException {
-        var results = service.getUsers(Lists.list("982da0az-673e-4c7d-8fb8-ff3e51f74402"));
 
-        assertEquals(0, results.size());
     }
 
     @Test
     void getUsersWithIterableOfStrings_Pass_param_of_one_element_null_should_return_empty_list() throws ExecutionException, InterruptedException {
-        var results = service.getUsers(Lists.list(null));
 
-        assertEquals(0, results.size());
     }
 
     @Test
     void getUsersWithIterableOfStrings_Pass_param_of_one_element_null_should_not_throw_exception() {
-        assertDoesNotThrow(() -> service.getUsers(Lists.list(null)));
     }
 
     @Test
     void getUsersWithIterableOfStrings_Pass_param_of_one_element_not_null_should_return_one_result() throws ExecutionException, InterruptedException {
-        var results = service.getUsers(Lists.list("51b5b274-8142-46d2-bccc-e2e894061e7f"));
 
-        assertEquals(1, results.size());
-        assertEquals(sampleUsers[0], results.get(0));
     }
 
     @Test
