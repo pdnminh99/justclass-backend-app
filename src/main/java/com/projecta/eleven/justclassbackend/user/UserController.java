@@ -14,10 +14,10 @@ import java.util.concurrent.ExecutionException;
 @RequestMapping("api/v1/user")
 public class UserController {
 
-    private final AbstractUserService userService;
+    private final IUserOperations userService;
 
     @Autowired
-    public UserController(@Qualifier("defaultUserService") AbstractUserService userService) {
+    public UserController(@Qualifier("defaultUserService") IUserOperations userService) {
         this.userService = userService;
     }
 
