@@ -26,8 +26,17 @@ public class CollectionsConfig {
     @Scope("singleton")
     public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
-                .map(db -> db.collection("user"))
+                .map(db -> db.collection("users"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
 
+    @Bean("friendCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getFriendCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection("friends"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+
+    }
 }

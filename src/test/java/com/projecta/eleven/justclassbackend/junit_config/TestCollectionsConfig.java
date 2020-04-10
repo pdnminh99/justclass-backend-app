@@ -24,7 +24,7 @@ public class TestCollectionsConfig {
     @DependsOn("firestore")
     public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
-                .map(db -> db.collection("user_test"))
+                .map(db -> db.collection("users_test"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
 

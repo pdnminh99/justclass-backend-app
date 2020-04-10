@@ -23,9 +23,9 @@ class UserRepository implements IUserRepository {
 
     @Autowired
     public UserRepository(@Qualifier("userCollection") CollectionReference userCollection,
-                          Firestore firestore) {
+                          @Qualifier("friendCollection") CollectionReference friendCollection) {
         this.userCollection = userCollection;
-        this.friendCollection = firestore.collection("friends");
+        this.friendCollection = friendCollection;
     }
 
     @Override

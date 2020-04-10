@@ -42,4 +42,9 @@ public class UserController {
     public ResponseEntity<String> handleTypeMismatch() {
         return ResponseEntity.badRequest().body("Request param 'autoUpdate' must be a boolean.");
     }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public String handleInvalidUserInfo(InvalidUserInformationException e) {
+        return e.getMessage();
+    }
 }
