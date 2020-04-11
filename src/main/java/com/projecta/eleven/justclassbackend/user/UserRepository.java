@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @Repository("firestoreRepository")
@@ -42,12 +43,14 @@ class UserRepository implements IUserRepository {
     }
 
     @Override
-    public List<MinifiedUser> getUsers(Iterable<String> localIds) {
-        return StreamSupport
+    public List<MinifiedUser> getUsers(Iterable<String> localIds) throws ExecutionException, InterruptedException {
+        return ApiFutures.allAsList(StreamSupport
                 .stream(localIds.spliterator(), false)
-                .map(this::getMinifiedUser)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .map(s -> userCollection.document(s).get())
+                .collect(Collectors.toList()))
+                .get()
+                .stream()
+                .map(MinifiedUser::new)
                 .collect(Collectors.toList());
     }
 
@@ -91,49 +94,29 @@ class UserRepository implements IUserRepository {
     }
 
     @Override
-    public List<FriendReference> getRelationshipReference(String hostLocalId, Integer count)
+    public Stream<FriendReference> getRelationshipReferences(String hostLocalId, Timestamp lastTimeRequest)
             throws ExecutionException, InterruptedException {
-        var futureQueryByHostIdSnapshot = queryFriendDocuments(hostLocalId, "hostId", count);
-        var futureQueryByGuestIdSnapshot = queryFriendDocuments(hostLocalId, "guestId", count);
-        var results = ApiFutures
+        var futureQueryByHostIdSnapshot = queryFriendsDocuments(
+                hostLocalId, "hostId", lastTimeRequest);
+        var futureQueryByGuestIdSnapshot = queryFriendsDocuments(
+                hostLocalId, "guestId", lastTimeRequest);
+        return ApiFutures
                 .allAsList(Lists.newArrayList(futureQueryByGuestIdSnapshot, futureQueryByHostIdSnapshot))
                 .get()
                 .stream()
                 .map(QuerySnapshot::getDocuments)
                 .flatMap(Collection::stream)
                 .map(FriendReference::new)
-                .collect(Collectors.toList());
-        // TODO sort results
-        System.out.println(results);
-        return null;
-//        return results.stream().limit(count).collect(Collectors.toList());
+                .sorted(Comparator.comparing(FriendReference::getDatetime));
     }
 
-    private ApiFuture<QuerySnapshot> queryFriendDocuments(String hostId, String fieldToCompare, Integer count) {
-        Query query = friendCollection
-                .orderBy("lastAccess", Query.Direction.ASCENDING)
-                .whereEqualTo(fieldToCompare, hostId);
-        return Objects.isNull(count) ?
-                query.get() :
-                query.limit(count).get();
+    private ApiFuture<QuerySnapshot> queryFriendsDocuments(String hostId, String fieldToCompare, Timestamp lastTimeRequest) {
+        var collection = friendCollection
+                .whereEqualTo(fieldToCompare, hostId)
+                .orderBy("datetime", Query.Direction.ASCENDING);
+        return Objects.isNull(lastTimeRequest) ?
+                collection.get() :
+                collection.whereGreaterThanOrEqualTo("datetime", lastTimeRequest).get();
     }
 
-//    public List<MinifiedUser> getUsers() throws ExecutionException, InterruptedException {
-//        ArrayList<MinifiedUser> minifiedUsers = new ArrayList<>();
-//        ApiFuture<QuerySnapshot> query = firestore.collection("user").get();
-//        QuerySnapshot querySnapshot = query.get();
-//        List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
-//        String userId, name, address;
-//        Long age;
-//        MinifiedUser currentMinifiedUser;
-//        for (QueryDocumentSnapshot document : documents) {
-//            userId = document.getId();
-//            name = document.getString("name");
-//            address = document.getString("address");
-//            age = document.getLong("age");
-////            currentMinifiedUser = new MinifiedUser(userId, name, age, address);
-////            minifiedUsers.add(currentMinifiedUser);
-//        }
-//        return minifiedUsers;
-//    }
 }
