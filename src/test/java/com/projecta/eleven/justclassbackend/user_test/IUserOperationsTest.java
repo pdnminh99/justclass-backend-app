@@ -1,32 +1,36 @@
 package com.projecta.eleven.justclassbackend.user_test;
 
+import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.Firestore;
+import com.projecta.eleven.justclassbackend.configuration.DatabaseFailedToInitializeException;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
-import com.projecta.eleven.justclassbackend.junit_config.TestCollectionsConfig;
 import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.User;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.DisplayNameGeneration;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
 
+import java.util.LinkedList;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
 @DisplayName("Unit Tests for IUserOperations interface.")
-@Import(TestCollectionsConfig.class)
-@SpringBootTest
+@SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 public class IUserOperationsTest {
 
     private final IUserOperations service;
@@ -34,6 +38,14 @@ public class IUserOperationsTest {
     private final CollectionReference userCollection;
 
     private int currentLocalId = 0;
+    private final LinkedList<String> localIdsToBeRemoved = new LinkedList<>();
+
+    @Autowired
+    public IUserOperationsTest(IUserOperations service,
+                               @Qualifier("userCollection") CollectionReference userCollection) {
+        this.service = service;
+        this.userCollection = userCollection;
+    }
 
     private final String firstNameExpected = "John";
     private final String lastNameExpected = "Wick";
@@ -41,17 +53,23 @@ public class IUserOperationsTest {
     private final String photoUrlExpected = "http:somewhere.to.cats.jpg";
     private final String emailExpected = "johnwick@yahoo.com";
 
-    @Autowired
-    public IUserOperationsTest(IUserOperations service, CollectionReference userCollection) {
-        this.service = service;
-        this.userCollection = userCollection;
+    private void saveCurrentLocalIds() {
+        localIdsToBeRemoved.add(String.valueOf(currentLocalId));
     }
 
     @AfterEach
-    void incrementLocalId() throws InterruptedException {
-        Thread.sleep(500);
-        userCollection.document(String.valueOf(currentLocalId)).delete();
+    void incrementLocalId() {
         currentLocalId += 1;
+    }
+
+    @AfterAll
+    void cleanTestResults() throws InterruptedException {
+        Thread.sleep(500);
+        ApiFutures.allAsList(
+                localIdsToBeRemoved
+                        .stream()
+                        .map(i -> userCollection.document(i).delete())
+                        .collect(Collectors.toList()));
     }
 
     @ParameterizedTest
@@ -67,13 +85,7 @@ public class IUserOperationsTest {
                 Timestamp.now(),
                 false);
         assertDoesNotThrow(() -> service.assignUser(user, autoUpdate));
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    @NullSource
-    void assignUser_Pass_params_with_null_user_should_not_throw_exception(Boolean autoUpdate) {
-        assertDoesNotThrow(() -> service.assignUser(null, autoUpdate));
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -97,6 +109,39 @@ public class IUserOperationsTest {
         assertEquals(emailExpected, result.get().getEmail());
         assertEquals(photoUrlExpected, result.get().getPhotoUrl());
         assertTrue(result.get().isNewUser());
+        saveCurrentLocalIds();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @NullSource
+    void assignUser_Pass_params_with_null_user_should_not_throw_exception(Boolean autoUpdate) {
+        assertDoesNotThrow(() -> service.assignUser(null, autoUpdate));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @NullSource
+    void assignUser_Pass_valid_user_with_empty_first_name(Boolean autoUpdate) throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var user = new User(String.valueOf(currentLocalId),
+                "",
+                lastNameExpected,
+                displayNameExpected,
+                photoUrlExpected,
+                emailExpected,
+                Timestamp.now(),
+                false);
+        var result = service.assignUser(user, autoUpdate);
+        assertTrue(result.isPresent());
+        assertEquals("", result.get().getFirstName());
+        assertEquals(lastNameExpected, result.get().getLastName());
+        assertEquals(lastNameExpected, result.get().getFullName());
+        assertEquals(displayNameExpected, result.get().getDisplayName());
+        assertEquals(emailExpected, result.get().getEmail());
+        assertEquals(photoUrlExpected, result.get().getPhotoUrl());
+        assertNotNull(result.get().getAssignTimestamp());
+        assertTrue(result.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -140,30 +185,6 @@ public class IUserOperationsTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @NullSource
-    void assignUser_Pass_valid_user_with_empty_first_name(Boolean autoUpdate) throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var user = new User(String.valueOf(currentLocalId),
-                "",
-                lastNameExpected,
-                displayNameExpected,
-                photoUrlExpected,
-                emailExpected,
-                Timestamp.now(),
-                false);
-        var result = service.assignUser(user, autoUpdate);
-        assertTrue(result.isPresent());
-        assertEquals("", result.get().getFirstName());
-        assertEquals(lastNameExpected, result.get().getLastName());
-        assertEquals(lastNameExpected, result.get().getFullName());
-        assertEquals(displayNameExpected, result.get().getDisplayName());
-        assertEquals(emailExpected, result.get().getEmail());
-        assertEquals(photoUrlExpected, result.get().getPhotoUrl());
-        assertNotNull(result.get().getAssignTimestamp());
-        assertTrue(result.get().isNewUser());
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    @NullSource
     void assignUser_Pass_valid_user_with_null_first_name(Boolean autoUpdate) throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var lastNameExpected = "Wick";
         var displayNameExpected = "Johnny Week";
@@ -187,6 +208,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, result.get().getPhotoUrl());
         assertNotNull(result.get().getAssignTimestamp());
         assertTrue(result.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -211,6 +233,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, result.get().getPhotoUrl());
         assertNotNull(result.get().getAssignTimestamp());
         assertTrue(result.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -235,6 +258,32 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, result.get().getPhotoUrl());
         assertNotNull(result.get().getAssignTimestamp());
         assertTrue(result.get().isNewUser());
+        saveCurrentLocalIds();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    @NullSource
+    void assignUser_Pass_valid_user_with_null_photoUrl(Boolean autoUpdate) throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var user = new User(String.valueOf(currentLocalId),
+                firstNameExpected,
+                lastNameExpected,
+                displayNameExpected,
+                null,
+                emailExpected,
+                Timestamp.now(),
+                false);
+        var result = service.assignUser(user, autoUpdate);
+        assertTrue(result.isPresent());
+        assertEquals(firstNameExpected, result.get().getFirstName());
+        assertEquals(lastNameExpected, result.get().getLastName());
+        assertEquals(firstNameExpected + " " + lastNameExpected, result.get().getFullName());
+        assertEquals(displayNameExpected, result.get().getDisplayName());
+        assertEquals(emailExpected, result.get().getEmail());
+        assertNull(result.get().getPhotoUrl());
+        assertNotNull(result.get().getAssignTimestamp());
+        assertTrue(result.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -300,30 +349,6 @@ public class IUserOperationsTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     @NullSource
-    void assignUser_Pass_valid_user_with_null_photoUrl(Boolean autoUpdate) throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var user = new User(String.valueOf(currentLocalId),
-                firstNameExpected,
-                lastNameExpected,
-                displayNameExpected,
-                null,
-                emailExpected,
-                Timestamp.now(),
-                false);
-        var result = service.assignUser(user, autoUpdate);
-        assertTrue(result.isPresent());
-        assertEquals(firstNameExpected, result.get().getFirstName());
-        assertEquals(lastNameExpected, result.get().getLastName());
-        assertEquals(firstNameExpected + " " + lastNameExpected, result.get().getFullName());
-        assertEquals(displayNameExpected, result.get().getDisplayName());
-        assertEquals(emailExpected, result.get().getEmail());
-        assertNull(result.get().getPhotoUrl());
-        assertNotNull(result.get().getAssignTimestamp());
-        assertTrue(result.get().isNewUser());
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    @NullSource
     void assignUser_Pass_valid_user_with_empty_photoUrl(Boolean autoUpdate) throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var user = new User(String.valueOf(currentLocalId),
                 firstNameExpected,
@@ -343,6 +368,7 @@ public class IUserOperationsTest {
         assertEquals("", result.get().getPhotoUrl());
         assertNotNull(result.get().getAssignTimestamp());
         assertTrue(result.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -381,6 +407,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -419,6 +446,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -457,6 +485,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -495,6 +524,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -533,6 +563,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -571,6 +602,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -609,6 +641,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -647,6 +680,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -685,6 +719,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -723,6 +758,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -761,6 +797,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -799,6 +836,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -837,6 +875,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -875,6 +914,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -913,6 +953,7 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -951,6 +992,7 @@ public class IUserOperationsTest {
         assertEquals("another:photo", retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
     }
 
     @ParameterizedTest
@@ -989,6 +1031,27 @@ public class IUserOperationsTest {
         assertEquals(photoUrlExpected, retest.get().getPhotoUrl());
         assertNotNull(retest.get().getAssignTimestamp());
         assertFalse(retest.get().isNewUser());
+        saveCurrentLocalIds();
+    }
+
+    @TestConfiguration
+    static class TestCollectionsConfig {
+
+        private final Firestore firestore;
+
+        @Autowired
+        TestCollectionsConfig(Firestore firestore) {
+            this.firestore = firestore;
+        }
+
+        @Bean("userCollection")
+        @DependsOn("firestore")
+        public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
+            return Optional.ofNullable(firestore)
+                    .map(db -> db.collection("users_test"))
+                    .orElseThrow(DatabaseFailedToInitializeException::new);
+        }
+
     }
 
     // TODO performance test.

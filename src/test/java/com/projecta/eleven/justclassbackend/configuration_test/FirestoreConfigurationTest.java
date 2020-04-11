@@ -1,6 +1,6 @@
 package com.projecta.eleven.justclassbackend.configuration_test;
 
-import com.projecta.eleven.justclassbackend.configuration.FirestoreConfig;
+import com.google.cloud.firestore.Firestore;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -15,16 +15,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
 public class FirestoreConfigurationTest {
 
-    private final FirestoreConfig config;
+    private final Firestore firestore;
 
     @Autowired
-    public FirestoreConfigurationTest(FirestoreConfig config) {
-        this.config = config;
+    public FirestoreConfigurationTest(Firestore firestore) {
+        this.firestore = firestore;
     }
 
     @Test
     void Constructor_FirestoreConfigInstanceShouldNotBeNull() {
-        assertNotNull(config, "Firestore initiated with a null value.");
+        assertNotNull(firestore, "Firestore initiated with a null value.");
     }
 
 }

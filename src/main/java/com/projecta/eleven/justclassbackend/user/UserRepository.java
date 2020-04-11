@@ -1,17 +1,15 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.*;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,9 +20,13 @@ class UserRepository implements IUserRepository {
 
     private final CollectionReference userCollection;
 
+    private final CollectionReference friendCollection;
+
     @Autowired
-    public UserRepository(@Qualifier("userCollection") CollectionReference userCollection) {
+    public UserRepository(@Qualifier("userCollection") CollectionReference userCollection,
+                          @Qualifier("friendCollection") CollectionReference friendCollection) {
         this.userCollection = userCollection;
+        this.friendCollection = friendCollection;
     }
 
     @Override
@@ -41,27 +43,25 @@ class UserRepository implements IUserRepository {
     }
 
     @Override
-    public List<MinifiedUser> getUsers(Iterable<String> localIds) {
-        return StreamSupport
+    public List<MinifiedUser> getUsers(Iterable<String> localIds) throws ExecutionException, InterruptedException {
+        return ApiFutures.allAsList(StreamSupport
                 .stream(localIds.spliterator(), false)
-                .map(this::getMinifiedUser)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .map(s -> userCollection.document(s).get())
+                .collect(Collectors.toList()))
+                .get()
+                .stream()
+                .map(MinifiedUser::new)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Optional<MinifiedUser> getMinifiedUser(String localId) {
-        DocumentReference documentReference = userCollection
-                .document(localId);
         try {
-            DocumentSnapshot snapshot = documentReference
+            DocumentSnapshot snapshot = userCollection
+                    .document(localId)
                     .get()
                     .get();
-            var displayName = snapshot.getString("displayName");
-            var photoUrl = snapshot.getString("photoUrl");
-            var minifiedUser = new MinifiedUser(localId, displayName, photoUrl);
-            return Optional.of(minifiedUser);
+            return Optional.of(new MinifiedUser(snapshot));
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
             return Optional.empty();
@@ -88,52 +88,35 @@ class UserRepository implements IUserRepository {
                 .document(localId)
                 .get()
                 .get();
-        if (document.exists()) {
-            return Optional.of(new User(
-                    localId,
-                    document.getString("firstName"),
-                    document.getString("lastName"),
-                    document.getString("displayName"),
-                    document.getString("photoUrl"),
-                    document.getString("email"),
-                    document.getTimestamp("assignTimestamp"),
-                    false
-            ));
-        }
-        return Optional.empty();
+        return document.exists() ?
+                Optional.of(new User(document, false)) :
+                Optional.empty();
     }
 
     @Override
-    public Stream<String> getFriends(String hostLocalId) throws ExecutionException, InterruptedException {
-        DocumentSnapshot documentSnapshot = userCollection
-                .document(hostLocalId)
+    public Stream<FriendReference> getRelationshipReferences(String hostLocalId, Timestamp lastTimeRequest)
+            throws ExecutionException, InterruptedException {
+        var futureQueryByHostIdSnapshot = queryFriendsDocuments(
+                hostLocalId, "hostId", lastTimeRequest);
+        var futureQueryByGuestIdSnapshot = queryFriendsDocuments(
+                hostLocalId, "guestId", lastTimeRequest);
+        return ApiFutures
+                .allAsList(Lists.newArrayList(futureQueryByGuestIdSnapshot, futureQueryByHostIdSnapshot))
                 .get()
-                .get();
-        if (!documentSnapshot.exists()) {
-            return Stream.empty();
-        }
-        var userData = documentSnapshot.getData();
-        Objects.requireNonNull(userData)
-                .forEach((k, v) -> System.out.println(k + " : " + v));
-        return Stream.empty();
+                .stream()
+                .map(QuerySnapshot::getDocuments)
+                .flatMap(Collection::stream)
+                .map(FriendReference::new)
+                .sorted(Comparator.comparing(FriendReference::getDatetime));
     }
 
-//    public List<MinifiedUser> getUsers() throws ExecutionException, InterruptedException {
-//        ArrayList<MinifiedUser> minifiedUsers = new ArrayList<>();
-//        ApiFuture<QuerySnapshot> query = firestore.collection("user").get();
-//        QuerySnapshot querySnapshot = query.get();
-//        List<QueryDocumentSnapshot> documents = querySnapshot.getDocuments();
-//        String userId, name, address;
-//        Long age;
-//        MinifiedUser currentMinifiedUser;
-//        for (QueryDocumentSnapshot document : documents) {
-//            userId = document.getId();
-//            name = document.getString("name");
-//            address = document.getString("address");
-//            age = document.getLong("age");
-////            currentMinifiedUser = new MinifiedUser(userId, name, age, address);
-////            minifiedUsers.add(currentMinifiedUser);
-//        }
-//        return minifiedUsers;
-//    }
+    private ApiFuture<QuerySnapshot> queryFriendsDocuments(String hostId, String fieldToCompare, Timestamp lastTimeRequest) {
+        var collection = friendCollection
+                .whereEqualTo(fieldToCompare, hostId)
+                .orderBy("datetime", Query.Direction.ASCENDING);
+        return Objects.isNull(lastTimeRequest) ?
+                collection.get() :
+                collection.whereGreaterThanOrEqualTo("datetime", lastTimeRequest).get();
+    }
+
 }

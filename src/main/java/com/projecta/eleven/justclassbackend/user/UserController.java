@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.google.cloud.Timestamp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -8,17 +9,39 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.sql.Date;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/v1/user")
 public class UserController {
 
-    private final IUserOperations userService;
+    private final AbstractUserService userService;
 
     @Autowired
-    public UserController(@Qualifier("defaultUserService") IUserOperations userService) {
+    public UserController(@Qualifier("defaultUserService") AbstractUserService userService) {
         this.userService = userService;
+    }
+
+    @GetMapping("{localId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<MinifiedUser> getConnectedUsers(
+            @PathVariable String localId,
+            @Nullable
+            @RequestParam(value = "lastRequest", required = false) String lastRequestString)
+            throws ExecutionException, InterruptedException {
+        Timestamp lastRequestTimestamp = null;
+
+        if (Objects.nonNull(lastRequestString)) {
+            lastRequestTimestamp = Timestamp.of(Date.from(Instant.parse(lastRequestString)));
+        }
+        return userService.getFriendsOfUser(localId, lastRequestTimestamp)
+                .collect(Collectors.toList());
     }
 
     @PostMapping
@@ -41,5 +64,17 @@ public class UserController {
     @ExceptionHandler({MethodArgumentTypeMismatchException.class})
     public ResponseEntity<String> handleTypeMismatch() {
         return ResponseEntity.badRequest().body("Request param 'autoUpdate' must be a boolean.");
+    }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public String handleInvalidUserInfo(InvalidUserInformationException e) {
+        return e.getMessage();
+    }
+
+    @ExceptionHandler({DateTimeParseException.class})
+    public ResponseEntity<String> handleDatetimeParsingFailure() {
+        return ResponseEntity
+                .status(HttpStatus.NOT_ACCEPTABLE)
+                .body("You must use RFC 3339 Datetime format.");
     }
 }

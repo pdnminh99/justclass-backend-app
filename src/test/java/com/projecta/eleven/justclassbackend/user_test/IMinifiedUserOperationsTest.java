@@ -2,7 +2,6 @@ package com.projecta.eleven.justclassbackend.user_test;
 
 import com.google.cloud.firestore.CollectionReference;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
-import com.projecta.eleven.justclassbackend.junit_config.TestCollectionsConfig;
 import com.projecta.eleven.justclassbackend.user.IMinifiedUserOperations;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.user.User;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
 @DisplayName("Unit Tests for IMinifiedUserOperations interface.")
-@Import(TestCollectionsConfig.class)
 @SpringBootTest
 public class IMinifiedUserOperationsTest {
 
@@ -34,7 +31,7 @@ public class IMinifiedUserOperationsTest {
 
     @Autowired
     IMinifiedUserOperationsTest(IMinifiedUserOperations service,
-                                @Qualifier("userCollectionTest") CollectionReference userCollection) {
+                                @Qualifier("userCollection") CollectionReference userCollection) {
         this.service = service;
         this.userCollection = userCollection;
     }

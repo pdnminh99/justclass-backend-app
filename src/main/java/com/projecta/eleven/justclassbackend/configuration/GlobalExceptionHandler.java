@@ -13,7 +13,8 @@ import java.util.concurrent.ExecutionException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({ExecutionException.class, InterruptedException.class, NestedServletException.class})
-    public ResponseEntity<String> handleFirestoreException() {
+    public ResponseEntity<String> handleFirestoreException(Exception e) {
+        System.err.println(e.getMessage());
         return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
                 .body("Fail to connect to Database. Please try again.");
     }

@@ -1,5 +1,7 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.google.cloud.Timestamp;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -17,20 +19,12 @@ interface IUserRepository {
         return getUser(sampleUser.getLocalId());
     }
 
-    Stream<String> getFriends(String hostLocalId) throws ExecutionException, InterruptedException;
+    Stream<FriendReference> getRelationshipReferences(String hostLocalId, Timestamp lastTimeRequest)
+            throws ExecutionException, InterruptedException;
 
     Optional<MinifiedUser> getMinifiedUser(String localId);
 
     boolean isUserExist(String hostLocalId) throws ExecutionException, InterruptedException;
 
     void edit(String localId, HashMap<String, Object> changesMap);
-//    User deleteUser(MinifiedUser user);
-//
-//    User deleteUser(String userId);
-//
-//    User getUser(String user);
-//
-//    User getUser(MinifiedUser user);
-//
-//    User updateUser(MinifiedUser user);
 }

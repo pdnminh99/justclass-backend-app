@@ -5,8 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service("defaultUserService")
 @Primary
@@ -122,35 +126,18 @@ public class UserService extends AbstractUserService {
     }
 
     @Override
-    public Optional<MinifiedUser> getUser(String localId) {
-        return repository.getMinifiedUser(localId);
-    }
-
-    @Override
-    public List<MinifiedUser> getUsers(String keyword) {
-        return null;
-    }
-
-    @Override
-    public List<MinifiedUser> getUsers(Iterable<String> localIds, String sortByField, Boolean isAscending) throws ExecutionException, InterruptedException {
-        return repository.getUsers(localIds);
-    }
-
-//    @Override
-//    public List<MinifiedUser> getFriends(String hostLocalId) throws ExecutionException, InterruptedException {
-//        if (!repository.isUserExist(hostLocalId)) {
-//            return null;
-//        }
-//        Stream<String> friendsIndexes = repository.getFriends(hostLocalId);
-//
-//        if (friendsIndexes.count() == 0) {
-//            return null;
-//        }
-//        return getUsers(friendsIndexes.collect(Collectors.toList()), );
-//    }
-
-    @Override
-    public Map<String, Timestamp> getLocalIdsOfFriends(String localId, Integer count, Boolean sortByMostRecentAccess) {
-        return null;
+    public Stream<MinifiedUser> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
+            throws ExecutionException, InterruptedException {
+        if (!verifyValidStringField(localId)) {
+            return Stream.empty();
+        }
+        return repository.getUsers(
+                repository
+                        .getRelationshipReferences(localId, lastTimeRequest)
+                        .map(ref -> ref.getGuestId().equals(localId) ?
+                                ref.getHostId() :
+                                ref.getGuestId())
+                        .collect(Collectors.toList()))
+                .stream();
     }
 }
