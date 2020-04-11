@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
@@ -131,13 +132,15 @@ public class UserService extends AbstractUserService {
         if (!verifyValidStringField(localId)) {
             return Stream.empty();
         }
-        return repository.getUsers(
-                repository
-                        .getRelationshipReferences(localId, lastTimeRequest)
-                        .map(ref -> ref.getGuestId().equals(localId) ?
-                                ref.getHostId() :
-                                ref.getGuestId())
-                        .collect(Collectors.toList()))
-                .stream();
+        var relationshipsReferences = repository
+                .getRelationshipReferences(localId, lastTimeRequest)
+                .map(ref -> ref.getGuestId().equals(localId) ?
+                        ref.getHostReference().get() :
+                        ref.getGuestReference().get())
+                .collect(Collectors.toList());
+        return ApiFutures.allAsList(relationshipsReferences)
+                .get()
+                .stream()
+                .map(MinifiedUser::new);
     }
 }
