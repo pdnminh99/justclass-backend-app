@@ -51,7 +51,7 @@ public class UserService extends AbstractUserService {
 
     @Override
     public DocumentReference getUserReference(String localId) {
-        return null;
+        return repository.getUserReference(localId);
     }
 
     @Override

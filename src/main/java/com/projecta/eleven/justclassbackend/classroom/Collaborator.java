@@ -1,8 +1,11 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.cloud.firestore.DocumentReference;
+import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
-public class Collaborator {
+import java.util.HashMap;
+
+public class Collaborator implements MapSerializable {
     private final String collaboratorId;
 
     private DocumentReference classroomReference;
@@ -55,5 +58,14 @@ public class Collaborator {
 
     public String getClassroomId() {
         return classroomReference.getId();
+    }
+
+    public HashMap<String, Object> toMap() {
+        var map = new HashMap<String, Object>();
+        ifFieldNotNullThenPutToMap("collaboratorId", getCollaboratorId(), map);
+        ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
+        ifFieldNotNullThenPutToMap("userReference", getUserReference(), map);
+        ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
+        return map;
     }
 }

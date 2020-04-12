@@ -81,6 +81,14 @@ class UserRepository implements IUserRepository {
     }
 
     @Override
+    public DocumentReference getUserReference(String localId) {
+        if (Objects.isNull(localId)) {
+            return null;
+        }
+        return userCollection.document(localId);
+    }
+
+    @Override
     public Optional<User> getUser(String localId) throws ExecutionException, InterruptedException {
         DocumentSnapshot document = userCollection
                 .document(localId)

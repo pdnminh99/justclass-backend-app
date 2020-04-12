@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -22,9 +23,9 @@ public class ClassroomController {
 
     @GetMapping("{localId}")
     @ResponseStatus(HttpStatus.OK)
-    public Iterable<Classroom> getClassrooms(@PathVariable("localId") String localId,
-                                             @RequestParam("joinedOnly") Boolean joinedClassesOnly,
-                                             @RequestParam("lastRequest") Timestamp lastRequest)
+    public Iterable<UserViewClassroom> getClassrooms(@PathVariable("localId") String localId,
+                                                     @RequestParam("joinedOnly") Boolean joinedClassesOnly,
+                                                     @RequestParam("lastRequest") Timestamp lastRequest)
             throws InvalidUserInformationException {
         return service.get(localId, joinedClassesOnly, lastRequest)
                 .collect(Collectors.toList());
@@ -38,26 +39,26 @@ public class ClassroomController {
 //    }
 
     @PostMapping("{localId}")
-    public ResponseEntity<Classroom> create(@RequestBody ClassroomRequestBody request,
-                                            @PathVariable String localId)
-            throws InvalidUserInformationException, InvalidClassroomInformationException {
+    public ResponseEntity<UserViewClassroom> create(@RequestBody ClassroomRequestBody request,
+                                                    @PathVariable String localId)
+            throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
         return service.create(request, localId)
                 .map(this::handleCreateNotEmpty)
                 .orElseGet(this::handleCreateOrUpdateEmpty);
     }
 
-    private ResponseEntity<Classroom> handleCreateNotEmpty(Classroom createdClassroom) {
+    private ResponseEntity<UserViewClassroom> handleCreateNotEmpty(UserViewClassroom createdClassroom) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createdClassroom);
     }
 
-    private ResponseEntity<Classroom> handleCreateOrUpdateEmpty() {
+    private ResponseEntity<UserViewClassroom> handleCreateOrUpdateEmpty() {
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
     @PatchMapping("{localId}")
-    public ResponseEntity<Classroom> update(@PathVariable("localId") String localId,
-                                            @RequestBody ClassroomRequestBody newClassroomVersion) {
+    public ResponseEntity<UserViewClassroom> update(@PathVariable("localId") String localId,
+                                                    @RequestBody ClassroomRequestBody newClassroomVersion) {
         return service.update(newClassroomVersion, localId)
                 .map(ResponseEntity::ok)
                 .orElseGet(this::handleCreateOrUpdateEmpty);
@@ -79,5 +80,15 @@ public class ClassroomController {
 
     private ResponseEntity<Boolean> handleDeleteStateEmpty() {
         return ResponseEntity.badRequest().build();
+    }
+
+    @ExceptionHandler({InvalidClassroomInformationException.class})
+    public ResponseEntity<String> handleInvalidClassroomInfo(InvalidClassroomInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

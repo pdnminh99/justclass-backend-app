@@ -1,8 +1,12 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.Timestamp;
+import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
-class ClassroomRequestBody {
+import java.util.HashMap;
+
+class ClassroomRequestBody implements MapSerializable {
     private String title;
     private String description;
     private String section;
@@ -71,6 +75,28 @@ class ClassroomRequestBody {
 
     public void setTheme(Integer theme) {
         this.theme = theme;
+    }
+
+    public Classroom toClassroom(String classroomId, Timestamp createdTimestamp) {
+        return new Classroom(classroomId,
+                getTitle(),
+                getDescription(),
+                getSection(),
+                getSubject(),
+                getRoom(),
+                getTheme(),
+                createdTimestamp);
+    }
+
+    public HashMap<String, Object> toMap() {
+        var map = new HashMap<String, Object>();
+
+        ifFieldNotNullThenPutToMap("title", getTitle(), map);
+        ifFieldNotNullThenPutToMap("description", getDescription(), map);
+        ifFieldNotNullThenPutToMap("section", getSection(), map);
+        ifFieldNotNullThenPutToMap("subject", getSubject(), map);
+        ifFieldNotNullThenPutToMap("room", getRoom(), map);
+        return map;
     }
 
     @Override

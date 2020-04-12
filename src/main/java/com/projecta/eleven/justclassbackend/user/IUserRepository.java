@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
 
 import java.util.HashMap;
 import java.util.Optional;
@@ -26,4 +27,6 @@ interface IUserRepository {
 //    boolean isUserExist(String hostLocalId) throws ExecutionException, InterruptedException;
 
     void edit(String localId, HashMap<String, Object> changesMap);
+
+    DocumentReference getUserReference(String localId);
 }

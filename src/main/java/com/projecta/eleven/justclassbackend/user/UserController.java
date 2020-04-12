@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import com.google.cloud.Timestamp;
+import com.projecta.eleven.justclassbackend.classroom.InvalidClassroomInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -71,5 +72,15 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.NOT_ACCEPTABLE)
                 .body("You must use RFC 3339 Datetime format.");
+    }
+
+    @ExceptionHandler({InvalidClassroomInformationException.class})
+    public ResponseEntity<String> handleInvalidClassroomInfo(InvalidClassroomInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
