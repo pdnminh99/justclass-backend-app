@@ -39,4 +39,22 @@ public class CollectionsConfig {
                 .orElseThrow(DatabaseFailedToInitializeException::new);
 
     }
+
+    @Bean("collaboratorCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getCollaboratorCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection("collaborators"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
+
+    @Bean("classroomCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getClassroomCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection("classrooms"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
 }
