@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 public interface IClassroomOperationsService {
     Stream<Classroom> get(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException;
 
-    Optional<Classroom> create(ClassroomRequestBody classroom, String localId);
+    Optional<Classroom> create(ClassroomRequestBody classroom, String localId) throws InvalidUserInformationException, InvalidClassroomInformationException;
 
     Optional<Classroom> update(ClassroomRequestBody classroom, String localId);
 

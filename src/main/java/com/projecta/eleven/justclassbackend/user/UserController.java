@@ -66,11 +66,6 @@ public class UserController {
         return ResponseEntity.badRequest().body("Request param 'autoUpdate' must be a boolean.");
     }
 
-    @ExceptionHandler({InvalidUserInformationException.class})
-    public String handleInvalidUserInfo(InvalidUserInformationException e) {
-        return e.getMessage();
-    }
-
     @ExceptionHandler({DateTimeParseException.class})
     public ResponseEntity<String> handleDatetimeParsingFailure() {
         return ResponseEntity

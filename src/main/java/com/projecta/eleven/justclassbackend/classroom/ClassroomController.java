@@ -39,7 +39,8 @@ public class ClassroomController {
 
     @PostMapping("{localId}")
     public ResponseEntity<Classroom> create(@RequestBody ClassroomRequestBody request,
-                                            @PathVariable String localId) {
+                                            @PathVariable String localId)
+            throws InvalidUserInformationException, InvalidClassroomInformationException {
         return service.create(request, localId)
                 .map(this::handleCreateNotEmpty)
                 .orElseGet(this::handleCreateOrUpdateEmpty);

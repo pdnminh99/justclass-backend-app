@@ -1,5 +1,7 @@
 package com.projecta.eleven.justclassbackend.configuration;
 
+import com.projecta.eleven.justclassbackend.classroom.InvalidClassroomInformationException;
+import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,4 +26,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body("Invalid JSON string.");
     }
 
+    @ExceptionHandler({InvalidUserInformationException.class, InvalidClassroomInformationException.class})
+    public String handleInvalidUserInfo(InvalidUserInformationException e) {
+        return e.getMessage();
+    }
 }

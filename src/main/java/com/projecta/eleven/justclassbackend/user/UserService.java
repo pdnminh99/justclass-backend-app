@@ -2,11 +2,13 @@ package com.projecta.eleven.justclassbackend.user;
 
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -45,6 +47,16 @@ public class UserService extends AbstractUserService {
         throw new InvalidUserInformationException(
                 "Email and displayName must not be null or empty.",
                 new NullPointerException("Email or displayName field is null."));
+    }
+
+    @Override
+    public DocumentReference getUserReference(String localId) {
+        return null;
+    }
+
+    @Override
+    public Stream<DocumentReference> getUsersReferences(List<String> localIds) {
+        return null;
     }
 
     private Optional<User> compareAndApplyChanges(User existingUser, UserRequestBody newUser) {

@@ -1,8 +1,10 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.cloud.Timestamp;
+import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -15,7 +17,8 @@ public class ClassroomService implements IClassroomOperationsService {
     private final IClassroomRepository repository;
 
     @Autowired
-    public ClassroomService(IClassroomRepository repository) {
+    public ClassroomService(IClassroomRepository repository,
+                            @Qualifier("defaultUserService") IUserOperations userService) {
         this.repository = repository;
     }
 
@@ -28,8 +31,15 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Classroom> create(ClassroomRequestBody classroom, String localId) {
-        return null;
+    public Optional<Classroom> create(ClassroomRequestBody classroom, String localId)
+            throws InvalidUserInformationException, InvalidClassroomInformationException {
+        if (Objects.isNull(localId)) {
+            throw new InvalidUserInformationException("LocalId of current logged in user is required to create new classroom", new NullPointerException("LocalId is null."));
+        }
+        if (Objects.isNull(classroom)) {
+            throw new InvalidClassroomInformationException("Classroom should have at least theme or title field.", new NullPointerException("classroom title or theme is missing."));
+        }
+        return Optional.empty();
     }
 
     @Override
