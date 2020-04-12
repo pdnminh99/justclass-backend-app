@@ -1,15 +1,20 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.HashMap;
 import java.util.Objects;
 
 public class MinifiedUser {
+
+    @JsonProperty("localId")
     private final String localId;
 
+    @JsonProperty("displayName")
     private String displayName;
 
+    @JsonProperty("photoUrl")
     private String photoUrl;
 
     public MinifiedUser(String localId, String displayName, String photoUrl) {

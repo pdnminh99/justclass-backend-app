@@ -61,7 +61,7 @@ public class ClassroomController {
 
     @PatchMapping("{localId}")
     public ResponseEntity<HashMap<String, Object>> update(@PathVariable("localId") String localId,
-                                                          @RequestBody ClassroomRequestBody newClassroomVersion) {
+                                                          @RequestBody Classroom newClassroomVersion) {
         return service.update(newClassroomVersion, localId)
                 .map(Classroom::toMap)
                 .map(ResponseEntity::ok)
