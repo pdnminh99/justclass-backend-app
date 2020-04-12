@@ -46,12 +46,20 @@ public class ClassroomService implements IClassroomOperationsService {
         var now = Timestamp.now();
         var classroomMap = classroomRequestBody.toMap();
         classroomMap.put("createdTimestamp", now);
+        // generate public code here.
+        classroomMap.put("publicCode", null);
 
         var createdClassroomReference = repository.createClassroom(classroomMap);
-        var collaboratorMap = (new Collaborator(null, createdClassroomReference, userReference, CollaboratorRoles.OWNER))
-                .toMap();
+        var collaboratorId = createdClassroomReference.getId() + userReference.getId();
+        var collaboratorMap = (new Collaborator(
+                null,
+                createdClassroomReference,
+                userReference,
+                now,
+                CollaboratorRoles.OWNER)).toMap();
+
         collaboratorMap.remove("collaboratorId");
-        repository.createCollaborator(collaboratorMap);
+        repository.createCollaborator(collaboratorMap, collaboratorId);
         return Optional.of(
                 classroomRequestBody.toClassroom(
                         createdClassroomReference.getId(),

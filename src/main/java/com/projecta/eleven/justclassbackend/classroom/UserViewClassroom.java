@@ -13,10 +13,11 @@ class UserViewClassroom extends Classroom {
                              String section,
                              String subject,
                              String room,
+                             String stream,
                              Integer theme,
                              Timestamp createdTimestamp,
                              CollaboratorRoles role) {
-        super(classroomId, title, description, section, subject, room, theme, createdTimestamp);
+        super(classroomId, title, description, section, subject, room, stream, theme, createdTimestamp);
         this.role = role;
     }
 

@@ -10,5 +10,5 @@ interface IClassroomRepository {
 
     DocumentReference createClassroom(Map<String, Object> classroom) throws ExecutionException, InterruptedException, InvalidClassroomInformationException;
 
-    DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap) throws ExecutionException, InterruptedException;
+    DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap, String keyCombination) throws ExecutionException, InterruptedException;
 }

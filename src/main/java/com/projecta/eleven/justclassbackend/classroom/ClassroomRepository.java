@@ -37,10 +37,14 @@ class ClassroomRepository implements IClassroomRepository {
     }
 
     @Override
-    public DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap)
+    public DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap, String keyCombination)
             throws ExecutionException, InterruptedException {
-        return collaboratorCollection
-                .add(collaboratorMap)
-                .get();
+        var reference = collaboratorCollection
+                .document(keyCombination);
+        if (reference.get().get().exists()) {
+            return null;
+        }
+        reference.set(collaboratorMap);
+        return reference;
     }
 }

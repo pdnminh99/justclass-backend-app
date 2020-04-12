@@ -15,9 +15,10 @@ public class Classroom extends ClassroomRequestBody {
                      String section,
                      String subject,
                      String room,
+                     String stream,
                      Integer theme,
                      Timestamp createdTimestamp) {
-        super(title, description, section, subject, room, theme);
+        super(title, description, section, subject, room, stream, theme);
         this.classroomId = classroomId;
         this.createdTimestamp = createdTimestamp;
     }
@@ -49,6 +50,7 @@ public class Classroom extends ClassroomRequestBody {
                 getSection(),
                 getSubject(),
                 getRoom(),
+                getStream(),
                 getTheme(),
                 getCreatedTimestamp(),
                 role

@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
@@ -14,13 +15,17 @@ public class Collaborator implements MapSerializable {
 
     private CollaboratorRoles role;
 
+    private Timestamp createdTimestamp;
+
     public Collaborator(String collaboratorId,
                         DocumentReference classroomReference,
                         DocumentReference userReference,
+                        Timestamp createdTimestamp,
                         CollaboratorRoles role) {
         this.collaboratorId = collaboratorId;
         this.classroomReference = classroomReference;
         this.userReference = userReference;
+        this.createdTimestamp = createdTimestamp;
         this.role = role;
     }
 
@@ -60,11 +65,22 @@ public class Collaborator implements MapSerializable {
         return classroomReference.getId();
     }
 
+    public Timestamp getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public void setCreatedTimestamp(Timestamp createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
+    }
+
     public HashMap<String, Object> toMap() {
         var map = new HashMap<String, Object>();
         ifFieldNotNullThenPutToMap("collaboratorId", getCollaboratorId(), map);
+        ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
+        ifFieldNotNullThenPutToMap("userId", getUserId(), map);
         ifFieldNotNullThenPutToMap("userReference", getUserReference(), map);
+        ifFieldNotNullThenPutToMap("createTimestamp", getCreatedTimestamp(), map);
         ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
         return map;
     }

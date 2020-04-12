@@ -5,13 +5,21 @@ import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 class ClassroomRequestBody implements MapSerializable {
     private String title;
+
     private String description;
+
     private String section;
+
     private String subject;
+
     private String room;
+
+    private String stream;
+
     private Integer theme;
 
     public ClassroomRequestBody(
@@ -20,12 +28,14 @@ class ClassroomRequestBody implements MapSerializable {
             @JsonProperty("section") String section,
             @JsonProperty("subject") String subject,
             @JsonProperty("room") String room,
+            @JsonProperty("stream") String stream,
             @JsonProperty("theme") Integer theme) {
         this.title = title;
         this.description = description;
         this.section = section;
         this.subject = subject;
         this.room = room;
+        setStream(stream);
         this.theme = theme;
     }
 
@@ -84,6 +94,7 @@ class ClassroomRequestBody implements MapSerializable {
                 getSection(),
                 getSubject(),
                 getRoom(),
+                getStream(),
                 getTheme(),
                 createdTimestamp);
     }
@@ -95,6 +106,7 @@ class ClassroomRequestBody implements MapSerializable {
         ifFieldNotNullThenPutToMap("description", getDescription(), map);
         ifFieldNotNullThenPutToMap("section", getSection(), map);
         ifFieldNotNullThenPutToMap("subject", getSubject(), map);
+        ifFieldNotNullThenPutToMap("stream", getStream(), map);
         ifFieldNotNullThenPutToMap("room", getRoom(), map);
         return map;
     }
@@ -102,11 +114,23 @@ class ClassroomRequestBody implements MapSerializable {
     @Override
     public String toString() {
         return "ClassroomRequestBody{" +
-                "description='" + description + '\'' +
+                "title='" + title + '\'' +
+                ", description='" + description + '\'' +
                 ", section='" + section + '\'' +
                 ", subject='" + subject + '\'' +
                 ", room='" + room + '\'' +
+                ", stream='" + stream + '\'' +
                 ", theme=" + theme +
                 '}';
+    }
+
+    public String getStream() {
+        return stream;
+    }
+
+    public void setStream(String stream) {
+        if (Objects.isNull(stream) || (stream != "VIEW_COMMENT_POST" && stream != "VIEW_COMMENT" && stream != "VIEW")) {
+            this.stream = "VIEW_COMMENT_POST";
+        } else this.stream = stream;
     }
 }
