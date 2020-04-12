@@ -28,7 +28,7 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Stream<UserViewClassroom> get(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException {
+    public Stream<Classroom> get(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException {
         if (Objects.isNull(hostId)) {
             throw new InvalidUserInformationException(
                     "LocalId of current logged in user is required to retrieve classrooms",
@@ -38,34 +38,35 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<UserViewClassroom> create(ClassroomRequestBody classroomRequestBody, String localId)
+    public Optional<Classroom> create(ClassroomRequestBody classroomRequestBody, String localId)
             throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
         validateCreateRequestInput(classroomRequestBody, localId);
         var userReference = userService.getUserReference(localId);
         validateUserReferenceExistence(userReference, localId);
         var now = Timestamp.now();
-        var classroomMap = classroomRequestBody.toMap();
-        classroomMap.put("createdTimestamp", now);
-        // generate public code here.
-        classroomMap.put("publicCode", null);
+
+        // TODO: generate public code and pass to `toClassroom` method.
+        var classroomInstance = classroomRequestBody.toClassroom(now);
+        var classroomMap = classroomInstance.toMap();
+
+        // Since ClassroomRequestBody constructor also include these two fields,
+        // we must exclude them to prevent side effects.
+        classroomMap.remove("classroomId");
+        classroomMap.remove("role");
 
         var createdClassroomReference = repository.createClassroom(classroomMap);
-        var collaboratorId = createdClassroomReference.getId() + userReference.getId();
+        classroomInstance.setClassroomId(createdClassroomReference.getId());
+
+        var collaboratorId = classroomInstance.getClassroomId() + localId;
         var collaboratorMap = (new Collaborator(
                 null,
                 createdClassroomReference,
                 userReference,
                 now,
                 CollaboratorRoles.OWNER)).toMap();
-
-        collaboratorMap.remove("collaboratorId");
         repository.createCollaborator(collaboratorMap, collaboratorId);
-        return Optional.of(
-                classroomRequestBody.toClassroom(
-                        createdClassroomReference.getId(),
-                        now
-                ).toUserViewClassroom(CollaboratorRoles.OWNER)
-        );
+        classroomInstance.setRole(CollaboratorRoles.OWNER);
+        return Optional.of(classroomInstance);
     }
 
     private void validateCreateRequestInput(ClassroomRequestBody classroomRequestBody, String localId)
@@ -99,7 +100,7 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<UserViewClassroom> update(ClassroomRequestBody classroom, String localId) {
+    public Optional<Classroom> update(ClassroomRequestBody classroom, String localId) {
         return Optional.empty();
     }
 

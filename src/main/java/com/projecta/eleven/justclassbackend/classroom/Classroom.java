@@ -5,8 +5,6 @@ import com.google.cloud.Timestamp;
 import java.util.HashMap;
 
 public class Classroom extends ClassroomRequestBody {
-    private final String classroomId;
-
     private Timestamp createdTimestamp;
 
     public Classroom(String classroomId,
@@ -15,16 +13,11 @@ public class Classroom extends ClassroomRequestBody {
                      String section,
                      String subject,
                      String room,
-                     String stream,
                      Integer theme,
-                     Timestamp createdTimestamp) {
-        super(title, description, section, subject, room, stream, theme);
-        this.classroomId = classroomId;
+                     Timestamp createdTimestamp,
+                     CollaboratorRoles role) {
+        super(classroomId, title, description, section, subject, room, theme, role);
         this.createdTimestamp = createdTimestamp;
-    }
-
-    public String getClassroomId() {
-        return classroomId;
     }
 
     public Timestamp getCreatedTimestamp() {
@@ -35,25 +28,11 @@ public class Classroom extends ClassroomRequestBody {
         this.createdTimestamp = createdTimestamp;
     }
 
+    @Override
     public HashMap<String, Object> toMap() {
-        var superMap = super.toMap();
-        ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), superMap);
-        ifFieldNotNullThenPutToMap("createdTimestamp", getCreatedTimestamp(), superMap);
-        return superMap;
-    }
+        var map = super.toMap();
 
-    public UserViewClassroom toUserViewClassroom(CollaboratorRoles role) {
-        return new UserViewClassroom(
-                getClassroomId(),
-                getTitle(),
-                getDescription(),
-                getSection(),
-                getSubject(),
-                getRoom(),
-                getStream(),
-                getTheme(),
-                getCreatedTimestamp(),
-                role
-        );
+        ifFieldNotNullThenPutToMap("createdTimestamp", createdTimestamp, map);
+        return map;
     }
 }

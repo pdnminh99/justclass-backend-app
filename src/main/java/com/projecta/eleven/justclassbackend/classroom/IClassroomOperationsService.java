@@ -8,11 +8,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 public interface IClassroomOperationsService {
-    Stream<UserViewClassroom> get(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException;
+    Stream<Classroom> get(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException;
 
-    Optional<UserViewClassroom> create(ClassroomRequestBody classroom, String localId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
+    Optional<Classroom> create(ClassroomRequestBody classroom, String localId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 
-    Optional<UserViewClassroom> update(ClassroomRequestBody classroom, String localId);
+    Optional<Classroom> update(ClassroomRequestBody classroom, String localId);
 
     Optional<Boolean> delete(String localId, String classroomId);
 }
