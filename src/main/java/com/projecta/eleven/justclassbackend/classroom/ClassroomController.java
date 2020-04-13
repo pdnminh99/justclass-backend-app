@@ -71,7 +71,8 @@ public class ClassroomController {
 
     @DeleteMapping("{localId}/{classroomId}")
     public ResponseEntity<Boolean> delete(@PathVariable("localId") String localId,
-                                          @PathVariable("classroomId") String classroomId) {
+                                          @PathVariable("classroomId") String classroomId)
+            throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
         return service.delete(localId, classroomId)
                 .map(this::handleDeleteStateNotEmpty)
                 .orElseGet(this::handleDeleteStateEmpty);

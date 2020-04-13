@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
+import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.projecta.eleven.justclassbackend.user.IUserOperations;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -206,7 +208,34 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Boolean> delete(String localId, String classroomId) {
-        return Optional.empty();
+    public Optional<Boolean> delete(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
+        if (Objects.isNull(localId) ||
+                localId.trim().length() == 0) {
+            throw new InvalidUserInformationException("LocalId must be included to perform delete classroom task.");
+        }
+        if (Objects.isNull(classroomId) ||
+                classroomId.trim().length() == 0) {
+            throw new InvalidClassroomInformationException("ClassroomId must be included to perform delete classroom task.");
+        }
+        // Check if user has permission to perform delete task.
+        var collaboratorSnapshot = repository.getCollaborator(classroomId, localId)
+                .get()
+                .get();
+        if (!collaboratorSnapshot.exists()) {
+            throw new InvalidClassroomInformationException("Classroom not exists, or user does not have permission to perform `DELETE` task.");
+        }
+        var collaboratorInstance = new Collaborator(collaboratorSnapshot);
+        if (collaboratorInstance.getRole() != CollaboratorRoles.OWNER) {
+            throw new InvalidUserInformationException("User with Id [" + localId + "] does not have permission to delete classroom [" + classroomId + "].");
+        }
+        // No need to check classroomReference for
+        var classroomDeleteQuery = Objects.requireNonNull(collaboratorSnapshot.get("classroomReference", DocumentReference.class))
+                .delete();
+        var collaboratorsByClassroom = repository.getCollaborators(classroomId)
+                .map(DocumentReference::delete)
+                .collect(Collectors.toList());
+        collaboratorsByClassroom.add(classroomDeleteQuery);
+        ApiFutures.allAsList(collaboratorsByClassroom);
+        return Optional.of(true);
     }
 }

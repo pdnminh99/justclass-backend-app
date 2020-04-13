@@ -14,5 +14,5 @@ public interface IClassroomOperationsService {
 
     Optional<Classroom> update(Classroom classroom, String localId) throws InvalidClassroomInformationException, InvalidUserInformationException, ExecutionException, InterruptedException;
 
-    Optional<Boolean> delete(String localId, String classroomId);
+    Optional<Boolean> delete(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 }

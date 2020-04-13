@@ -5,6 +5,7 @@ import com.google.cloud.firestore.DocumentReference;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 interface IClassroomRepository {
 
@@ -18,5 +19,6 @@ interface IClassroomRepository {
 
     DocumentReference getCollaborator(String classroomId, String localId);
 
+    Stream<DocumentReference> getCollaborators(String classroomId) throws ExecutionException, InterruptedException;
 //    DocumentReference updateCollaborator(String key, HashMap<String, Object> map);
 }

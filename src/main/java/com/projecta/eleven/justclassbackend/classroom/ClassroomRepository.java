@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
@@ -10,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 @Repository
 class ClassroomRepository implements IClassroomRepository {
@@ -68,6 +70,18 @@ class ClassroomRepository implements IClassroomRepository {
             return null;
         }
         return collaboratorCollection.document(classroomId + localId);
+    }
+
+    @Override
+    public Stream<DocumentReference> getCollaborators(String classroomId)
+            throws ExecutionException, InterruptedException {
+        return collaboratorCollection
+                .whereEqualTo("classroomId", classroomId)
+                .get()
+                .get()
+                .getDocuments()
+                .stream()
+                .map(DocumentSnapshot::getReference);
     }
 
 //    @Override
