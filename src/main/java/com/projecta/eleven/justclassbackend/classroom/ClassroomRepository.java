@@ -1,8 +1,7 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
@@ -73,7 +72,7 @@ class ClassroomRepository implements IClassroomRepository {
     }
 
     @Override
-    public Stream<DocumentReference> getCollaborators(String classroomId)
+    public Stream<DocumentReference> getCollaboratorsByClassroom(String classroomId)
             throws ExecutionException, InterruptedException {
         return collaboratorCollection
                 .whereEqualTo("classroomId", classroomId)
@@ -82,6 +81,45 @@ class ClassroomRepository implements IClassroomRepository {
                 .getDocuments()
                 .stream()
                 .map(DocumentSnapshot::getReference);
+    }
+
+    @Override
+    public Stream<QueryDocumentSnapshot> getCollaboratorsByUser(String hostId, CollaboratorRoles role, Timestamp lastRequest) throws ExecutionException, InterruptedException {
+//        System.out.println(role);
+        if (Objects.isNull(hostId) || hostId.trim().length() == 0) {
+            return Stream.empty();
+        }
+        if (Objects.isNull(role) && Objects.isNull(lastRequest)) {
+            return collaboratorCollection.whereEqualTo("userId", hostId)
+                    .orderBy("lastAccessTimestamp", Query.Direction.DESCENDING)
+                    .get()
+                    .get()
+                    .getDocuments()
+                    .stream();
+        }
+        if (Objects.isNull(role)) {
+            return collaboratorCollection.whereEqualTo("userId", hostId)
+                    .orderBy("lastAccessTimestamp", Query.Direction.DESCENDING)
+                    .whereGreaterThanOrEqualTo("lastAccessTimestamp", lastRequest)
+                    .get()
+                    .get()
+                    .getDocuments()
+                    .stream();
+        } else if (Objects.isNull(lastRequest)) {
+            return collaboratorCollection.whereEqualTo("userId", hostId)
+                    .whereEqualTo("role", role.toString())
+                    .get()
+                    .get()
+                    .getDocuments()
+                    .stream();
+        } else return collaboratorCollection.whereEqualTo("userId", hostId)
+                .orderBy("lastAccessTimestamp", Query.Direction.DESCENDING)
+                .whereGreaterThanOrEqualTo("lastAccessTimestamp", lastRequest)
+                .whereEqualTo("role", role.toString())
+                .get()
+                .get()
+                .getDocuments()
+                .stream();
     }
 
 //    @Override

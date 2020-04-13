@@ -5,7 +5,9 @@ import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
@@ -26,11 +28,22 @@ public class ClassroomController {
     @ResponseStatus(HttpStatus.OK)
     public Iterable<HashMap<String, Object>> getClassrooms(
             @PathVariable("localId") String localId,
-            @RequestParam("joinedOnly") Boolean joinedClassesOnly,
-            @RequestParam("lastRequest") Timestamp lastRequest)
-            throws InvalidUserInformationException {
-        return service.getClassrooms(localId, joinedClassesOnly, lastRequest)
-                .map(Classroom::toMap)
+            @Nullable
+            @RequestParam(value = "role", required = false) CollaboratorRoles role,
+            @Nullable
+            @RequestParam(value = "lastRequest", required = false) String lastRequest,
+            @Nullable
+            @RequestParam(value = "isMicrosecondsAccuracy", required = false) Boolean isMicrosecondsAccuracy)
+            throws InvalidUserInformationException, ExecutionException, InterruptedException {
+        Timestamp lastRequestTimestamp = null;
+        if (lastRequest != null) {
+            long epochTime = isMicrosecondsAccuracy != null && isMicrosecondsAccuracy ?
+                    Long.parseLong(lastRequest) :
+                    Long.parseLong(lastRequest) * 1000;
+            lastRequestTimestamp = Timestamp.ofTimeMicroseconds(epochTime);
+        }
+        return service.getClassrooms(localId, role, lastRequestTimestamp)
+                .map(MinifiedClassroom::toMap)
                 .collect(Collectors.toList());
     }
 
@@ -110,5 +123,11 @@ public class ClassroomController {
     @ExceptionHandler({IllegalArgumentException.class})
     public ResponseEntity<String> handleInvalidUserInfo(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleArgumentTypeMismatchException() {
+        return "Request parameter is not valid.";
     }
 }

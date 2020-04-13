@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 public interface IClassroomOperationsService {
-    Stream<Classroom> getClassrooms(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException;
+    Stream<MinifiedClassroom> getClassrooms(String hostId, CollaboratorRoles role, Timestamp lastRequest) throws InvalidUserInformationException, ExecutionException, InterruptedException;
 
     Optional<Classroom> get(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 

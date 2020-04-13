@@ -10,8 +10,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.sql.Date;
-import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
@@ -34,12 +32,17 @@ public class UserController {
     public List<MinifiedUser> getConnectedUsers(
             @PathVariable String localId,
             @Nullable
-            @RequestParam(value = "lastRequest", required = false) String lastRequestString)
+            @RequestParam(value = "lastRequest", required = false) String lastRequestString,
+            @Nullable
+            @RequestParam(value = "isMicrosecondsAccuracy", required = false) Boolean isMicrosecondsAccuracy)
             throws ExecutionException, InterruptedException {
         Timestamp lastRequestTimestamp = null;
 
         if (Objects.nonNull(lastRequestString)) {
-            lastRequestTimestamp = Timestamp.of(Date.from(Instant.parse(lastRequestString)));
+            long epochTime = isMicrosecondsAccuracy != null && isMicrosecondsAccuracy ?
+                    Long.parseLong(lastRequestString) :
+                    Long.parseLong(lastRequestString) * 1000;
+            lastRequestTimestamp = Timestamp.ofTimeMicroseconds(epochTime);
         }
         return userService.getFriendsOfUser(localId, lastRequestTimestamp)
                 .collect(Collectors.toList());

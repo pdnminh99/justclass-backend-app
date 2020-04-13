@@ -31,13 +31,25 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Stream<Classroom> getClassrooms(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException {
-        if (Objects.isNull(hostId)) {
+    public Stream<MinifiedClassroom> getClassrooms(String hostId, CollaboratorRoles role, Timestamp lastRequest) throws InvalidUserInformationException, ExecutionException, InterruptedException {
+        if (Objects.isNull(hostId) || hostId.trim().length() == 0) {
             throw new InvalidUserInformationException(
                     "LocalId of current logged in user is required to retrieve classrooms",
                     new NullPointerException("LocalId is null."));
         }
-        return Stream.empty();
+        return repository.getCollaboratorsByUser(hostId, role, lastRequest)
+                .map(Collaborator::new)
+                .map(c -> {
+                    try {
+                        var classroom = new MinifiedClassroom(c.getClassroomReference().get().get());
+                        classroom.setRole(c.getRole());
+                        classroom.setLastAccessTimestamp(c.getLastAccessTimestamp());
+                        return classroom;
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                });
     }
 
     @Override
@@ -251,7 +263,7 @@ public class ClassroomService implements IClassroomOperationsService {
         // No need to check classroomReference for
         var classroomDeleteQuery = Objects.requireNonNull(collaboratorSnapshot.get("classroomReference", DocumentReference.class))
                 .delete();
-        var collaboratorsByClassroom = repository.getCollaborators(classroomId)
+        var collaboratorsByClassroom = repository.getCollaboratorsByClassroom(classroomId)
                 .map(DocumentReference::delete)
                 .collect(Collectors.toList());
         collaboratorsByClassroom.add(classroomDeleteQuery);
