@@ -12,7 +12,7 @@ public interface IClassroomOperationsService {
 
     Optional<Classroom> create(ClassroomRequestBody classroom, String localId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 
-    Optional<Classroom> update(ClassroomRequestBody classroom, String localId);
+    Optional<Classroom> update(Classroom classroom, String localId);
 
     Optional<Boolean> delete(String localId, String classroomId);
 }

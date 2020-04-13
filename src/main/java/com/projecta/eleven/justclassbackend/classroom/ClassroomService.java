@@ -100,7 +100,16 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Classroom> update(ClassroomRequestBody classroom, String localId) {
+    public Optional<Classroom> update(Classroom classroom, String localId) {
+        // TODO: check if user has permission to edit this classroom.
+        System.err.println("----------------------------");
+        System.err.println(classroom.getClassroomId());
+        System.err.println(classroom.getTitle());
+        System.err.println(classroom.getSubject());
+        System.err.println(classroom.getDescription());
+        System.err.println(classroom.getRoom());
+        System.err.println(classroom.getPublicCode());
+        System.err.println(classroom.getNotePermissions());
         return Optional.empty();
     }
 

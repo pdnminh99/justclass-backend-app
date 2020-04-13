@@ -54,7 +54,9 @@ class ClassroomRequestBody extends MinifiedClassroom {
         this.room = room;
     }
 
-    public Classroom toClassroom(Timestamp createdTimestamp) {
+    public Classroom toClassroom(Timestamp createdTimestamp,
+                                 NotePermissions studentsNotePermissions,
+                                 String publicCode) {
         return new Classroom(getClassroomId(),
                 getTitle(),
                 getDescription(),
@@ -63,7 +65,23 @@ class ClassroomRequestBody extends MinifiedClassroom {
                 getRoom(),
                 getTheme(),
                 createdTimestamp,
-                getRole());
+                getRole(),
+                studentsNotePermissions,
+                publicCode
+        );
+    }
+
+    public Classroom toClassroom(Timestamp createdTimestamp,
+                                 NotePermissions studentsNotePermissions) {
+        return toClassroom(createdTimestamp, studentsNotePermissions, null);
+    }
+
+    public Classroom toClassroom(Timestamp createdTimestamp) {
+        return toClassroom(createdTimestamp, null);
+    }
+
+    public Classroom toClassroom() {
+        return toClassroom(null);
     }
 
     public HashMap<String, Object> toMap() {
