@@ -4,18 +4,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.HashMap;
 import java.util.Objects;
 
-@JsonIgnoreProperties(value = {"publicCode"})
+@JsonIgnoreProperties(value = {"publicCode", "createdTimestamp"})
 public class Classroom extends ClassroomRequestBody {
 
-    @JsonProperty("createdTimestamp")
+    @JsonIgnore
     private Timestamp createdTimestamp;
 
-    @JsonProperty("notePermission")
-    private NotePermissions notePermission;
+    @JsonProperty("studentsNotePermission")
+    private NotePermissions studentsNotePermission;
 
     @JsonIgnore
     private String publicCode;
@@ -29,12 +30,26 @@ public class Classroom extends ClassroomRequestBody {
                      Integer theme,
                      Timestamp createdTimestamp,
                      CollaboratorRoles role,
-                     NotePermissions notePermission,
+                     NotePermissions studentsNotePermission,
                      String publicCode) {
         super(classroomId, title, description, section, subject, room, theme, role);
         this.createdTimestamp = createdTimestamp;
-        this.notePermission = notePermission;
+        this.studentsNotePermission = studentsNotePermission;
         this.publicCode = publicCode;
+    }
+
+    public Classroom(DocumentSnapshot snapshot) {
+        super(snapshot.getId(),
+                snapshot.getString("title"),
+                snapshot.getString("description"),
+                snapshot.getString("section"),
+                snapshot.getString("subject"),
+                snapshot.getString("room"),
+                Objects.requireNonNull(snapshot.getLong("theme")).intValue(),
+                CollaboratorRoles.fromText(snapshot.getString("role")));
+        this.createdTimestamp = snapshot.getTimestamp("createdTimestamp");
+        this.studentsNotePermission = NotePermissions.fromText(Objects.requireNonNull(snapshot.getString("studentsNotePermission")));
+        this.publicCode = snapshot.getString("publicCode");
     }
 
     public Timestamp getCreatedTimestamp() {
@@ -45,12 +60,12 @@ public class Classroom extends ClassroomRequestBody {
         this.createdTimestamp = createdTimestamp;
     }
 
-    public NotePermissions getNotePermission() {
-        return notePermission;
+    public NotePermissions getStudentsNotePermission() {
+        return studentsNotePermission;
     }
 
-    public void setNotePermission(NotePermissions notePermission) {
-        this.notePermission = notePermission;
+    public void setStudentsNotePermission(NotePermissions studentsNotePermission) {
+        this.studentsNotePermission = studentsNotePermission;
     }
 
     public String getPublicCode() {
@@ -67,8 +82,8 @@ public class Classroom extends ClassroomRequestBody {
 
         ifFieldNotNullThenPutToMap("createdTimestamp", createdTimestamp, map);
         ifFieldNotNullThenPutToMap("publicCode", publicCode, map);
-        if (Objects.nonNull(notePermission)) {
-            ifFieldNotNullThenPutToMap("studentsNotePermission", notePermission.toString(), map);
+        if (Objects.nonNull(studentsNotePermission)) {
+            ifFieldNotNullThenPutToMap("studentsNotePermission", studentsNotePermission.toString(), map);
         }
         return map;
     }
@@ -77,7 +92,7 @@ public class Classroom extends ClassroomRequestBody {
     public String toString() {
         return "Classroom{" +
                 "createdTimestamp=" + createdTimestamp +
-                ", studentsNotePermission=" + notePermission +
+                ", studentsNotePermission=" + studentsNotePermission +
                 ", publicCode='" + publicCode + '\'' +
                 '}';
     }

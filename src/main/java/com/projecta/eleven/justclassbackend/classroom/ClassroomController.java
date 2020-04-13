@@ -61,7 +61,8 @@ public class ClassroomController {
 
     @PatchMapping("{localId}")
     public ResponseEntity<HashMap<String, Object>> update(@PathVariable("localId") String localId,
-                                                          @RequestBody Classroom newClassroomVersion) {
+                                                          @RequestBody Classroom newClassroomVersion)
+            throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
         return service.update(newClassroomVersion, localId)
                 .map(Classroom::toMap)
                 .map(ResponseEntity::ok)
@@ -93,6 +94,11 @@ public class ClassroomController {
 
     @ExceptionHandler({InvalidUserInformationException.class})
     public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

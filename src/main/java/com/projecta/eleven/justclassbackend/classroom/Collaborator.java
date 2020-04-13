@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
@@ -27,6 +28,14 @@ public class Collaborator implements MapSerializable {
         this.userReference = userReference;
         this.createdTimestamp = createdTimestamp;
         this.role = role;
+    }
+
+    public Collaborator(DocumentSnapshot snapshot) {
+        this.collaboratorId = snapshot.getId();
+        this.classroomReference = snapshot.get("classroomReference", DocumentReference.class);
+        this.userReference = snapshot.get("userReference", DocumentReference.class);
+        this.createdTimestamp = snapshot.getTimestamp("createTimestamp");
+        this.role = CollaboratorRoles.fromText(snapshot.getString("role"));
     }
 
     public String getCollaboratorId() {

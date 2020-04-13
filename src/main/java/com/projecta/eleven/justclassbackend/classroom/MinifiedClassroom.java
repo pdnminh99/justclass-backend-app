@@ -12,12 +12,16 @@ public class MinifiedClassroom implements MapSerializable {
 
     @JsonProperty("classroomId")
     private String classroomId;
+
     @JsonIgnore
     private CollaboratorRoles role;
+
     @JsonProperty("title")
     private String title;
+
     @JsonProperty("subject")
     private String subject;
+
     @JsonProperty("theme")
     private Integer theme;
 

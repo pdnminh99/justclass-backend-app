@@ -26,6 +26,11 @@ class ClassroomRepository implements IClassroomRepository {
     }
 
     @Override
+    public DocumentReference getClassroom(String classroomId) {
+        return classroomCollection.document(classroomId);
+    }
+
+    @Override
     public DocumentReference createClassroom(Map<String, Object> classroomMap)
             throws ExecutionException, InterruptedException, InvalidClassroomInformationException {
         if (Objects.isNull(classroomMap)) {
@@ -37,14 +42,31 @@ class ClassroomRepository implements IClassroomRepository {
     }
 
     @Override
+    public DocumentReference updateClassroom(Map<String, Object> classroom, String classroomId)
+            throws ExecutionException, InterruptedException {
+        var classroomReference = classroomCollection.document(classroomId);
+        classroomReference.update(classroom);
+        return classroomReference;
+    }
+
+    @Override
     public DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap, String keyCombination)
             throws ExecutionException, InterruptedException {
         var reference = collaboratorCollection
                 .document(keyCombination);
+        // if the collaborator already existed, returns null.
         if (reference.get().get().exists()) {
             return null;
         }
         reference.set(collaboratorMap);
         return reference;
+    }
+
+    @Override
+    public DocumentReference getCollaborator(String classroomId, String localId) {
+        if (Objects.isNull(classroomId) || Objects.isNull(localId)) {
+            return null;
+        }
+        return collaboratorCollection.document(classroomId + localId);
     }
 }
