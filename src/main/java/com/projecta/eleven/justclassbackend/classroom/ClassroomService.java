@@ -31,13 +31,39 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Stream<Classroom> get(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException {
+    public Stream<Classroom> getClassrooms(String hostId, Boolean joinedClassesOnly, Timestamp lastRequest) throws InvalidUserInformationException {
         if (Objects.isNull(hostId)) {
             throw new InvalidUserInformationException(
                     "LocalId of current logged in user is required to retrieve classrooms",
                     new NullPointerException("LocalId is null."));
         }
         return Stream.empty();
+    }
+
+    @Override
+    public Optional<Classroom> get(String localId, String classroomId)
+            throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
+        validateRetrieveOrDeleteRequestInput(localId, classroomId);
+        var collaboratorSnapshot = repository.getCollaborator(classroomId, localId)
+                .get()
+                .get();
+        if (!collaboratorSnapshot.exists()) {
+            throw new InvalidClassroomInformationException("Classroom not exists, or user does not have permission to perform `GET` task.");
+        }
+        var now = Timestamp.now();
+        var collaboratorUpdateMap = new HashMap<String, Object>();
+        var collaboratorInstance = new Collaborator(collaboratorSnapshot);
+        var classroomInstance = new Classroom(collaboratorInstance
+                .getClassroomReference()
+                .get()
+                .get());
+
+        classroomInstance.setLastAccessTimestamp(now);
+        classroomInstance.setRole(collaboratorInstance.getRole());
+        collaboratorUpdateMap.put("lastAccessTimestamp", now);
+        collaboratorSnapshot.getReference()
+                .update(collaboratorUpdateMap);
+        return Optional.of(classroomInstance);
     }
 
     @Override
@@ -208,15 +234,9 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Boolean> delete(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
-        if (Objects.isNull(localId) ||
-                localId.trim().length() == 0) {
-            throw new InvalidUserInformationException("LocalId must be included to perform delete classroom task.");
-        }
-        if (Objects.isNull(classroomId) ||
-                classroomId.trim().length() == 0) {
-            throw new InvalidClassroomInformationException("ClassroomId must be included to perform delete classroom task.");
-        }
+    public Optional<Boolean> delete(String localId, String classroomId)
+            throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
+        validateRetrieveOrDeleteRequestInput(localId, classroomId);
         // Check if user has permission to perform delete task.
         var collaboratorSnapshot = repository.getCollaborator(classroomId, localId)
                 .get()
@@ -237,5 +257,17 @@ public class ClassroomService implements IClassroomOperationsService {
         collaboratorsByClassroom.add(classroomDeleteQuery);
         ApiFutures.allAsList(collaboratorsByClassroom);
         return Optional.of(true);
+    }
+
+    private void validateRetrieveOrDeleteRequestInput(String localId, String classroomId)
+            throws InvalidUserInformationException, InvalidClassroomInformationException {
+        if (Objects.isNull(localId) ||
+                localId.trim().length() == 0) {
+            throw new InvalidUserInformationException("LocalId must be included to perform this task.");
+        }
+        if (Objects.isNull(classroomId) ||
+                classroomId.trim().length() == 0) {
+            throw new InvalidClassroomInformationException("ClassroomId must be included to perform this task.");
+        }
     }
 }

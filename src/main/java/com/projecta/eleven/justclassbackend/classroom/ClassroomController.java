@@ -29,9 +29,18 @@ public class ClassroomController {
             @RequestParam("joinedOnly") Boolean joinedClassesOnly,
             @RequestParam("lastRequest") Timestamp lastRequest)
             throws InvalidUserInformationException {
-        return service.get(localId, joinedClassesOnly, lastRequest)
+        return service.getClassrooms(localId, joinedClassesOnly, lastRequest)
                 .map(Classroom::toMap)
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("{localId}/{classroomId}")
+    public ResponseEntity<HashMap<String, Object>> getClassroom(@PathVariable("localId") String localId,
+                                                                @PathVariable("classroomId") String classroomId)
+            throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
+        return service.get(localId, classroomId)
+                .map(this::handleCreateOrRetrieveNotEmpty)
+                .orElseGet(this::handleResponseEmpty);
     }
 
 //    @GetMapping("{hostId}/{guestId}/{classroomId}")
@@ -46,16 +55,16 @@ public class ClassroomController {
                                                           @PathVariable String localId)
             throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
         return service.create(request, localId)
-                .map(this::handleCreateNotEmpty)
-                .orElseGet(this::handleCreateOrUpdateEmpty);
+                .map(this::handleCreateOrRetrieveNotEmpty)
+                .orElseGet(this::handleResponseEmpty);
     }
 
-    private ResponseEntity<HashMap<String, Object>> handleCreateNotEmpty(Classroom createdClassroom) {
+    private ResponseEntity<HashMap<String, Object>> handleCreateOrRetrieveNotEmpty(Classroom createdClassroom) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createdClassroom.toMap());
     }
 
-    private ResponseEntity<HashMap<String, Object>> handleCreateOrUpdateEmpty() {
+    private ResponseEntity<HashMap<String, Object>> handleResponseEmpty() {
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
@@ -66,7 +75,7 @@ public class ClassroomController {
         return service.update(newClassroomVersion, localId)
                 .map(Classroom::toMap)
                 .map(ResponseEntity::ok)
-                .orElseGet(this::handleCreateOrUpdateEmpty);
+                .orElseGet(this::handleResponseEmpty);
     }
 
     @DeleteMapping("{localId}/{classroomId}")
