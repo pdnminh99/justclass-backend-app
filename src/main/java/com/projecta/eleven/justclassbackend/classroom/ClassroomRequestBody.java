@@ -55,7 +55,7 @@ class ClassroomRequestBody extends MinifiedClassroom {
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp,
-                                 NotePermissions studentsNotePermissions,
+                                 NotePermissions studentsNotePermission,
                                  String publicCode) {
         return new Classroom(getClassroomId(),
                 getTitle(),
@@ -66,14 +66,14 @@ class ClassroomRequestBody extends MinifiedClassroom {
                 getTheme(),
                 createdTimestamp,
                 getRole(),
-                studentsNotePermissions,
+                studentsNotePermission,
                 publicCode
         );
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp,
-                                 NotePermissions studentsNotePermissions) {
-        return toClassroom(createdTimestamp, studentsNotePermissions, null);
+                                 NotePermissions studentsNotePermission) {
+        return toClassroom(createdTimestamp, studentsNotePermission, null);
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp) {

@@ -6,14 +6,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 @JsonIgnoreProperties(value = {"publicCode"})
 public class Classroom extends ClassroomRequestBody {
+
+    @JsonProperty("createdTimestamp")
     private Timestamp createdTimestamp;
 
-    //    @JsonIgnore
-    @JsonProperty("notePermissions")
-    private NotePermissions notePermissions;
+    @JsonProperty("notePermission")
+    private NotePermissions notePermission;
+
     @JsonIgnore
     private String publicCode;
 
@@ -26,11 +29,11 @@ public class Classroom extends ClassroomRequestBody {
                      Integer theme,
                      Timestamp createdTimestamp,
                      CollaboratorRoles role,
-                     NotePermissions notePermissions,
+                     NotePermissions notePermission,
                      String publicCode) {
         super(classroomId, title, description, section, subject, room, theme, role);
         this.createdTimestamp = createdTimestamp;
-        this.notePermissions = notePermissions;
+        this.notePermission = notePermission;
         this.publicCode = publicCode;
     }
 
@@ -42,12 +45,12 @@ public class Classroom extends ClassroomRequestBody {
         this.createdTimestamp = createdTimestamp;
     }
 
-    public NotePermissions getNotePermissions() {
-        return notePermissions;
+    public NotePermissions getNotePermission() {
+        return notePermission;
     }
 
-    public void setNotePermissions(NotePermissions notePermissions) {
-        this.notePermissions = notePermissions;
+    public void setNotePermission(NotePermissions notePermission) {
+        this.notePermission = notePermission;
     }
 
     public String getPublicCode() {
@@ -64,7 +67,9 @@ public class Classroom extends ClassroomRequestBody {
 
         ifFieldNotNullThenPutToMap("createdTimestamp", createdTimestamp, map);
         ifFieldNotNullThenPutToMap("publicCode", publicCode, map);
-        ifFieldNotNullThenPutToMap("studentsNotePermission", notePermissions, map);
+        if (Objects.nonNull(notePermission)) {
+            ifFieldNotNullThenPutToMap("studentsNotePermission", notePermission.toString(), map);
+        }
         return map;
     }
 
@@ -72,7 +77,7 @@ public class Classroom extends ClassroomRequestBody {
     public String toString() {
         return "Classroom{" +
                 "createdTimestamp=" + createdTimestamp +
-                ", studentsNotePermission=" + notePermissions +
+                ", studentsNotePermission=" + notePermission +
                 ", publicCode='" + publicCode + '\'' +
                 '}';
     }

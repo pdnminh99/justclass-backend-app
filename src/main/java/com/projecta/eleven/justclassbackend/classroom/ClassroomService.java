@@ -46,7 +46,7 @@ public class ClassroomService implements IClassroomOperationsService {
         var now = Timestamp.now();
 
         // TODO: generate public code and pass to `toClassroom` method.
-        var classroomInstance = classroomRequestBody.toClassroom(now);
+        var classroomInstance = classroomRequestBody.toClassroom(now, NotePermissions.VIEW_COMMENT_POST);
         var classroomMap = classroomInstance.toMap();
 
         // Since ClassroomRequestBody constructor also include these two fields,
@@ -109,7 +109,7 @@ public class ClassroomService implements IClassroomOperationsService {
         System.err.println(classroom.getDescription());
         System.err.println(classroom.getRoom());
         System.err.println(classroom.getPublicCode());
-        System.err.println(classroom.getNotePermissions());
+        System.err.println(classroom.getNotePermission());
         return Optional.empty();
     }
 
