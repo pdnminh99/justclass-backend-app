@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentSnapshot;
 
 import java.util.HashMap;
 
@@ -23,11 +24,19 @@ class ClassroomRequestBody extends MinifiedClassroom {
             String subject,
             String room,
             Integer theme,
-            CollaboratorRoles role) {
-        super(classroomId, title, subject, theme, role);
+            CollaboratorRoles role,
+            Timestamp lastAccessTimestamp) {
+        super(classroomId, title, subject, theme, role, lastAccessTimestamp);
         this.description = description;
         this.section = section;
         this.room = room;
+    }
+
+    public ClassroomRequestBody(DocumentSnapshot snapshot) {
+        super(snapshot);
+        this.description = snapshot.getString("description");
+        this.section = snapshot.getString("section");
+        this.room = snapshot.getString("room");
     }
 
     public String getDescription() {
@@ -55,6 +64,7 @@ class ClassroomRequestBody extends MinifiedClassroom {
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp,
+                                 Timestamp lastTimestamp,
                                  NotePermissions studentsNotePermission,
                                  String publicCode) {
         return new Classroom(getClassroomId(),
@@ -66,14 +76,20 @@ class ClassroomRequestBody extends MinifiedClassroom {
                 getTheme(),
                 createdTimestamp,
                 getRole(),
+                lastTimestamp,
                 studentsNotePermission,
                 publicCode
         );
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp,
+                                 Timestamp lastAccessTimestamp,
                                  NotePermissions studentsNotePermission) {
-        return toClassroom(createdTimestamp, studentsNotePermission, null);
+        return toClassroom(createdTimestamp, lastAccessTimestamp, studentsNotePermission, null);
+    }
+
+    public Classroom toClassroom(Timestamp createdTimestamp, Timestamp lastAccessTimestamp) {
+        return toClassroom(createdTimestamp, lastAccessTimestamp, null);
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp) {

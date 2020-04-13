@@ -17,4 +17,6 @@ interface IClassroomRepository {
     DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap, String keyCombination) throws ExecutionException, InterruptedException;
 
     DocumentReference getCollaborator(String classroomId, String localId);
+
+//    DocumentReference updateCollaborator(String key, HashMap<String, Object> map);
 }

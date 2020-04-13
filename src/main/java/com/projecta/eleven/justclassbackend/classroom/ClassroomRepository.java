@@ -69,4 +69,11 @@ class ClassroomRepository implements IClassroomRepository {
         }
         return collaboratorCollection.document(classroomId + localId);
     }
+
+//    @Override
+//    public DocumentReference updateCollaborator(String key, HashMap<String, Object> map) {
+//        var ref = collaboratorCollection.document(key);
+//        ref.update(map);
+//        return ref;
+//    }
 }

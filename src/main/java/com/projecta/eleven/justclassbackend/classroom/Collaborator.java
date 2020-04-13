@@ -18,15 +18,19 @@ public class Collaborator implements MapSerializable {
 
     private Timestamp createdTimestamp;
 
+    private Timestamp lastAccessTimestamp;
+
     public Collaborator(String collaboratorId,
                         DocumentReference classroomReference,
                         DocumentReference userReference,
                         Timestamp createdTimestamp,
+                        Timestamp lastAccessTimestamp,
                         CollaboratorRoles role) {
         this.collaboratorId = collaboratorId;
         this.classroomReference = classroomReference;
         this.userReference = userReference;
         this.createdTimestamp = createdTimestamp;
+        this.lastAccessTimestamp = lastAccessTimestamp;
         this.role = role;
     }
 
@@ -35,6 +39,7 @@ public class Collaborator implements MapSerializable {
         this.classroomReference = snapshot.get("classroomReference", DocumentReference.class);
         this.userReference = snapshot.get("userReference", DocumentReference.class);
         this.createdTimestamp = snapshot.getTimestamp("createTimestamp");
+        this.lastAccessTimestamp = snapshot.getTimestamp("lastAccessTimestamp");
         this.role = CollaboratorRoles.fromText(snapshot.getString("role"));
     }
 
@@ -90,7 +95,16 @@ public class Collaborator implements MapSerializable {
         ifFieldNotNullThenPutToMap("userId", getUserId(), map);
         ifFieldNotNullThenPutToMap("userReference", getUserReference(), map);
         ifFieldNotNullThenPutToMap("createTimestamp", getCreatedTimestamp(), map);
+        ifFieldNotNullThenPutToMap("lastAccessTimestamp", getLastAccessTimestamp(), map);
         ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
         return map;
+    }
+
+    public Timestamp getLastAccessTimestamp() {
+        return lastAccessTimestamp;
+    }
+
+    public void setLastAccessTimestamp(Timestamp lastAccessTimestamp) {
+        this.lastAccessTimestamp = lastAccessTimestamp;
     }
 }

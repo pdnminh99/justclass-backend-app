@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -46,13 +47,15 @@ public class ClassroomService implements IClassroomOperationsService {
         var now = Timestamp.now();
 
         // TODO: generate public code and pass to `toClassroom` method.
-        var classroomInstance = classroomRequestBody.toClassroom(now, NotePermissions.VIEW_COMMENT_POST);
+        var classroomInstance = classroomRequestBody.toClassroom(
+                now, now, NotePermissions.VIEW_COMMENT_POST);
         var classroomMap = classroomInstance.toMap();
 
-        // Since ClassroomRequestBody constructor also include these two fields,
+        // Since ClassroomRequestBody constructor also include these three fields,
         // we must exclude them to prevent side effects.
         classroomMap.remove("classroomId");
         classroomMap.remove("role");
+        classroomMap.remove("lastAccessTimestamp");
 
         var createdClassroomReference = repository.createClassroom(classroomMap);
         classroomInstance.setClassroomId(createdClassroomReference.getId());
@@ -62,6 +65,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 null,
                 createdClassroomReference,
                 userReference,
+                now,
                 now,
                 CollaboratorRoles.OWNER)).toMap();
         repository.createCollaborator(collaboratorMap, collaboratorId);
@@ -102,26 +106,17 @@ public class ClassroomService implements IClassroomOperationsService {
     @Override
     public Optional<Classroom> update(Classroom classroom, String localId)
             throws InvalidClassroomInformationException, InvalidUserInformationException, ExecutionException, InterruptedException {
-        if (Objects.isNull(classroom) || Objects.isNull(classroom.getClassroomId()) || classroom.getClassroomId().trim().length() == 0) {
-            throw new InvalidClassroomInformationException("ClassroomId must be included to execute the edit task.",
-                    new NullPointerException("Classroom or classroomId is null."));
-        }
-        if (classroom.getTitle() != null && classroom.getTitle().trim().length() == 0) {
-            throw new InvalidClassroomInformationException("Cannot update classroom title of empty.");
-        }
-        if (Objects.isNull(localId) || localId.trim().length() == 0) {
-            throw new InvalidUserInformationException("LocalId of current logged in user must include to execute the edit task.",
-                    new NullPointerException("LocalId is null or empty."));
-        }
+        validateClassroomUpdateRequestInput(classroom, localId);
         var classroomId = classroom.getClassroomId();
-        var ref = repository
+        var collaboratorSnapshot = repository
                 .getCollaborator(classroomId, localId)
                 .get()
                 .get();
-        if (!ref.exists()) {
+
+        if (!collaboratorSnapshot.exists()) {
             throw new IllegalArgumentException("User " + localId + " do not have permissions to edit classroom [" + classroomId + "] info.");
         }
-        var collaboratorRole = new Collaborator(ref)
+        var collaboratorRole = (new Collaborator(collaboratorSnapshot))
                 .getRole();
 
         // Only OWNER and TEACHER have permissions to edit class.
@@ -135,39 +130,79 @@ public class ClassroomService implements IClassroomOperationsService {
         if (!oldClassroomSnapshot.exists()) {
             throw new InvalidClassroomInformationException("Classroom [" + classroomId + "] does not exist. Use POST method if you want to create new classroom.");
         }
+
         var oldClassroomInstance = new Classroom(oldClassroomSnapshot);
+        var now = Timestamp.now();
 
-        if (classroom.getTitle() != null && !classroom.getTitle().equals(oldClassroomInstance.getTitle())) {
-            oldClassroomInstance.setTitle(classroom.getTitle());
-        }
-        if (classroom.getStudentsNotePermission() != null && classroom.getStudentsNotePermission() != oldClassroomInstance.getStudentsNotePermission()) {
-            oldClassroomInstance.setStudentsNotePermission(classroom.getStudentsNotePermission());
-        }
-        if (classroom.getDescription() != null && !classroom.getDescription().equals(oldClassroomInstance.getDescription())) {
-            oldClassroomInstance.setDescription(classroom.getDescription());
-        }
-        if (classroom.getRoom() != null && !classroom.getRoom().equals(oldClassroomInstance.getRoom())) {
-            oldClassroomInstance.setRoom(classroom.getRoom());
-        }
-        if (classroom.getSection() != null && !classroom.getRoom().equals(oldClassroomInstance.getSection())) {
-            oldClassroomInstance.setSection(classroom.getSection());
-        }
-        if (classroom.getSubject() != null && !classroom.getSubject().equals(oldClassroomInstance.getSubject())) {
-            oldClassroomInstance.setSubject(classroom.getSubject());
-        }
-        if (classroom.getTheme() != null && !classroom.getTheme().equals(oldClassroomInstance.getTheme())) {
-            oldClassroomInstance.setTheme(classroom.getTheme());
-        }
+        if (containChangesAfterCompareAndApplyUpdates(oldClassroomInstance, classroom)) {
+            System.err.println("Changes found.");
 
-        var classroomMap = classroom.toMap();
-        classroomMap.remove("classroomId");
-        if (classroomMap.isEmpty()) {
-            throw new IllegalArgumentException("There is nothing to update. If you want to retrieve full data of classroom. Try the `GET` method.");
+            var classroomMap = classroom.toMap();
+            classroomMap.remove("classroomId");
+            if (classroomMap.isEmpty()) {
+                throw new IllegalArgumentException("There is nothing to update. If you want to retrieve full data of classroom. Try the `GET` method.");
+            }
+            // No need to exclude `publicCode` and `createdTimestamp` from `classroomMap`, since these fields are marked as @JsonIgnore.
+            repository.updateClassroom(classroomMap, classroomId);
+
+            // Update `lastAccessTimestamp` of collaborator.
+            var collaboratorMap = new HashMap<String, Object>();
+            collaboratorMap.put("lastAccessTimestamp", now);
+
+            collaboratorSnapshot.getReference()
+                    .update(collaboratorMap);
         }
-        // No need to exclude `publicCode` and `createdTimestamp` from `classroomMap`, since these fields are marked as @JsonIgnore.
-        repository.updateClassroom(classroomMap, classroomId);
         oldClassroomInstance.setRole(collaboratorRole);
+        oldClassroomInstance.setLastAccessTimestamp(now);
         return Optional.of(oldClassroomInstance);
+    }
+
+    private void validateClassroomUpdateRequestInput(Classroom classroom, String localId) throws InvalidClassroomInformationException, InvalidUserInformationException {
+        if (Objects.isNull(classroom) || Objects.isNull(classroom.getClassroomId()) || classroom.getClassroomId().trim().length() == 0) {
+            throw new InvalidClassroomInformationException("ClassroomId must be included to execute the edit task.",
+                    new NullPointerException("Classroom or classroomId is null."));
+        }
+        if (classroom.getTitle() != null && classroom.getTitle().trim().length() == 0) {
+            throw new InvalidClassroomInformationException("Cannot update classroom title of empty.");
+        }
+        if (Objects.isNull(localId) || localId.trim().length() == 0) {
+            throw new InvalidUserInformationException("LocalId of current logged in user must include to execute the edit task.",
+                    new NullPointerException("LocalId is null or empty."));
+        }
+    }
+
+    private boolean containChangesAfterCompareAndApplyUpdates(Classroom oldVersion, Classroom newVersion) {
+        var containChanges = false;
+
+        if (newVersion.getTitle() != null && !newVersion.getTitle().equals(oldVersion.getTitle())) {
+            oldVersion.setTitle(newVersion.getTitle());
+            containChanges = true;
+        }
+        if (newVersion.getStudentsNotePermission() != null && newVersion.getStudentsNotePermission() != oldVersion.getStudentsNotePermission()) {
+            oldVersion.setStudentsNotePermission(newVersion.getStudentsNotePermission());
+            containChanges = true;
+        }
+        if (newVersion.getDescription() != null && !newVersion.getDescription().equals(oldVersion.getDescription())) {
+            oldVersion.setDescription(newVersion.getDescription());
+            containChanges = true;
+        }
+        if (newVersion.getRoom() != null && !newVersion.getRoom().equals(oldVersion.getRoom())) {
+            oldVersion.setRoom(newVersion.getRoom());
+            containChanges = true;
+        }
+        if (newVersion.getSection() != null && !newVersion.getSection().equals(oldVersion.getSection())) {
+            oldVersion.setSection(newVersion.getSection());
+            containChanges = true;
+        }
+        if (newVersion.getSubject() != null && !newVersion.getSubject().equals(oldVersion.getSubject())) {
+            oldVersion.setSubject(newVersion.getSubject());
+            containChanges = true;
+        }
+        if (newVersion.getTheme() != null && !newVersion.getTheme().equals(oldVersion.getTheme())) {
+            oldVersion.setTheme(newVersion.getTheme());
+            containChanges = true;
+        }
+        return containChanges;
     }
 
     @Override
