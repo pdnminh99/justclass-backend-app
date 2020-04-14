@@ -60,7 +60,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 .get()
                 .get();
         if (!collaboratorSnapshot.exists()) {
-            throw new InvalidClassroomInformationException("Classroom not exists, or user does not have permission to perform `GET` task.");
+            throw new InvalidClassroomInformationException("Classroom does not exist, or user does not have permission to perform `GET` task.");
         }
         var now = Timestamp.now();
         var collaboratorUpdateMap = new HashMap<String, Object>();
@@ -139,7 +139,7 @@ public class ClassroomService implements IClassroomOperationsService {
     private void validateUserReferenceExistence(DocumentReference userReference, String localId)
             throws ExecutionException, InterruptedException, InvalidUserInformationException {
         if (Objects.isNull(userReference) || !userReference.get().get().exists()) {
-            throw new InvalidUserInformationException("User with localID [" + localId + "] not exist.");
+            throw new InvalidUserInformationException("User with localID [" + localId + "] does not exist.");
         }
     }
 
@@ -154,14 +154,14 @@ public class ClassroomService implements IClassroomOperationsService {
                 .get();
 
         if (!collaboratorSnapshot.exists()) {
-            throw new IllegalArgumentException("User " + localId + " do not have permissions to edit classroom [" + classroomId + "] info.");
+            throw new IllegalArgumentException("User " + localId + " is not part of classroom [" + classroomId + "]. Or this classroom does not exist.");
         }
         var collaboratorRole = (new Collaborator(collaboratorSnapshot))
                 .getRole();
 
         // Only OWNER and TEACHER have permissions to edit class.
         if (Objects.isNull(collaboratorRole) || collaboratorRole == CollaboratorRoles.STUDENT) {
-            throw new IllegalArgumentException("User " + localId + " do not have permissions to edit classroom [" + classroomId + "] info.");
+            throw new IllegalArgumentException("User " + localId + " (role STUDENT) does not have permission to edit classroom [" + classroomId + "] info.");
         }
 
         var oldClassroomSnapshot = repository.getClassroom(classroomId)
@@ -254,7 +254,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 .get()
                 .get();
         if (!collaboratorSnapshot.exists()) {
-            throw new InvalidClassroomInformationException("Classroom not exists, or user does not have permission to perform `DELETE` task.");
+            throw new InvalidClassroomInformationException("Classroom does not exist, or user does not have permission to perform `DELETE` task.");
         }
         var collaboratorInstance = new Collaborator(collaboratorSnapshot);
         if (collaboratorInstance.getRole() != CollaboratorRoles.OWNER) {

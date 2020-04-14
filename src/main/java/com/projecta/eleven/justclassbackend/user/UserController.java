@@ -74,7 +74,7 @@ public class UserController {
     public ResponseEntity<String> handleDatetimeParsingFailure() {
         return ResponseEntity
                 .status(HttpStatus.NOT_ACCEPTABLE)
-                .body("You must use RFC 3339 Datetime format.");
+                .body("You must use epoch time with milli or micro-seconds of accuracy format.");
     }
 
     @ExceptionHandler({InvalidClassroomInformationException.class})
@@ -85,5 +85,11 @@ public class UserController {
     @ExceptionHandler({InvalidUserInformationException.class})
     public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleArgumentTypeMismatchException() {
+        return "Request parameter is not valid.";
     }
 }
