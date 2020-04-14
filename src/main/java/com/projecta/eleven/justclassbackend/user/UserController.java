@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.user;
 
 import com.google.cloud.Timestamp;
+import com.projecta.eleven.justclassbackend.classroom.InvalidClassroomInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -9,8 +10,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.sql.Date;
-import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
@@ -33,12 +32,17 @@ public class UserController {
     public List<MinifiedUser> getConnectedUsers(
             @PathVariable String localId,
             @Nullable
-            @RequestParam(value = "lastRequest", required = false) String lastRequestString)
+            @RequestParam(value = "lastRequest", required = false) String lastRequestString,
+            @Nullable
+            @RequestParam(value = "isMicrosecondsAccuracy", required = false) Boolean isMicrosecondsAccuracy)
             throws ExecutionException, InterruptedException {
         Timestamp lastRequestTimestamp = null;
 
         if (Objects.nonNull(lastRequestString)) {
-            lastRequestTimestamp = Timestamp.of(Date.from(Instant.parse(lastRequestString)));
+            long epochTime = isMicrosecondsAccuracy != null && isMicrosecondsAccuracy ?
+                    Long.parseLong(lastRequestString) :
+                    Long.parseLong(lastRequestString) * 1000;
+            lastRequestTimestamp = Timestamp.ofTimeMicroseconds(epochTime);
         }
         return userService.getFriendsOfUser(localId, lastRequestTimestamp)
                 .collect(Collectors.toList());
@@ -66,15 +70,26 @@ public class UserController {
         return ResponseEntity.badRequest().body("Request param 'autoUpdate' must be a boolean.");
     }
 
-    @ExceptionHandler({InvalidUserInformationException.class})
-    public String handleInvalidUserInfo(InvalidUserInformationException e) {
-        return e.getMessage();
-    }
-
     @ExceptionHandler({DateTimeParseException.class})
     public ResponseEntity<String> handleDatetimeParsingFailure() {
         return ResponseEntity
                 .status(HttpStatus.NOT_ACCEPTABLE)
-                .body("You must use RFC 3339 Datetime format.");
+                .body("You must use epoch time with milli or micro-seconds of accuracy format.");
+    }
+
+    @ExceptionHandler({InvalidClassroomInformationException.class})
+    public ResponseEntity<String> handleInvalidClassroomInfo(InvalidClassroomInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleArgumentTypeMismatchException() {
+        return "Request parameter is not valid.";
     }
 }

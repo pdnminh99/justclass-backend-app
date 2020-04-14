@@ -4,8 +4,10 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
+import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.configuration.DatabaseFailedToInitializeException;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
 import com.projecta.eleven.justclassbackend.user.IMinifiedUserOperations;
@@ -59,8 +61,10 @@ public class IMinifiedUserOperationsTest {
         /*
          * John <-------> Bruce <-------> Alfred
          */
-        Stream<ApiFuture<WriteResult>> futureStream = Stream.concat(createSampleUsersStream(), createSampleRelationshipsStream());
-        ApiFutures.allAsList(futureStream.collect(Collectors.toList()))
+        ApiFutures.allAsList(createSampleUsersStream().collect(Collectors.toList()))
+                .get();
+        Thread.sleep(1000);
+        ApiFutures.allAsList(createSampleRelationshipsStream().collect(Collectors.toList()))
                 .get();
     }
 
@@ -103,23 +107,37 @@ public class IMinifiedUserOperationsTest {
                 .map(this::transformUserMapToFirestoreDocument);
     }
 
-    private Stream<ApiFuture<WriteResult>> createSampleRelationshipsStream() {
+    private Stream<ApiFuture<WriteResult>> createSampleRelationshipsStream() throws ExecutionException, InterruptedException {
         Collection<Map<String, Object>> sampleMaps = new ArrayList<>();
+
+        List<DocumentSnapshot> snapshots = ApiFutures.allAsList(
+                Lists.newArrayList(
+                        userCollection.document("8667dadc-aecf-4678-bf14-b1a6611aa0c4").get(),
+                        userCollection.document("982da0a1-673e-4c7d-8fb8-ff3e51f74408").get(),
+                        userCollection.document("51b5b274-8142-46d2-bccc-e2e894061e7f").get()))
+                .get();
+
+        var bruceReference = snapshots.get(0).getReference();
+        var alfredReference = snapshots.get(1).getReference();
+        var johnReference = snapshots.get(2).getReference();
 
         var firstRelationship = new HashMap<String, Object>();
         firstRelationship.put("relationshipId", "1");
         firstRelationship.put("hostId", "8667dadc-aecf-4678-bf14-b1a6611aa0c4");
+        firstRelationship.put("hostReference", bruceReference);
         firstRelationship.put("guestId", "982da0a1-673e-4c7d-8fb8-ff3e51f74408");
+        firstRelationship.put("guestReference", alfredReference);
         firstRelationship.put("datetime", Timestamp.parseTimestamp("2020-04-05T07:20:50.52Z"));
         firstRelationship.put("lastAccess", null);
 
         sampleMaps.add(firstRelationship);
 
         var secondRelationship = new HashMap<String, Object>();
-        secondRelationship.clear();
         secondRelationship.put("relationshipId", "2");
         secondRelationship.put("hostId", "8667dadc-aecf-4678-bf14-b1a6611aa0c4");
+        secondRelationship.put("hostReference", bruceReference);
         secondRelationship.put("guestId", "51b5b274-8142-46d2-bccc-e2e894061e7f");
+        secondRelationship.put("guestReference", johnReference);
         secondRelationship.put("datetime", Timestamp.parseTimestamp("2020-04-10T07:20:50.52Z"));
         secondRelationship.put("lastAccess", null);
 

@@ -23,5 +23,4 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleHttpMessageNotReadable() {
         return ResponseEntity.badRequest().body("Invalid JSON string.");
     }
-
 }

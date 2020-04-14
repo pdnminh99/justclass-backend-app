@@ -9,18 +9,21 @@ import java.util.Objects;
 
 class UserRequestBody extends MinifiedUser {
 
+    @JsonProperty("email")
     private String email;
 
+    @JsonProperty("firstName")
     private String firstName;
 
+    @JsonProperty("lastName")
     private String lastName;
 
-    public UserRequestBody(@JsonProperty("localId") String localId,
-                           @JsonProperty("firstName") String firstName,
-                           @JsonProperty("lastName") String lastName,
-                           @JsonProperty("displayName") String displayName,
-                           @JsonProperty("photoUrl") String photoUrl,
-                           @JsonProperty("email") String email) {
+    public UserRequestBody(String localId,
+                           String firstName,
+                           String lastName,
+                           String displayName,
+                           String photoUrl,
+                           String email) {
         super(localId, displayName, photoUrl);
         this.email = email;
         this.firstName = firstName;
