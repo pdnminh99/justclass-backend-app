@@ -164,6 +164,7 @@ public class ClassroomService implements IClassroomOperationsService {
         if (!userSnapshot.exists()) {
             throw new InvalidUserInformationException("User with localID [" + localId + "] does not exist.");
         }
+
         var now = Timestamp.now();
         // TODO: generate public code and pass to `toClassroom` method.
         var classroomInstance = classroomRequestBody.toClassroom(
