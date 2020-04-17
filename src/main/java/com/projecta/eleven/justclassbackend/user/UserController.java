@@ -82,7 +82,6 @@ public class UserController {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
-    // TODO already handle this
     @ExceptionHandler({MethodArgumentTypeMismatchException.class})
     @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
     public String handleArgumentTypeMismatchException() {
