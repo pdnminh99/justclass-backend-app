@@ -159,9 +159,8 @@ public class ClassroomService implements IClassroomOperationsService {
         validateCreateRequestInput(classroomRequestBody, localId);
 
         var userReference = userService.getUserReference(localId);
-        var userSnapshot = userReference.get().get();
 
-        if (!userSnapshot.exists()) {
+        if (!userReference.get().get().exists()) {
             throw new InvalidUserInformationException("User with localID [" + localId + "] does not exist.");
         }
 
@@ -190,11 +189,10 @@ public class ClassroomService implements IClassroomOperationsService {
                 CollaboratorRoles.OWNER)).toMap();
         repository.createCollaborator(collaboratorMap, collaboratorId);
 
-        // Set classroom metadata.
         classroomInstance.setRole(CollaboratorRoles.OWNER);
-        classroomInstance.setOwner(new MinifiedUser(userSnapshot));
-        classroomInstance.setStudentsCount(0);
-        classroomInstance.setTeachersCount(0);
+//        classroomInstance.setOwner(new MinifiedUser(userSnapshot));
+//        classroomInstance.setStudentsCount(0);
+//        classroomInstance.setTeachersCount(0);
 
         return Optional.of(classroomInstance);
     }
