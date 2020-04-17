@@ -5,12 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
 import java.util.Objects;
 
-@JsonIgnoreProperties(value = {"role", "lastAccessTimestamp"})
+@JsonIgnoreProperties(value = {"role", "lastAccessTimestamp", "owner", "studentsCount", "teachersCount"})
 public class MinifiedClassroom implements MapSerializable {
 
     @JsonProperty("classroomId")
@@ -27,6 +28,15 @@ public class MinifiedClassroom implements MapSerializable {
 
     @JsonProperty("theme")
     private Integer theme;
+
+    @JsonIgnore
+    private MinifiedUser owner;
+
+    @JsonIgnore
+    private Integer studentsCount;
+
+    @JsonIgnore
+    private Integer teachersCount;
 
     @JsonIgnore
     private Timestamp lastAccessTimestamp;
@@ -94,6 +104,38 @@ public class MinifiedClassroom implements MapSerializable {
         this.theme = theme;
     }
 
+    public Timestamp getLastAccessTimestamp() {
+        return lastAccessTimestamp;
+    }
+
+    public void setLastAccessTimestamp(Timestamp lastAccessTimestamp) {
+        this.lastAccessTimestamp = lastAccessTimestamp;
+    }
+
+    public MinifiedUser getOwner() {
+        return owner;
+    }
+
+    public void setOwner(MinifiedUser owner) {
+        this.owner = owner;
+    }
+
+    public Integer getStudentsCount() {
+        return studentsCount;
+    }
+
+    public void setStudentsCount(Integer studentsCount) {
+        this.studentsCount = studentsCount;
+    }
+
+    public Integer getTeachersCount() {
+        return teachersCount;
+    }
+
+    public void setTeachersCount(Integer teachersCount) {
+        this.teachersCount = teachersCount;
+    }
+
     @Override
     public HashMap<String, Object> toMap() {
         var map = new HashMap<String, Object>();
@@ -104,14 +146,9 @@ public class MinifiedClassroom implements MapSerializable {
         ifFieldNotNullThenPutToMap("theme", getTheme(), map);
         ifFieldNotNullThenPutToMap("lastAccessTimestamp", getLastAccessTimestamp(), map);
         ifFieldNotNullThenPutToMap("role", getRole(), map);
+        ifFieldNotNullThenPutToMap("studentsCount", getStudentsCount(), map);
+        ifFieldNotNullThenPutToMap("teachersCount", getTeachersCount(), map);
+        ifFieldNotNullThenPutToMap("owner", getOwner(), map);
         return map;
-    }
-
-    public Timestamp getLastAccessTimestamp() {
-        return lastAccessTimestamp;
-    }
-
-    public void setLastAccessTimestamp(Timestamp lastAccessTimestamp) {
-        this.lastAccessTimestamp = lastAccessTimestamp;
     }
 }
