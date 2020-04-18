@@ -52,8 +52,12 @@ public class ClassroomController {
                                                                 @PathVariable("classroomId") String classroomId)
             throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
         return service.get(localId, classroomId)
-                .map(this::handleCreateOrRetrieveNotEmpty)
+                .map(this::handleRetrieveNotEmpty)
                 .orElseGet(this::handleResponseEmpty);
+    }
+
+    private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {
+        return ResponseEntity.ok(classroom.toMap());
     }
 
 //    @GetMapping("{hostId}/{guestId}/{classroomId}")
@@ -68,11 +72,11 @@ public class ClassroomController {
                                                           @PathVariable String localId)
             throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
         return service.create(request, localId)
-                .map(this::handleCreateOrRetrieveNotEmpty)
+                .map(this::handleCreateNotEmpty)
                 .orElseGet(this::handleResponseEmpty);
     }
 
-    private ResponseEntity<HashMap<String, Object>> handleCreateOrRetrieveNotEmpty(Classroom createdClassroom) {
+    private ResponseEntity<HashMap<String, Object>> handleCreateNotEmpty(Classroom createdClassroom) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createdClassroom.toMap());
     }
