@@ -1,8 +1,10 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,8 @@ interface IClassroomRepository {
     DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap, String keyCombination) throws ExecutionException, InterruptedException;
 
     DocumentReference getCollaborator(String classroomId, String localId);
+
+    ApiFuture<QuerySnapshot> getCollaborators(String classroomId, CollaboratorRoles role);
 
     Stream<DocumentReference> getCollaboratorsByClassroom(String classroomId) throws ExecutionException, InterruptedException;
 

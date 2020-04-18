@@ -65,11 +65,6 @@ public class UserController {
                 ResponseEntity.ok(user);
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
-    public ResponseEntity<String> handleTypeMismatch() {
-        return ResponseEntity.badRequest().body("Request param 'autoUpdate' must be a boolean.");
-    }
-
     @ExceptionHandler({DateTimeParseException.class})
     public ResponseEntity<String> handleDatetimeParsingFailure() {
         return ResponseEntity

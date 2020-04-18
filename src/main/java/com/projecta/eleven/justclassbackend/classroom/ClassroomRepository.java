@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +70,19 @@ class ClassroomRepository implements IClassroomRepository {
             return null;
         }
         return collaboratorCollection.document(classroomId + localId);
+    }
+
+    @Override
+    public ApiFuture<QuerySnapshot> getCollaborators(String classroomId, CollaboratorRoles role) {
+        if (classroomId == null) {
+            return null;
+        }
+        return role == null ?
+                collaboratorCollection.whereEqualTo("classroomId", classroomId)
+                        .get() :
+                collaboratorCollection.whereEqualTo("classroomId", classroomId)
+                        .whereEqualTo("role", role.toString())
+                        .get();
     }
 
     @Override
