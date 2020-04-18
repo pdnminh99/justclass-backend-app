@@ -147,10 +147,11 @@ public class ClassroomService implements IClassroomOperationsService {
         classroomInstance.setRole(collaboratorInstance.getRole());
 
         // Update collaborators info.
-        var collaboratorUpdateMap = new HashMap<String, Object>();
-        collaboratorUpdateMap.put("lastAccessTimestamp", now);
-        collaboratorSnapshot.getReference()
-                .update(collaboratorUpdateMap);
+        // TODO considering whether should update this field.
+//        var collaboratorUpdateMap = new HashMap<String, Object>();
+//        collaboratorUpdateMap.put("lastAccessTimestamp", now);
+//        collaboratorSnapshot.getReference()
+//                .update(collaboratorUpdateMap);
 
         return Optional.of(classroomInstance);
     }
