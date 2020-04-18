@@ -3,6 +3,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.user.IUserOperations;
@@ -86,6 +87,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 .parallelStream()
                 .map(MinifiedClassroom::new)
                 .peek(classroom -> classroom.setRole(collaborators.get(index.get()).getRole()))
+                .peek(classroom -> classroom.setLastAccessTimestamp(collaborators.get(index.get()).getLastAccessTimestamp()))
                 .peek(classroom -> classroom.setOwner(owners.get(index.get())))
                 .peek(classroom -> classroom.setTeachersCount(teachersCount.get(index.get())))
                 .peek(classroom -> classroom.setStudentsCount(studentsCount.get(index.getAndIncrement())));
@@ -190,9 +192,6 @@ public class ClassroomService implements IClassroomOperationsService {
         repository.createCollaborator(collaboratorMap, collaboratorId);
 
         classroomInstance.setRole(CollaboratorRoles.OWNER);
-//        classroomInstance.setOwner(new MinifiedUser(userSnapshot));
-//        classroomInstance.setStudentsCount(0);
-//        classroomInstance.setTeachersCount(0);
 
         return Optional.of(classroomInstance);
     }
@@ -250,10 +249,11 @@ public class ClassroomService implements IClassroomOperationsService {
 
         var oldClassroomInstance = new Classroom(oldClassroomSnapshot);
         var now = Timestamp.now();
+        var shouldUpdateLastAccessTimestamp = classroom.getTitle() != null && classroom.getTitle().trim().length() != 0 &&
+                !oldClassroomInstance.getTitle().equals(classroom.getTitle()) ||
+                classroom.getSubject() != null && !oldClassroomInstance.getSubject().equals(classroom.getSubject());
 
         if (containChangesAfterCompareAndApplyUpdates(oldClassroomInstance, classroom)) {
-            System.err.println("Changes found.");
-
             var classroomMap = classroom.toMap();
             classroomMap.remove("classroomId");
             if (classroomMap.isEmpty()) {
@@ -261,14 +261,22 @@ public class ClassroomService implements IClassroomOperationsService {
             }
             // No need to exclude `publicCode` and `createdTimestamp` from `classroomMap`, since these fields are marked as @JsonIgnore.
             repository.updateClassroom(classroomMap, classroomId);
+        }
 
-            // Update `lastAccessTimestamp` of collaborator.
+        // Update `lastAccessTimestamp` of collaborator.
+        if (shouldUpdateLastAccessTimestamp) {
             var collaboratorMap = new HashMap<String, Object>();
             collaboratorMap.put("lastAccessTimestamp", now);
 
-            collaboratorSnapshot.getReference()
-                    .update(collaboratorMap);
+            var collaboratorsReferencesByClassroom = repository.getCollaborators(classroomId, null)
+                    .get()
+                    .getDocuments()
+                    .parallelStream()
+                    .map(DocumentSnapshot::getReference)
+                    .map(c -> c.update(collaboratorMap));
+            ApiFutures.allAsList(collaboratorsReferencesByClassroom.collect(Collectors.toList()));
         }
+
         oldClassroomInstance.setRole(collaboratorRole);
         oldClassroomInstance.setLastAccessTimestamp(now);
         return Optional.of(oldClassroomInstance);
@@ -291,7 +299,7 @@ public class ClassroomService implements IClassroomOperationsService {
     private boolean containChangesAfterCompareAndApplyUpdates(Classroom oldVersion, Classroom newVersion) {
         var containChanges = false;
 
-        if (newVersion.getTitle() != null && !newVersion.getTitle().equals(oldVersion.getTitle())) {
+        if (newVersion.getTitle() != null && newVersion.getTitle().trim().length() != 0 && !newVersion.getTitle().equals(oldVersion.getTitle())) {
             oldVersion.setTitle(newVersion.getTitle());
             containChanges = true;
         }
