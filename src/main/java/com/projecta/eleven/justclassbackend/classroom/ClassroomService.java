@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,6 +48,11 @@ public class ClassroomService implements IClassroomOperationsService {
                 .map(Collaborator::new)
                 .collect(Collectors.toList());
 
+        if (collaborators.isEmpty()) {
+            return Stream.empty();
+        }
+
+        // TODO what if you don't find any owner of a classroom?
         var ownersCollaborators = ApiFutures.allAsList(
                 collaborators
                         .parallelStream()
@@ -76,8 +80,7 @@ public class ClassroomService implements IClassroomOperationsService {
         var teachersCount = getCollaboratorsCount(
                 collaborators.parallelStream().map(Collaborator::getClassroomId), CollaboratorRoles.TEACHER);
 
-        AtomicInteger index = new AtomicInteger(0);
-        return ApiFutures.allAsList(
+        var classrooms = ApiFutures.allAsList(
                 collaborators
                         .parallelStream()
                         .map(Collaborator::getClassroomReference)
@@ -86,11 +89,18 @@ public class ClassroomService implements IClassroomOperationsService {
                 .get()
                 .parallelStream()
                 .map(MinifiedClassroom::new)
-                .peek(classroom -> classroom.setRole(collaborators.get(index.get()).getRole()))
-                .peek(classroom -> classroom.setLastAccessTimestamp(collaborators.get(index.get()).getLastAccessTimestamp()))
-                .peek(classroom -> classroom.setOwner(owners.get(index.get())))
-                .peek(classroom -> classroom.setTeachersCount(teachersCount.get(index.get())))
-                .peek(classroom -> classroom.setStudentsCount(studentsCount.get(index.getAndIncrement())));
+                .collect(Collectors.toList());
+
+        for (int index = 0; index < classrooms.size(); index++) {
+            var currentClassroom = classrooms.get(index);
+            currentClassroom.setRole(collaborators.get(index).getRole());
+            currentClassroom.setLastAccessTimestamp(collaborators.get(index).getLastAccessTimestamp());
+            currentClassroom.setOwner(owners.get(index));
+            currentClassroom.setTeachersCount(teachersCount.get(index));
+            currentClassroom.setStudentsCount(studentsCount.get(index));
+            classrooms.set(index, currentClassroom);
+        }
+        return classrooms.stream();
     }
 
     private List<Integer> getCollaboratorsCount(Stream<String> classroomIdStream, CollaboratorRoles role)

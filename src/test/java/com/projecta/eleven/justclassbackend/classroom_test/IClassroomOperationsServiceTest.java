@@ -6,11 +6,10 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteBatch;
 import com.google.common.collect.Lists;
-import com.projecta.eleven.justclassbackend.classroom.Classroom;
-import com.projecta.eleven.justclassbackend.classroom.Collaborator;
-import com.projecta.eleven.justclassbackend.classroom.CollaboratorRoles;
+import com.projecta.eleven.justclassbackend.classroom.*;
 import com.projecta.eleven.justclassbackend.configuration.DatabaseFailedToInitializeException;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
+import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.User;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,6 +24,10 @@ import org.springframework.context.annotation.DependsOn;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
@@ -59,6 +62,7 @@ public class IClassroomOperationsServiceTest {
     private final CollectionReference classroomCollection;
     private final CollectionReference collaboratorCollection;
     private final Firestore firestore;
+    private final IClassroomOperationsService service;
     private final Timestamp documentsCreatedTimestamp = Timestamp.now();
     private final Timestamp march25 = Timestamp.ofTimeMicroseconds(1_585_138_304_000_000L);
     private final Timestamp april7 = Timestamp.ofTimeMicroseconds(1_586_261_578_000_000L);
@@ -83,11 +87,13 @@ public class IClassroomOperationsServiceTest {
     @Autowired
     public IClassroomOperationsServiceTest(
             Firestore firestore,
+            IClassroomOperationsService service,
             @Qualifier("userCollection") CollectionReference userCollection,
             @Qualifier("classroomCollection") CollectionReference classroomCollection,
             @Qualifier("collaboratorCollection") CollectionReference collaboratorCollection) {
         this.firestore = firestore;
         this.batch = firestore.batch();
+        this.service = service;
         this.userCollection = userCollection;
         this.classroomCollection = classroomCollection;
         this.collaboratorCollection = collaboratorCollection;
@@ -212,7 +218,7 @@ public class IClassroomOperationsServiceTest {
 
         // Setup Calculus class.
         calculusOwner = new Collaborator(
-                "100",
+                calculusClass.getClassroomId() + userTom.getLocalId(),
                 calculusClassDocumentReference,
                 userTomDocumentReference,
                 march25,
@@ -222,7 +228,7 @@ public class IClassroomOperationsServiceTest {
         createVirtualCollaborator(calculusOwner);
 
         calculusStudent01 = new Collaborator(
-                "101",
+                calculusClass.getClassroomId() + userJerry.getLocalId(),
                 calculusClassDocumentReference,
                 userJerryDocumentReference,
                 march25,
@@ -232,7 +238,7 @@ public class IClassroomOperationsServiceTest {
         createVirtualCollaborator(calculusStudent01);
 
         calculusStudent02 = new Collaborator(
-                "102",
+                calculusClass.getClassroomId() + userJohn.getLocalId(),
                 calculusClassDocumentReference,
                 userJohnDocumentReference,
                 march25,
@@ -243,7 +249,7 @@ public class IClassroomOperationsServiceTest {
 
         // Setup Algorithm class.
         algorithmOwner = new Collaborator(
-                "200",
+                algorithmClass.getClassroomId() + userJerry.getLocalId(),
                 algorithmClassDocumentReference,
                 userJerryDocumentReference,
                 april7,
@@ -253,7 +259,7 @@ public class IClassroomOperationsServiceTest {
         createVirtualCollaborator(algorithmOwner);
 
         algorithmStudent = new Collaborator(
-                "201",
+                algorithmClass.getClassroomId() + userTom.getLocalId(),
                 algorithmClassDocumentReference,
                 userTomDocumentReference,
                 april7,
@@ -263,7 +269,7 @@ public class IClassroomOperationsServiceTest {
         createVirtualCollaborator(algorithmStudent);
 
         algorithmTeacher = new Collaborator(
-                "202",
+                algorithmClass.getClassroomId() + userJohn.getLocalId(),
                 algorithmClassDocumentReference,
                 userJohnDocumentReference,
                 april7,
@@ -274,7 +280,7 @@ public class IClassroomOperationsServiceTest {
 
         // Setup Cooking class.
         cookingOwner = new Collaborator(
-                "300",
+                cookingClass.getClassroomId() + userJohn.getLocalId(),
                 cookingClassDocumentReference,
                 userJohnDocumentReference,
                 april15,
@@ -284,7 +290,7 @@ public class IClassroomOperationsServiceTest {
         createVirtualCollaborator(cookingOwner);
 
         cookingTeacher01 = new Collaborator(
-                "301",
+                cookingClass.getClassroomId() + userTom.getLocalId(),
                 cookingClassDocumentReference,
                 userTomDocumentReference,
                 april15,
@@ -294,7 +300,7 @@ public class IClassroomOperationsServiceTest {
         createVirtualCollaborator(cookingTeacher01);
 
         cookingTeacher02 = new Collaborator(
-                "302",
+                cookingClass.getClassroomId() + userJerry.getLocalId(),
                 cookingClassDocumentReference,
                 userJerryDocumentReference,
                 april15,
@@ -306,7 +312,7 @@ public class IClassroomOperationsServiceTest {
 
     private void createVirtualCollaborator(Collaborator collaborator) {
         var map = collaborator.toMap();
-        batch.set(collaboratorCollection.document(collaborator.getClassroomId()), map);
+        batch.set(collaboratorCollection.document(collaborator.getCollaboratorId()), map);
     }
 
     @AfterAll
@@ -359,10 +365,91 @@ public class IClassroomOperationsServiceTest {
         batch.commit();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {""})
-    void getClassrooms_It_should_return_three_classrooms_when_role_and_timestamp_are_nulls() {
+    void assertEqualsCalculusClass(MinifiedClassroom classroom, CollaboratorRoles role) {
+        var owner = classroom.getOwner();
 
+        assertEquals(calculusClass.getClassroomId(), classroom.getClassroomId());
+        assertEquals(calculusClass.getTitle(), classroom.getTitle());
+        assertEquals(calculusClass.getSubject(), classroom.getSubject());
+        assertEquals(calculusClass.getTheme(), classroom.getTheme());
+        assertEquals(role, classroom.getRole());
+        assertEquals(2, classroom.getStudentsCount());
+        assertEquals(0, classroom.getTeachersCount());
+        assertEquals(userTom.getLocalId(), owner.getLocalId());
+        assertEquals(userTom.getDisplayName(), owner.getDisplayName());
+        assertEquals(userTom.getPhotoUrl(), owner.getPhotoUrl());
+    }
+
+    void assertEqualsAlgorithmClass(MinifiedClassroom classroom, CollaboratorRoles role) {
+        var owner = classroom.getOwner();
+
+        assertEquals(algorithmClass.getClassroomId(), classroom.getClassroomId());
+        assertEquals(algorithmClass.getTitle(), classroom.getTitle());
+        assertEquals(algorithmClass.getSubject(), classroom.getSubject());
+        assertEquals(algorithmClass.getTheme(), classroom.getTheme());
+        assertEquals(role, classroom.getRole());
+        assertEquals(1, classroom.getStudentsCount());
+        assertEquals(1, classroom.getTeachersCount());
+        assertEquals(userJerry.getLocalId(), owner.getLocalId());
+        assertEquals(userJerry.getDisplayName(), owner.getDisplayName());
+        assertEquals(userJerry.getPhotoUrl(), owner.getPhotoUrl());
+    }
+
+    void assertEqualsCookingClass(MinifiedClassroom classroom, CollaboratorRoles role) {
+        var owner = classroom.getOwner();
+
+        assertEquals(cookingClass.getClassroomId(), classroom.getClassroomId());
+        assertEquals(cookingClass.getTitle(), classroom.getTitle());
+        assertEquals(cookingClass.getSubject(), classroom.getSubject());
+        assertEquals(cookingClass.getTheme(), classroom.getTheme());
+        assertEquals(role, classroom.getRole());
+        assertEquals(0, classroom.getStudentsCount());
+        assertEquals(2, classroom.getTeachersCount());
+        assertEquals(userJohn.getLocalId(), owner.getLocalId());
+        assertEquals(userJohn.getDisplayName(), owner.getDisplayName());
+        assertEquals(userJohn.getPhotoUrl(), owner.getPhotoUrl());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"100", "200", "300"})
+    void getClassrooms_It_should_not_throw_classrooms_when_role_and_timestamp_are_nulls(String hostId) {
+        assertDoesNotThrow(() -> service.getClassrooms(hostId, null, null));
+    }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_role_and_timestamp_are_nulls()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("100", null, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(3, resultsByList.size());
+        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.OWNER);
+        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.STUDENT);
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_role_and_timestamp_are_nulls()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("200", null, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(3, resultsByList.size());
+        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
+        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.OWNER);
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_role_and_timestamp_are_nulls()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("300", null, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(3, resultsByList.size());
+        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
+        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.TEACHER);
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.OWNER);
     }
 
     @TestConfiguration
