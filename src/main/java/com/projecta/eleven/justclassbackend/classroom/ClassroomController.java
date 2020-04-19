@@ -24,7 +24,7 @@ public class ClassroomController {
         this.service = service;
     }
 
-    @GetMapping("{localId}")
+    @GetMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     @ResponseStatus(HttpStatus.OK)
     public Iterable<HashMap<String, Object>> getClassrooms(
             @PathVariable("localId") String localId,
@@ -47,7 +47,7 @@ public class ClassroomController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("{localId}/{classroomId}")
+    @GetMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> getClassroom(@PathVariable("localId") String localId,
                                                                 @PathVariable("classroomId") String classroomId)
             throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
@@ -67,7 +67,7 @@ public class ClassroomController {
 //        return ResponseEntity.ok(null);
 //    }
 
-    @PostMapping("{localId}")
+    @PostMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> create(@RequestBody ClassroomRequestBody request,
                                                           @PathVariable String localId)
             throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
@@ -85,7 +85,7 @@ public class ClassroomController {
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
-    @PatchMapping("{localId}")
+    @PatchMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> update(@PathVariable("localId") String localId,
                                                           @RequestBody Classroom newClassroomVersion)
             throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
