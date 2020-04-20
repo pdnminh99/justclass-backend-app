@@ -13,6 +13,7 @@ import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException
 import com.projecta.eleven.justclassbackend.user.User;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,8 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
@@ -410,6 +410,8 @@ public class IClassroomOperationsServiceTest {
         assertEquals(userJohn.getPhotoUrl(), owner.getPhotoUrl());
     }
 
+    // Valid cases
+
     @ParameterizedTest
     @ValueSource(strings = {"100", "200", "300"})
     void getClassrooms_It_should_not_throw_classrooms_when_role_and_timestamp_are_nulls(String hostId) {
@@ -427,6 +429,226 @@ public class IClassroomOperationsServiceTest {
         assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.STUDENT);
         assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
     }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_owner_role_and_timestamp_is_null()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCalculusClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+    }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_timestamp_is_null()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("100", null, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_student_role_and_timestamp_is_null()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("100", null, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.STUDENT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_null_role_and_at_around_timestamp_25th_march(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", null, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(3, resultsByList.size());
+        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.OWNER);
+        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.STUDENT);
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_owner_role_and_at_around_timestamp_25th_march(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCalculusClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_one_classrooms_when_user_is_Tom_with_student_role_and_at_around_timestamp_25th_march(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.STUDENT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", null, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_049_142_000_000L, 1_586_135_542_000_000L, 1_586_261_578_000_000L})
+    void getClassrooms_It_should_return_two_classrooms_when_user_is_Tom_with_null_role_and_at_around_timestamp_7th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", null, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(2, resultsByList.size());
+        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.STUDENT);
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_049_142_000_000L, 1_586_135_542_000_000L, 1_586_261_578_000_000L})
+    void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_around_timestamp_7th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(0, resultsByList.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_049_142_000_000L, 1_586_135_542_000_000L, 1_586_261_578_000_000L})
+    void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_student_role_and_at_around_timestamp_7th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.STUDENT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_049_142_000_000L, 1_586_135_542_000_000L, 1_586_261_578_000_000L})
+    void getClassrooms_It_should_return_two_classrooms_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_653_942_000_000L, 1_586_826_742_000_000L, 1_586_952_778_000_000L})
+    void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_null_role_and_at_around_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", null, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_653_942_000_000L, 1_586_826_742_000_000L, 1_586_952_778_000_000L})
+    void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_around_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(0, resultsByList.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_653_942_000_000L, 1_586_826_742_000_000L, 1_586_952_778_000_000L})
+    void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_653_942_000_000L, 1_586_826_742_000_000L, 1_586_952_778_000_000L})
+    void getClassrooms_It_should_return_empty_when_user_is_Tom_with_student_role_and_at_around_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(0, resultsByList.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_999_542_000_000L, 1_587_777_142_000_000L, 1_588_209_142_000_000L})
+    void getClassrooms_It_should_return_empty_when_user_is_Tom_with_null_role_and_at_after_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", null, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(0, resultsByList.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_999_542_000_000L, 1_587_777_142_000_000L, 1_588_209_142_000_000L})
+    void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_after_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(0, resultsByList.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_999_542_000_000L, 1_587_777_142_000_000L, 1_588_209_142_000_000L})
+    void getClassrooms_It_should_return_empty_when_user_is_Tom_with_student_role_and_at_after_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(0, resultsByList.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_586_999_542_000_000L, 1_587_777_142_000_000L, 1_588_209_142_000_000L})
+    void getClassrooms_It_should_return_empty_when_user_is_Tom_with_teacher_role_and_at_after_timestamp_15th_april(Long epoch)
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(0, resultsByList.size());
+    }
+
+    // User Tom ended.
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_role_and_timestamp_are_nulls()
@@ -450,6 +672,179 @@ public class IClassroomOperationsServiceTest {
         assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
         assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.TEACHER);
         assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+    }
+
+    // Invalid cases
+
+//    @ParameterizedTest
+//    @ValueSource(strings = {"400"})
+//    @NullSource
+//    @EmptySource
+//    void getClassrooms_It_should_return_empty_when_user_null_empty_or_no_match(String hostId)
+//            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+//        var results = service.getClassrooms(hostId, null, null)
+//                .collect(Collectors.toList());
+//
+//        assertEquals(0, results.size());
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(strings = {"400"})
+//    @NullSource
+//    @EmptySource
+//    void getClassrooms_It_should_return_empty_when_user_null_empty_or_no_match_with_owner_role(String hostId)
+//            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+//        var results = service.getClassrooms(hostId, CollaboratorRoles.OWNER, null)
+//                .collect(Collectors.toList());
+//
+//        assertEquals(0, results.size());
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(strings = {"400"})
+//    @NullSource
+//    @EmptySource
+//    void getClassrooms_It_should_return_empty_when_user_null_empty_or_no_match_with_student_role(String hostId)
+//            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+//        var results = service.getClassrooms(hostId, CollaboratorRoles.STUDENT, null)
+//                .collect(Collectors.toList());
+//
+//        assertEquals(0, results.size());
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(strings = {"400"})
+//    @NullSource
+//    @EmptySource
+//    void getClassrooms_It_should_return_empty_when_user_null_empty_or_no_match_with_teacher_role(String hostId)
+//            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+//        var results = service.getClassrooms(hostId, CollaboratorRoles.TEACHER, null)
+//                .collect(Collectors.toList());
+//
+//        assertEquals(0, results.size());
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    @NullSource
+//    void getClassrooms_It_should_return_empty_when_user_no_match_with_owner_role_and_different_timestamp(Long epoch)
+//            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+//        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+//        var results = service.getClassrooms("400", CollaboratorRoles.OWNER, timestamp)
+//                .collect(Collectors.toList());
+//
+//        assertEquals(0, results.size());
+//    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L,
+            1_585_012_342_000_000L,
+            1_585_138_304_000_000L,
+            1_586_049_142_000_000L,
+            1_586_135_542_000_000L,
+            1_586_261_578_000_000L,
+            1_586_653_942_000_000L,
+            1_586_826_742_000_000L,
+            1_586_952_778_000_000L,
+            1_586_999_542_000_000L,
+            1_587_777_142_000_000L,
+            1_588_209_142_000_000L})
+    @NullSource
+    void getClassrooms_It_should_throw_when_user_empty_with_owner_role_and_different_timestamp(Long epoch) {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.OWNER, timestamp));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L,
+            1_585_012_342_000_000L,
+            1_585_138_304_000_000L,
+            1_586_049_142_000_000L,
+            1_586_135_542_000_000L,
+            1_586_261_578_000_000L,
+            1_586_653_942_000_000L,
+            1_586_826_742_000_000L,
+            1_586_952_778_000_000L,
+            1_586_999_542_000_000L,
+            1_587_777_142_000_000L,
+            1_588_209_142_000_000L})
+    @NullSource
+    void getClassrooms_It_should_throw_when_user_empty_with_student_role_and_different_timestamp(Long epoch) {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.STUDENT, timestamp));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L,
+            1_585_012_342_000_000L,
+            1_585_138_304_000_000L,
+            1_586_049_142_000_000L,
+            1_586_135_542_000_000L,
+            1_586_261_578_000_000L,
+            1_586_653_942_000_000L,
+            1_586_826_742_000_000L,
+            1_586_952_778_000_000L,
+            1_586_999_542_000_000L,
+            1_587_777_142_000_000L,
+            1_588_209_142_000_000L})
+    @NullSource
+    void getClassrooms_It_should_throw_when_user_empty_with_teacher_role_and_different_timestamp(Long epoch) {
+        var timestamp = Timestamp.ofTimeMicroseconds(epoch);
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.TEACHER, timestamp));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L,
+            1_585_012_342_000_000L,
+            1_585_138_304_000_000L,
+            1_586_049_142_000_000L,
+            1_586_135_542_000_000L,
+            1_586_261_578_000_000L,
+            1_586_653_942_000_000L,
+            1_586_826_742_000_000L,
+            1_586_952_778_000_000L,
+            1_586_999_542_000_000L,
+            1_587_777_142_000_000L,
+            1_588_209_142_000_000L})
+    @NullSource
+    void getClassrooms_It_should_throw_when_user_null_with_owner_role_and_different_timestamp(Long epoch) {
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.OWNER, Timestamp.ofTimeMicroseconds(epoch)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L,
+            1_585_012_342_000_000L,
+            1_585_138_304_000_000L,
+            1_586_049_142_000_000L,
+            1_586_135_542_000_000L,
+            1_586_261_578_000_000L,
+            1_586_653_942_000_000L,
+            1_586_826_742_000_000L,
+            1_586_952_778_000_000L,
+            1_586_999_542_000_000L,
+            1_587_777_142_000_000L,
+            1_588_209_142_000_000L})
+    @NullSource
+    void getClassrooms_It_should_throw_when_user_null_with_student_role_and_different_timestamp(Long epoch) {
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.STUDENT, Timestamp.ofTimeMicroseconds(epoch)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L,
+            1_585_012_342_000_000L,
+            1_585_138_304_000_000L,
+            1_586_049_142_000_000L,
+            1_586_135_542_000_000L,
+            1_586_261_578_000_000L,
+            1_586_653_942_000_000L,
+            1_586_826_742_000_000L,
+            1_586_952_778_000_000L,
+            1_586_999_542_000_000L,
+            1_587_777_142_000_000L,
+            1_588_209_142_000_000L})
+    @NullSource
+    void getClassrooms_It_should_throw_when_user_null_with_teacher_role_and_different_timestamp(Long epoch) {
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.TEACHER, Timestamp.ofTimeMicroseconds(epoch)));
     }
 
     @TestConfiguration
