@@ -662,6 +662,48 @@ public class IClassroomOperationsServiceTest {
     }
 
     @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_timestamp_is_null()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("200", CollaboratorRoles.OWNER, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+    }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_timestamp_is_null()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("200", CollaboratorRoles.STUDENT, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
+    }
+
+    @Test
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_timestamp_is_null()
+            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        var results = service.getClassrooms("200", CollaboratorRoles.TEACHER, null);
+        var resultsByList = results.collect(Collectors.toList());
+
+        assertEquals(1, resultsByList.size());
+        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+    }
+
+    /**
+     * TODO: implement these.
+     * <p>
+     * Before or equal 25th March
+     * <p>
+     * After 25th March and before or equal 7th April
+     * <p>
+     * After 7th April and before or equal 15th April
+     * <p>
+     * After 15th April
+     */
+
+    @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_role_and_timestamp_are_nulls()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var results = service.getClassrooms("300", null, null);
