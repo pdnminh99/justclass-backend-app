@@ -13,7 +13,6 @@ import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException
 import com.projecta.eleven.justclassbackend.user.User;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -443,7 +442,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", null, null);
+        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -453,7 +452,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_student_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", null, null);
+        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -503,7 +502,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", null, timestamp);
+        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -749,7 +748,6 @@ public class IClassroomOperationsServiceTest {
             1_586_999_542_000_000L,
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
-    @NullSource
     void getClassrooms_It_should_throw_when_user_empty_with_owner_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
         assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.OWNER, timestamp));
@@ -768,7 +766,6 @@ public class IClassroomOperationsServiceTest {
             1_586_999_542_000_000L,
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
-    @NullSource
     void getClassrooms_It_should_throw_when_user_empty_with_student_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
         assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.STUDENT, timestamp));
@@ -787,7 +784,6 @@ public class IClassroomOperationsServiceTest {
             1_586_999_542_000_000L,
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
-    @NullSource
     void getClassrooms_It_should_throw_when_user_empty_with_teacher_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
         assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.TEACHER, timestamp));
@@ -806,7 +802,6 @@ public class IClassroomOperationsServiceTest {
             1_586_999_542_000_000L,
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
-    @NullSource
     void getClassrooms_It_should_throw_when_user_null_with_owner_role_and_different_timestamp(Long epoch) {
         assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.OWNER, Timestamp.ofTimeMicroseconds(epoch)));
     }
@@ -824,7 +819,6 @@ public class IClassroomOperationsServiceTest {
             1_586_999_542_000_000L,
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
-    @NullSource
     void getClassrooms_It_should_throw_when_user_null_with_student_role_and_different_timestamp(Long epoch) {
         assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.STUDENT, Timestamp.ofTimeMicroseconds(epoch)));
     }
@@ -842,7 +836,6 @@ public class IClassroomOperationsServiceTest {
             1_586_999_542_000_000L,
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
-    @NullSource
     void getClassrooms_It_should_throw_when_user_null_with_teacher_role_and_different_timestamp(Long epoch) {
         assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.TEACHER, Timestamp.ofTimeMicroseconds(epoch)));
     }
