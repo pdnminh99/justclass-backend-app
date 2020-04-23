@@ -703,6 +703,102 @@ public class IClassroomOperationsServiceTest {
      * After 15th April
      */
 
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_after_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_after_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_after_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_after_timestamp_15th_april(Long epoch) {
+
+    }
+
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_role_and_timestamp_are_nulls()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
@@ -714,6 +810,79 @@ public class IClassroomOperationsServiceTest {
         assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.TEACHER);
         assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.OWNER);
     }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_25th_march(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_7th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {})
+    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_15th_april(Long epoch) {
+
+    }
+
 
     // Invalid cases
 
