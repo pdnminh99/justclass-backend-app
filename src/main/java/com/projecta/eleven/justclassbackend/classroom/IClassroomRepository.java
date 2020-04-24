@@ -26,5 +26,7 @@ interface IClassroomRepository {
     Stream<DocumentReference> getMembersByClassroom(String classroomId) throws ExecutionException, InterruptedException;
 
     Stream<QueryDocumentSnapshot> getMembersByUser(String hostId, MemberRoles role) throws ExecutionException, InterruptedException;
-//    DocumentReference updateCollaborator(String key, HashMap<String, Object> map);
+
+    boolean isPublicCodeAlreadyExist(String publicCode) throws ExecutionException, InterruptedException;
+    //    DocumentReference updateCollaborator(String key, HashMap<String, Object> map);
 }

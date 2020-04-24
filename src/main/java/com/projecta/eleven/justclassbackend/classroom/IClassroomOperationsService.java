@@ -14,7 +14,7 @@ public interface IClassroomOperationsService {
 
     Optional<Classroom> create(ClassroomRequestBody classroom, String localId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 
-    Optional<Classroom> update(Classroom classroom, String localId) throws InvalidClassroomInformationException, InvalidUserInformationException, ExecutionException, InterruptedException;
+    Optional<Classroom> update(Classroom classroom, String localId, Boolean requestNewPublicCode) throws InvalidClassroomInformationException, InvalidUserInformationException, ExecutionException, InterruptedException;
 
     Optional<Boolean> delete(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 }

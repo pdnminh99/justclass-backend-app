@@ -9,7 +9,9 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import java.util.HashMap;
 import java.util.Objects;
 
-@JsonIgnoreProperties(value = {"publicCode", "createdTimestamp"})
+@JsonIgnoreProperties(value = {
+        "publicCode", "createdTimestamp", "role", "lastAccess",
+        "owner", "studentsCount", "collaboratorsCount", "lastEdit"})
 public class Classroom extends ClassroomRequestBody {
 
     @JsonIgnore

@@ -187,9 +187,8 @@ public class ClassroomService implements IClassroomOperationsService {
         DocumentReference userReference = verifyUserExistenceOrElseThrow(localId);
 
         var now = Timestamp.now();
-        // TODO: generate public code and pass to `toClassroom` method.
         var classroom = classroomRequestBody.toClassroom(
-                now, NotePermissions.VIEW_COMMENT_POST, generatePublicCode());
+                now, NotePermissions.VIEW_COMMENT_POST, generateNewPublicCode());
         classroom.setLastEdit(now);
 
         DocumentReference classroomReference = createClassroomDocument(classroom);
@@ -201,10 +200,20 @@ public class ClassroomService implements IClassroomOperationsService {
         return Optional.of(classroom);
     }
 
-    private String generatePublicCode() {
-        CRC32 crc = new CRC32();
-        crc.update(longToBytes(System.currentTimeMillis()));
-        return Long.toHexString(crc.getValue());
+    private String generateNewPublicCode() throws ExecutionException, InterruptedException {
+        var isCorrect = false;
+        var crc = new CRC32();
+        String newPublicCode = "";
+        long currentMillis;
+
+        while (!isCorrect) {
+            currentMillis = System.currentTimeMillis();
+            crc.update(longToBytes(currentMillis));
+            newPublicCode = Long.toHexString(crc.getValue());
+            isCorrect = !repository.isPublicCodeAlreadyExist(newPublicCode);
+        }
+
+        return newPublicCode;
     }
 
     private byte[] longToBytes(long x) {
@@ -268,7 +277,7 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Classroom> update(Classroom classroom, String localId)
+    public Optional<Classroom> update(Classroom classroom, String localId, Boolean requestNewPublicCode)
             throws InvalidClassroomInformationException, InvalidUserInformationException, ExecutionException, InterruptedException {
         validateClassroomUpdateRequestInput(classroom, localId);
         var classroomId = classroom.getClassroomId();
@@ -300,11 +309,14 @@ public class ClassroomService implements IClassroomOperationsService {
                 classroom.getSubject() != null && !originalClassroom.getSubject().equals(classroom.getSubject()) ||
                 classroom.getTheme() != null && !originalClassroom.getTheme().equals(classroom.getTheme());
 
-        if (containChangesAfterCompareAndApplyUpdates(originalClassroom, classroom)) {
+        // Processing public code here.
+        requestNewPublicCode = verifyNewPublicCodeRequest(originalClassroom.getPublicCode(), requestNewPublicCode);
+
+        if (containChangesAfterCompareAndApplyUpdates(originalClassroom, classroom, requestNewPublicCode)) {
             var classroomMap = classroom.toMap();
             classroomMap.remove("classroomId");
-            if (classroomMap.isEmpty()) {
-                throw new IllegalArgumentException("There is nothing to update. If you want to retrieve full data of classroom. Try the `GET` method.");
+            if (requestNewPublicCode != null && !requestNewPublicCode) {
+                classroomMap.put("publicCode", null);
             }
             // No need to exclude `publicCode` and `createdTimestamp` from `classroomMap`, since these fields are marked as @JsonIgnore.
             repository.updateClassroom(classroomMap, classroomId);
@@ -324,6 +336,19 @@ public class ClassroomService implements IClassroomOperationsService {
         return Optional.of(originalClassroom);
     }
 
+    /**
+     * null: No change
+     * true: Generate new public code
+     * false: switch off public code
+     */
+    private Boolean verifyNewPublicCodeRequest(String originalPublicCode, Boolean publicCodeRequest) {
+        if (publicCodeRequest != null && !publicCodeRequest ||
+                publicCodeRequest == null && originalPublicCode == null) {
+            return null;
+        }
+        return publicCodeRequest != null;
+    }
+
     private void validateClassroomUpdateRequestInput(Classroom classroom, String localId) throws InvalidClassroomInformationException, InvalidUserInformationException {
         if (Objects.isNull(classroom) || Objects.isNull(classroom.getClassroomId()) || classroom.getClassroomId().trim().length() == 0) {
             throw new InvalidClassroomInformationException("ClassroomId must be included to execute the edit task.",
@@ -338,7 +363,7 @@ public class ClassroomService implements IClassroomOperationsService {
         }
     }
 
-    private boolean containChangesAfterCompareAndApplyUpdates(Classroom oldVersion, Classroom newVersion) {
+    private boolean containChangesAfterCompareAndApplyUpdates(Classroom oldVersion, Classroom newVersion, Boolean requireNewPublicCode) throws ExecutionException, InterruptedException {
         var containChanges = false;
 
         if (newVersion.getTitle() != null && newVersion.getTitle().trim().length() != 0 && !newVersion.getTitle().equals(oldVersion.getTitle())) {
@@ -367,6 +392,14 @@ public class ClassroomService implements IClassroomOperationsService {
         }
         if (newVersion.getTheme() != null && !newVersion.getTheme().equals(oldVersion.getTheme())) {
             oldVersion.setTheme(newVersion.getTheme());
+            containChanges = true;
+        }
+        if (requireNewPublicCode != null) {
+            String newPublicCode = requireNewPublicCode ?
+                    generateNewPublicCode() :
+                    null;
+            newVersion.setPublicCode(newPublicCode);
+            oldVersion.setPublicCode(newPublicCode);
             containChanges = true;
         }
         return containChanges;

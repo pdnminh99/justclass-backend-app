@@ -60,12 +60,17 @@ public class ClassroomController {
         return ResponseEntity.ok(classroom.toMap());
     }
 
-//    @GetMapping("{hostId}/{guestId}/{classroomId}")
-//    public ResponseEntity<Boolean> invite(@PathVariable("hostId") String hostId,
-//                                          @PathVariable("guestId") String guestId,
-//                                          @PathVariable("classroomId") String classroomId) {
-//        return ResponseEntity.ok(null);
-//    }
+    @PutMapping(value = "{localId}", produces = "application/json;charset=utf-8")
+    public ResponseEntity<HashMap<String, Object>> inviteMembers(@PathVariable("localId") String localId,
+                                                                 @RequestBody Iterable<HashMap<String, String>> invitations) {
+        return ResponseEntity.ok(new HashMap<String, Object>());
+    }
+
+    @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
+    public ResponseEntity<HashMap<String, Object>> joinClassroom(@PathVariable("localId") String localId,
+                                                                 @PathVariable("publicCode") String publicCode) {
+        return ResponseEntity.ok(new HashMap<String, Object>());
+    }
 
     @PostMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> create(@RequestBody ClassroomRequestBody request,
@@ -85,11 +90,16 @@ public class ClassroomController {
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
+
+    // TODO why not allow null, new public code param.
     @PatchMapping(value = "{localId}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<HashMap<String, Object>> update(@PathVariable("localId") String localId,
-                                                          @RequestBody Classroom newClassroomVersion)
+    public ResponseEntity<HashMap<String, Object>> update(
+            @PathVariable("localId") String localId,
+            @Nullable
+            @RequestParam(value = "requestNewPublicCode", required = false, defaultValue = "false") Boolean requestNewPublicCode,
+            @RequestBody Classroom newClassroomVersion)
             throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
-        return service.update(newClassroomVersion, localId)
+        return service.update(newClassroomVersion, localId, requestNewPublicCode)
                 .map(Classroom::toMap)
                 .map(ResponseEntity::ok)
                 .orElseGet(this::handleResponseEmpty);

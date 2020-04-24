@@ -106,4 +106,21 @@ class ClassroomRepository implements IClassroomRepository {
                 .getDocuments()
                 .stream();
     }
+
+    @Override
+    public boolean isPublicCodeAlreadyExist(String publicCode) throws ExecutionException, InterruptedException {
+        QuerySnapshot snapshots = classroomsCollection.whereEqualTo("publicCode", publicCode)
+                .get()
+                .get();
+        if (snapshots.size() == 0) {
+            return false;
+        }
+        // TODO save logs here
+        System.err.println("Found classrooms with duplicate public code: " + publicCode);
+        snapshots.getDocuments()
+                .stream()
+                .map(Classroom::new)
+                .forEach(System.out::println);
+        return true;
+    }
 }

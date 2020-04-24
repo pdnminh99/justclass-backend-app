@@ -11,7 +11,7 @@ import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 import java.util.HashMap;
 import java.util.Objects;
 
-@JsonIgnoreProperties(value = {"role", "lastAccessTimestamp", "owner", "studentsCount", "teachersCount", "lastEdit"})
+@JsonIgnoreProperties(value = {"role", "lastAccess", "owner", "studentsCount", "collaboratorsCount", "lastEdit"})
 public class MinifiedClassroom implements MapSerializable {
 
     @JsonProperty("classroomId")
