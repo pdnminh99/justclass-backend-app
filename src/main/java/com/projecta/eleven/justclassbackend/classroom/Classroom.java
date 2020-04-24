@@ -29,11 +29,12 @@ public class Classroom extends ClassroomRequestBody {
                      String room,
                      Integer theme,
                      Timestamp createdTimestamp,
-                     CollaboratorRoles role,
-                     Timestamp lastAccessTimestamp,
+                     MemberRoles role,
+                     Timestamp lastAccess,
+                     Timestamp lastEdit,
                      NotePermissions studentsNotePermission,
                      String publicCode) {
-        super(classroomId, title, description, section, subject, room, theme, role, lastAccessTimestamp);
+        super(classroomId, title, description, section, subject, room, theme, role, lastAccess, lastEdit);
         this.createdTimestamp = createdTimestamp;
         this.studentsNotePermission = studentsNotePermission;
         this.publicCode = publicCode;

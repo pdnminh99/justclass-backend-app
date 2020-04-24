@@ -16,20 +16,20 @@ import java.util.stream.Stream;
 @Repository("firestoreRepository")
 class UserRepository implements IUserRepository {
 
-    private final CollectionReference userCollection;
+    private final CollectionReference usersCollection;
 
-    private final CollectionReference friendCollection;
+    private final CollectionReference friendsCollection;
 
     @Autowired
-    public UserRepository(@Qualifier("userCollection") CollectionReference userCollection,
-                          @Qualifier("friendCollection") CollectionReference friendCollection) {
-        this.userCollection = userCollection;
-        this.friendCollection = friendCollection;
+    public UserRepository(@Qualifier("usersCollection") CollectionReference usersCollection,
+                          @Qualifier("friendsCollection") CollectionReference friendsCollection) {
+        this.usersCollection = usersCollection;
+        this.friendsCollection = friendsCollection;
     }
 
     @Override
     public Optional<User> createUser(UserRequestBody user) {
-        DocumentReference documentReference = userCollection
+        DocumentReference documentReference = usersCollection
                 .document(user.getLocalId());
         HashMap<String, Object> userMap = user.toMap();
         userMap.remove("localId");
@@ -75,7 +75,7 @@ class UserRepository implements IUserRepository {
 
     @Override
     public void edit(String localId, HashMap<String, Object> changesMap) {
-        DocumentReference documentReference = userCollection
+        DocumentReference documentReference = usersCollection
                 .document(localId);
         documentReference.update(changesMap);
     }
@@ -85,12 +85,12 @@ class UserRepository implements IUserRepository {
         if (Objects.isNull(localId)) {
             return null;
         }
-        return userCollection.document(localId);
+        return usersCollection.document(localId);
     }
 
     @Override
     public Optional<User> getUser(String localId) throws ExecutionException, InterruptedException {
-        DocumentSnapshot document = userCollection
+        DocumentSnapshot document = usersCollection
                 .document(localId)
                 .get()
                 .get();
@@ -117,7 +117,7 @@ class UserRepository implements IUserRepository {
     }
 
     private ApiFuture<QuerySnapshot> queryFriendsDocuments(String hostId, String fieldToCompare, Timestamp lastTimeRequest) {
-        var collection = friendCollection
+        var collection = friendsCollection
                 .whereEqualTo(fieldToCompare, hostId)
                 .orderBy("datetime", Query.Direction.ASCENDING);
         return Objects.isNull(lastTimeRequest) ?

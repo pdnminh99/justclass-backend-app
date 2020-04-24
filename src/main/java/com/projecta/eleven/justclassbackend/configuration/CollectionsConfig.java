@@ -23,38 +23,38 @@ public class CollectionsConfig {
         this.firestore = firestore;
     }
 
-    @Bean("userCollection")
+    @Bean("usersCollection")
     @DependsOn("firestore")
     @Scope("singleton")
-    public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
+    public CollectionReference getUsersCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
                 .map(db -> db.collection(isDeploymentEnvironment ? "users" : "users_dev"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
 
-    @Bean("friendCollection")
+    @Bean("friendsCollection")
     @DependsOn("firestore")
     @Scope("singleton")
-    public CollectionReference getFriendCollection() throws DatabaseFailedToInitializeException {
+    public CollectionReference getFriendsCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
                 .map(db -> db.collection(isDeploymentEnvironment ? "friends" : "friends_dev"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
 
     }
 
-    @Bean("collaboratorCollection")
+    @Bean("membersCollection")
     @DependsOn("firestore")
     @Scope("singleton")
-    public CollectionReference getCollaboratorCollection() throws DatabaseFailedToInitializeException {
+    public CollectionReference getMembersCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
-                .map(db -> db.collection(isDeploymentEnvironment ? "collaborators" : "collaborators_dev"))
+                .map(db -> db.collection(isDeploymentEnvironment ? "members" : "members_dev"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
 
-    @Bean("classroomCollection")
+    @Bean("classroomsCollection")
     @DependsOn("firestore")
     @Scope("singleton")
-    public CollectionReference getClassroomCollection() throws DatabaseFailedToInitializeException {
+    public CollectionReference getClassroomsCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
                 .map(db -> db.collection(isDeploymentEnvironment ? "classrooms" : "classrooms_dev"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);

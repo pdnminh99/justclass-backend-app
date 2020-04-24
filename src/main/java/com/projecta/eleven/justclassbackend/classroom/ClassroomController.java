@@ -29,7 +29,7 @@ public class ClassroomController {
     public Iterable<HashMap<String, Object>> getClassrooms(
             @PathVariable("localId") String localId,
             @Nullable
-            @RequestParam(value = "role", required = false) CollaboratorRoles role,
+            @RequestParam(value = "role", required = false) MemberRoles role,
             @Nullable
             @RequestParam(value = "lastRequest", required = false) String lastRequest,
             @Nullable

@@ -35,16 +35,16 @@ public class IUserOperationsTest {
 
     private final IUserOperations service;
 
-    private final CollectionReference userCollection;
+    private final CollectionReference usersCollection;
 
     private int currentLocalId = 0;
     private final LinkedList<String> localIdsToBeRemoved = new LinkedList<>();
 
     @Autowired
     public IUserOperationsTest(IUserOperations service,
-                               @Qualifier("userCollection") CollectionReference userCollection) {
+                               @Qualifier("usersCollection") CollectionReference usersCollection) {
         this.service = service;
-        this.userCollection = userCollection;
+        this.usersCollection = usersCollection;
     }
 
     private final String firstNameExpected = "John";
@@ -68,7 +68,7 @@ public class IUserOperationsTest {
         ApiFutures.allAsList(
                 localIdsToBeRemoved
                         .stream()
-                        .map(i -> userCollection.document(i).delete())
+                        .map(i -> usersCollection.document(i).delete())
                         .collect(Collectors.toList()));
     }
 
@@ -1044,9 +1044,9 @@ public class IUserOperationsTest {
             this.firestore = firestore;
         }
 
-        @Bean("userCollection")
+        @Bean("usersCollection")
         @DependsOn("firestore")
-        public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
+        public CollectionReference getUsersCollection() throws DatabaseFailedToInitializeException {
             return Optional.ofNullable(firestore)
                     .map(db -> db.collection("users_test"))
                     .orElseThrow(DatabaseFailedToInitializeException::new);

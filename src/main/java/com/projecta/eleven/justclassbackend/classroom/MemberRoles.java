@@ -6,37 +6,37 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Arrays;
 import java.util.Objects;
 
-public enum CollaboratorRoles {
+public enum MemberRoles {
     OWNER("OWNER"),
-    TEACHER("TEACHER"),
+    COLLABORATOR("COLLABORATOR"),
     STUDENT("STUDENT");
 
     @JsonIgnore
     private final String role;
 
     @JsonIgnore
-    CollaboratorRoles(String role) {
+    MemberRoles(String role) {
         this.role = role;
     }
 
     @JsonCreator
-    public static CollaboratorRoles fromText(String text) {
+    public static MemberRoles fromText(String text) {
         if (Objects.isNull(text)) {
             return null;
         }
-        return CollaboratorRoles.parseRole(text);
+        return MemberRoles.parseRole(text);
     }
 
-    private static CollaboratorRoles parseRole(String text) {
+    private static MemberRoles parseRole(String text) {
         final String lowerCaseText = text.toLowerCase();
 
-        return Arrays.stream(CollaboratorRoles.values())
+        return Arrays.stream(MemberRoles.values())
                 .filter(v -> isRoleMatchesText(v, lowerCaseText))
                 .findAny()
                 .orElseThrow(IllegalArgumentException::new);
     }
 
-    private static boolean isRoleMatchesText(CollaboratorRoles v, String lowerCaseText) {
+    private static boolean isRoleMatchesText(MemberRoles v, String lowerCaseText) {
         String lowerCaseValue = v.toString().toLowerCase();
         String lowerCaseName = v.name().toLowerCase();
 

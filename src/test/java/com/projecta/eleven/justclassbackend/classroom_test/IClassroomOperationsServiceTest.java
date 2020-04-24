@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 public class IClassroomOperationsServiceTest {
 
-    private final CollectionReference userCollection;
+    private final CollectionReference usersCollection;
 
     /*
      * TEST PLAN
@@ -58,8 +58,8 @@ public class IClassroomOperationsServiceTest {
      *
      *
      */
-    private final CollectionReference classroomCollection;
-    private final CollectionReference collaboratorCollection;
+    private final CollectionReference classroomsCollection;
+    private final CollectionReference membersCollection;
     private final Firestore firestore;
     private final IClassroomOperationsService service;
     private final Timestamp documentsCreatedTimestamp = Timestamp.now();
@@ -71,31 +71,31 @@ public class IClassroomOperationsServiceTest {
     private User userJerry;
     private User userJohn;
     private Classroom calculusClass;
-    private Collaborator calculusOwner;
-    private Collaborator calculusStudent01;
-    private Collaborator calculusStudent02;
+    private Member calculusOwner;
+    private Member calculusStudent01;
+    private Member calculusStudent02;
     private Classroom algorithmClass;
-    private Collaborator algorithmOwner;
-    private Collaborator algorithmStudent;
-    private Collaborator algorithmTeacher;
+    private Member algorithmOwner;
+    private Member algorithmStudent;
+    private Member algorithmCollaborator;
     private Classroom cookingClass;
-    private Collaborator cookingOwner;
-    private Collaborator cookingTeacher01;
-    private Collaborator cookingTeacher02;
+    private Member cookingOwner;
+    private Member cookingCollaborator01;
+    private Member cookingCollaborator02;
 
     @Autowired
     public IClassroomOperationsServiceTest(
             Firestore firestore,
             IClassroomOperationsService service,
-            @Qualifier("userCollection") CollectionReference userCollection,
-            @Qualifier("classroomCollection") CollectionReference classroomCollection,
-            @Qualifier("collaboratorCollection") CollectionReference collaboratorCollection) {
+            @Qualifier("usersCollection") CollectionReference usersCollection,
+            @Qualifier("classroomsCollection") CollectionReference classroomsCollection,
+            @Qualifier("membersCollection") CollectionReference membersCollection) {
         this.firestore = firestore;
         this.batch = firestore.batch();
         this.service = service;
-        this.userCollection = userCollection;
-        this.classroomCollection = classroomCollection;
-        this.collaboratorCollection = collaboratorCollection;
+        this.usersCollection = usersCollection;
+        this.classroomsCollection = classroomsCollection;
+        this.membersCollection = membersCollection;
     }
 
     @BeforeAll
@@ -144,10 +144,12 @@ public class IClassroomOperationsServiceTest {
     private void createVirtualUser(User userToCreate) {
         var map = userToCreate.toMap();
         map.remove("isNewUser");
-        batch.set(userCollection.document(userToCreate.getLocalId()), map);
+        batch.set(usersCollection.document(userToCreate.getLocalId()), map);
     }
 
     private void initializeClassroomsDocuments() {
+        var now = Timestamp.now();
+
         calculusClass = new Classroom(
                 "100",
                 "Calculus 01",
@@ -156,9 +158,10 @@ public class IClassroomOperationsServiceTest {
                 "CS50",
                 "101",
                 1,
+                now,
+                null,
+                null,
                 march25,
-                null,
-                null,
                 null,
                 "101"
         );
@@ -172,9 +175,10 @@ public class IClassroomOperationsServiceTest {
                 "CS50",
                 "101",
                 1,
+                now,
+                null,
+                null,
                 april7,
-                null,
-                null,
                 null,
                 "303"
         );
@@ -188,9 +192,10 @@ public class IClassroomOperationsServiceTest {
                 "CS50",
                 "101",
                 1,
+                now,
+                null,
+                null,
                 april15,
-                null,
-                null,
                 null,
                 "404"
         );
@@ -203,138 +208,139 @@ public class IClassroomOperationsServiceTest {
         map.remove("role");
         map.remove("lastAccessTimestamp");
         map.remove("studentsNotePermission");
-        batch.set(classroomCollection.document(classroomToCreate.getClassroomId()), map);
+        batch.set(classroomsCollection.document(classroomToCreate.getClassroomId()), map);
     }
 
     private void initializeCollaboratorsDocuments() {
-        var userTomDocumentReference = userCollection.document(userTom.getLocalId());
-        var userJerryDocumentReference = userCollection.document(userJerry.getLocalId());
-        var userJohnDocumentReference = userCollection.document(userJohn.getLocalId());
+        var now = Timestamp.now();
+        var userTomDocumentReference = usersCollection.document(userTom.getLocalId());
+        var userJerryDocumentReference = usersCollection.document(userJerry.getLocalId());
+        var userJohnDocumentReference = usersCollection.document(userJohn.getLocalId());
 
-        var calculusClassDocumentReference = classroomCollection.document(calculusClass.getClassroomId());
-        var algorithmClassDocumentReference = classroomCollection.document(algorithmClass.getClassroomId());
-        var cookingClassDocumentReference = classroomCollection.document(cookingClass.getClassroomId());
+        var calculusClassDocumentReference = classroomsCollection.document(calculusClass.getClassroomId());
+        var algorithmClassDocumentReference = classroomsCollection.document(algorithmClass.getClassroomId());
+        var cookingClassDocumentReference = classroomsCollection.document(cookingClass.getClassroomId());
 
         // Setup Calculus class.
-        calculusOwner = new Collaborator(
+        calculusOwner = new Member(
                 calculusClass.getClassroomId() + userTom.getLocalId(),
                 calculusClassDocumentReference,
                 userTomDocumentReference,
+                now,
                 march25,
-                march25,
-                CollaboratorRoles.OWNER
+                MemberRoles.OWNER
         );
         createVirtualCollaborator(calculusOwner);
 
-        calculusStudent01 = new Collaborator(
+        calculusStudent01 = new Member(
                 calculusClass.getClassroomId() + userJerry.getLocalId(),
                 calculusClassDocumentReference,
                 userJerryDocumentReference,
+                now,
                 march25,
-                march25,
-                CollaboratorRoles.STUDENT
+                MemberRoles.STUDENT
         );
         createVirtualCollaborator(calculusStudent01);
 
-        calculusStudent02 = new Collaborator(
+        calculusStudent02 = new Member(
                 calculusClass.getClassroomId() + userJohn.getLocalId(),
                 calculusClassDocumentReference,
                 userJohnDocumentReference,
+                now,
                 march25,
-                march25,
-                CollaboratorRoles.STUDENT
+                MemberRoles.STUDENT
         );
         createVirtualCollaborator(calculusStudent02);
 
         // Setup Algorithm class.
-        algorithmOwner = new Collaborator(
+        algorithmOwner = new Member(
                 algorithmClass.getClassroomId() + userJerry.getLocalId(),
                 algorithmClassDocumentReference,
                 userJerryDocumentReference,
+                now,
                 april7,
-                april7,
-                CollaboratorRoles.OWNER
+                MemberRoles.OWNER
         );
         createVirtualCollaborator(algorithmOwner);
 
-        algorithmStudent = new Collaborator(
+        algorithmStudent = new Member(
                 algorithmClass.getClassroomId() + userTom.getLocalId(),
                 algorithmClassDocumentReference,
                 userTomDocumentReference,
+                now,
                 april7,
-                april7,
-                CollaboratorRoles.STUDENT
+                MemberRoles.STUDENT
         );
         createVirtualCollaborator(algorithmStudent);
 
-        algorithmTeacher = new Collaborator(
+        algorithmCollaborator = new Member(
                 algorithmClass.getClassroomId() + userJohn.getLocalId(),
                 algorithmClassDocumentReference,
                 userJohnDocumentReference,
+                now,
                 april7,
-                april7,
-                CollaboratorRoles.TEACHER
+                MemberRoles.COLLABORATOR
         );
-        createVirtualCollaborator(algorithmTeacher);
+        createVirtualCollaborator(algorithmCollaborator);
 
         // Setup Cooking class.
-        cookingOwner = new Collaborator(
+        cookingOwner = new Member(
                 cookingClass.getClassroomId() + userJohn.getLocalId(),
                 cookingClassDocumentReference,
                 userJohnDocumentReference,
+                now,
                 april15,
-                april15,
-                CollaboratorRoles.OWNER
+                MemberRoles.OWNER
         );
         createVirtualCollaborator(cookingOwner);
 
-        cookingTeacher01 = new Collaborator(
+        cookingCollaborator01 = new Member(
                 cookingClass.getClassroomId() + userTom.getLocalId(),
                 cookingClassDocumentReference,
                 userTomDocumentReference,
+                now,
                 april15,
-                april15,
-                CollaboratorRoles.TEACHER
+                MemberRoles.COLLABORATOR
         );
-        createVirtualCollaborator(cookingTeacher01);
+        createVirtualCollaborator(cookingCollaborator01);
 
-        cookingTeacher02 = new Collaborator(
+        cookingCollaborator02 = new Member(
                 cookingClass.getClassroomId() + userJerry.getLocalId(),
                 cookingClassDocumentReference,
                 userJerryDocumentReference,
+                now,
                 april15,
-                april15,
-                CollaboratorRoles.TEACHER
+                MemberRoles.COLLABORATOR
         );
-        createVirtualCollaborator(cookingTeacher02);
+        createVirtualCollaborator(cookingCollaborator02);
     }
 
-    private void createVirtualCollaborator(Collaborator collaborator) {
-        var map = collaborator.toMap();
-        batch.set(collaboratorCollection.document(collaborator.getCollaboratorId()), map);
+    private void createVirtualCollaborator(Member member) {
+        var map = member.toMap();
+        batch.set(membersCollection.document(member.getMemberId()), map);
     }
 
     @AfterAll
     void cleanupData() {
-        var userTomDocumentReference = userCollection.document(userTom.getLocalId());
-        var userJerryDocumentReference = userCollection.document(userJerry.getLocalId());
-        var userJohnDocumentReference = userCollection.document(userJohn.getLocalId());
+        var userTomDocumentReference = usersCollection.document(userTom.getLocalId());
+        var userJerryDocumentReference = usersCollection.document(userJerry.getLocalId());
+        var userJohnDocumentReference = usersCollection.document(userJohn.getLocalId());
 
-        var calculusClassDocumentReference = classroomCollection.document(calculusClass.getClassroomId());
-        var algorithmClassDocumentReference = classroomCollection.document(algorithmClass.getClassroomId());
-        var cookingClassDocumentReference = classroomCollection.document(cookingClass.getClassroomId());
+        var calculusClassDocumentReference = classroomsCollection.document(calculusClass.getClassroomId());
+        var algorithmClassDocumentReference = classroomsCollection.document(algorithmClass.getClassroomId());
+        var cookingClassDocumentReference = classroomsCollection.document(cookingClass.getClassroomId());
 
-        var calculusOwnerDocumentReference = collaboratorCollection.document(calculusOwner.getCollaboratorId());
-        var calculusStudent01DocumentReference = collaboratorCollection.document(calculusStudent01.getCollaboratorId());
-        var calculusStudent02DocumentReference = collaboratorCollection.document(calculusStudent01.getCollaboratorId());
+        var calculusOwnerDocumentReference = membersCollection.document(calculusOwner.getMemberId());
+        var calculusStudent01DocumentReference = membersCollection.document(calculusStudent01.getMemberId());
+        var calculusStudent02DocumentReference = membersCollection.document(calculusStudent01.getMemberId());
 
-        var algorithmOwnerDocumentReference = collaboratorCollection.document(algorithmOwner.getCollaboratorId());
-        var algorithmStudentDocumentReference = collaboratorCollection.document(algorithmStudent.getCollaboratorId());
-        var algorithmTeacherDocumentReference = collaboratorCollection.document(algorithmTeacher.getCollaboratorId());
+        var algorithmOwnerDocumentReference = membersCollection.document(algorithmOwner.getMemberId());
+        var algorithmStudentDocumentReference = membersCollection.document(algorithmStudent.getMemberId());
+        var algorithmTeacherDocumentReference = membersCollection.document(algorithmCollaborator.getMemberId());
 
-        var cookingOwnerDocumentReference = collaboratorCollection.document(cookingOwner.getCollaboratorId());
-        var cookingTeacher01DocumentReference = collaboratorCollection.document(cookingTeacher01.getCollaboratorId());
-        var cookingTeacher02DocumentReference = collaboratorCollection.document(cookingTeacher02.getCollaboratorId());
+        var cookingOwnerDocumentReference = membersCollection.document(cookingOwner.getMemberId());
+        var cookingTeacher01DocumentReference = membersCollection.document(cookingCollaborator01.getMemberId());
+        var cookingTeacher02DocumentReference = membersCollection.document(cookingCollaborator02.getMemberId());
 
         List<DocumentReference> references = Lists.newArrayList(
                 userTomDocumentReference,
@@ -364,7 +370,7 @@ public class IClassroomOperationsServiceTest {
         batch.commit();
     }
 
-    void assertEqualsCalculusClass(MinifiedClassroom classroom, CollaboratorRoles role) {
+    void assertEqualsCalculusClass(MinifiedClassroom classroom, MemberRoles role) {
         var owner = classroom.getOwner();
 
         assertEquals(calculusClass.getClassroomId(), classroom.getClassroomId());
@@ -373,13 +379,13 @@ public class IClassroomOperationsServiceTest {
         assertEquals(calculusClass.getTheme(), classroom.getTheme());
         assertEquals(role, classroom.getRole());
         assertEquals(2, classroom.getStudentsCount());
-        assertEquals(0, classroom.getTeachersCount());
+        assertEquals(0, classroom.getCollaboratorsCount());
         assertEquals(userTom.getLocalId(), owner.getLocalId());
         assertEquals(userTom.getDisplayName(), owner.getDisplayName());
         assertEquals(userTom.getPhotoUrl(), owner.getPhotoUrl());
     }
 
-    void assertEqualsAlgorithmClass(MinifiedClassroom classroom, CollaboratorRoles role) {
+    void assertEqualsAlgorithmClass(MinifiedClassroom classroom, MemberRoles role) {
         var owner = classroom.getOwner();
 
         assertEquals(algorithmClass.getClassroomId(), classroom.getClassroomId());
@@ -388,13 +394,13 @@ public class IClassroomOperationsServiceTest {
         assertEquals(algorithmClass.getTheme(), classroom.getTheme());
         assertEquals(role, classroom.getRole());
         assertEquals(1, classroom.getStudentsCount());
-        assertEquals(1, classroom.getTeachersCount());
+        assertEquals(1, classroom.getCollaboratorsCount());
         assertEquals(userJerry.getLocalId(), owner.getLocalId());
         assertEquals(userJerry.getDisplayName(), owner.getDisplayName());
         assertEquals(userJerry.getPhotoUrl(), owner.getPhotoUrl());
     }
 
-    void assertEqualsCookingClass(MinifiedClassroom classroom, CollaboratorRoles role) {
+    void assertEqualsCookingClass(MinifiedClassroom classroom, MemberRoles role) {
         var owner = classroom.getOwner();
 
         assertEquals(cookingClass.getClassroomId(), classroom.getClassroomId());
@@ -403,7 +409,7 @@ public class IClassroomOperationsServiceTest {
         assertEquals(cookingClass.getTheme(), classroom.getTheme());
         assertEquals(role, classroom.getRole());
         assertEquals(0, classroom.getStudentsCount());
-        assertEquals(2, classroom.getTeachersCount());
+        assertEquals(2, classroom.getCollaboratorsCount());
         assertEquals(userJohn.getLocalId(), owner.getLocalId());
         assertEquals(userJohn.getDisplayName(), owner.getDisplayName());
         assertEquals(userJohn.getPhotoUrl(), owner.getPhotoUrl());
@@ -424,39 +430,39 @@ public class IClassroomOperationsServiceTest {
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(3, resultsByList.size());
-        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.OWNER);
-        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.STUDENT);
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCalculusClass(resultsByList.get(2), MemberRoles.OWNER);
+        assertEqualsAlgorithmClass(resultsByList.get(1), MemberRoles.STUDENT);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_owner_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, null);
+        var results = service.getClassrooms("100", MemberRoles.OWNER, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCalculusClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+        assertEqualsCalculusClass(resultsByList.get(0), MemberRoles.OWNER);
     }
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, null);
+        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_student_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, null);
+        var results = service.getClassrooms("100", MemberRoles.STUDENT, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.STUDENT);
+        assertEqualsAlgorithmClass(resultsByList.get(0), MemberRoles.STUDENT);
     }
 
     @ParameterizedTest
@@ -468,9 +474,9 @@ public class IClassroomOperationsServiceTest {
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(3, resultsByList.size());
-        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.OWNER);
-        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.STUDENT);
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCalculusClass(resultsByList.get(2), MemberRoles.OWNER);
+        assertEqualsAlgorithmClass(resultsByList.get(1), MemberRoles.STUDENT);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @ParameterizedTest
@@ -478,11 +484,11 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_owner_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCalculusClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+        assertEqualsCalculusClass(resultsByList.get(0), MemberRoles.OWNER);
     }
 
     @ParameterizedTest
@@ -490,11 +496,11 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classrooms_when_user_is_Tom_with_student_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.STUDENT);
+        assertEqualsAlgorithmClass(resultsByList.get(0), MemberRoles.STUDENT);
     }
 
     @ParameterizedTest
@@ -502,11 +508,11 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @ParameterizedTest
@@ -518,8 +524,8 @@ public class IClassroomOperationsServiceTest {
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(2, resultsByList.size());
-        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.STUDENT);
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsAlgorithmClass(resultsByList.get(1), MemberRoles.STUDENT);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @ParameterizedTest
@@ -527,7 +533,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_around_timestamp_7th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -538,11 +544,11 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_student_role_and_at_around_timestamp_7th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.STUDENT);
+        assertEqualsAlgorithmClass(resultsByList.get(0), MemberRoles.STUDENT);
     }
 
     @ParameterizedTest
@@ -550,11 +556,11 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_two_classrooms_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @ParameterizedTest
@@ -566,7 +572,7 @@ public class IClassroomOperationsServiceTest {
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @ParameterizedTest
@@ -574,7 +580,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_around_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -585,11 +591,11 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @ParameterizedTest
@@ -597,7 +603,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_student_role_and_at_around_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -619,7 +625,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_after_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.OWNER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -630,7 +636,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_student_role_and_at_after_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.STUDENT, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -641,7 +647,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_teacher_role_and_at_after_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", CollaboratorRoles.TEACHER, timestamp);
+        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -656,39 +662,39 @@ public class IClassroomOperationsServiceTest {
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(3, resultsByList.size());
-        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
-        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.OWNER);
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCalculusClass(resultsByList.get(2), MemberRoles.STUDENT);
+        assertEqualsAlgorithmClass(resultsByList.get(1), MemberRoles.OWNER);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("200", CollaboratorRoles.OWNER, null);
+        var results = service.getClassrooms("200", MemberRoles.OWNER, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsAlgorithmClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+        assertEqualsAlgorithmClass(resultsByList.get(0), MemberRoles.OWNER);
     }
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("200", CollaboratorRoles.STUDENT, null);
+        var results = service.getClassrooms("200", MemberRoles.STUDENT, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
+        assertEqualsCalculusClass(resultsByList.get(0), MemberRoles.STUDENT);
     }
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("200", CollaboratorRoles.TEACHER, null);
+        var results = service.getClassrooms("200", MemberRoles.COLLABORATOR, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.TEACHER);
+        assertEqualsCookingClass(resultsByList.get(0), MemberRoles.COLLABORATOR);
     }
 
     /**
@@ -703,185 +709,187 @@ public class IClassroomOperationsServiceTest {
      * After 15th April
      */
 
-    @ParameterizedTest
-    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_25th_march(Long epoch) {
+//    @ParameterizedTest
+//    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_after_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_after_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_after_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_after_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @Test
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_role_and_timestamp_are_nulls()
+//            throws InterruptedException, ExecutionException, InvalidUserInformationException {
+//        var results = service.getClassrooms("300", null, null);
+//        var resultsByList = results.collect(Collectors.toList());
+//
+//        assertEquals(3, resultsByList.size());
+//        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
+//        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.TEACHER);
+//        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.OWNER);
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_25th_march(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_7th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
+//
+//    @ParameterizedTest
+//    @ValueSource(longs = {})
+//    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_15th_april(Long epoch) {
+//
+//    }
 
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_25th_march(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {1_584_839_542_000_000L, 1_585_012_342_000_000L, 1_585_138_304_000_000L})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_25th_march(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_null_role_and_at_after_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_at_after_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_at_after_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_at_after_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @Test
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_role_and_timestamp_are_nulls()
-            throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("300", null, null);
-        var resultsByList = results.collect(Collectors.toList());
-
-        assertEquals(3, resultsByList.size());
-        assertEqualsCalculusClass(resultsByList.get(2), CollaboratorRoles.STUDENT);
-        assertEqualsAlgorithmClass(resultsByList.get(1), CollaboratorRoles.TEACHER);
-        assertEqualsCookingClass(resultsByList.get(0), CollaboratorRoles.OWNER);
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_25th_march(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_25th_march(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_25th_march(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_7th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_null_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_owner_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
-
-    @ParameterizedTest
-    @ValueSource(longs = {})
-    void getClassrooms_It_should_return_three_classrooms_when_user_is_John_with_student_role_and_at_around_timestamp_15th_april(Long epoch) {
-
-    }
+    // TODO continue from here
 
 
     // Invalid cases
@@ -961,7 +969,7 @@ public class IClassroomOperationsServiceTest {
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_empty_with_owner_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.OWNER, timestamp));
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", MemberRoles.OWNER, timestamp));
     }
 
     @ParameterizedTest
@@ -979,7 +987,7 @@ public class IClassroomOperationsServiceTest {
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_empty_with_student_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.STUDENT, timestamp));
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", MemberRoles.STUDENT, timestamp));
     }
 
     @ParameterizedTest
@@ -997,7 +1005,7 @@ public class IClassroomOperationsServiceTest {
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_empty_with_teacher_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", CollaboratorRoles.TEACHER, timestamp));
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", MemberRoles.COLLABORATOR, timestamp));
     }
 
     @ParameterizedTest
@@ -1014,7 +1022,7 @@ public class IClassroomOperationsServiceTest {
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_null_with_owner_role_and_different_timestamp(Long epoch) {
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.OWNER, Timestamp.ofTimeMicroseconds(epoch)));
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, MemberRoles.OWNER, Timestamp.ofTimeMicroseconds(epoch)));
     }
 
     @ParameterizedTest
@@ -1031,7 +1039,7 @@ public class IClassroomOperationsServiceTest {
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_null_with_student_role_and_different_timestamp(Long epoch) {
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.STUDENT, Timestamp.ofTimeMicroseconds(epoch)));
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, MemberRoles.STUDENT, Timestamp.ofTimeMicroseconds(epoch)));
     }
 
     @ParameterizedTest
@@ -1048,7 +1056,7 @@ public class IClassroomOperationsServiceTest {
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_null_with_teacher_role_and_different_timestamp(Long epoch) {
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, CollaboratorRoles.TEACHER, Timestamp.ofTimeMicroseconds(epoch)));
+        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, MemberRoles.COLLABORATOR, Timestamp.ofTimeMicroseconds(epoch)));
     }
 
     @TestConfiguration
@@ -1061,27 +1069,27 @@ public class IClassroomOperationsServiceTest {
             this.firestore = firestore;
         }
 
-        @Bean("userCollection")
+        @Bean("usersCollection")
         @DependsOn("firestore")
-        public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
+        public CollectionReference getUsersCollection() throws DatabaseFailedToInitializeException {
             return Optional.ofNullable(firestore)
                     .map(db -> db.collection("users_test"))
                     .orElseThrow(DatabaseFailedToInitializeException::new);
         }
 
-        @Bean("classroomCollection")
+        @Bean("classroomsCollection")
         @DependsOn("firestore")
-        public CollectionReference getClassroomCollection() throws DatabaseFailedToInitializeException {
+        public CollectionReference getClassroomsCollection() throws DatabaseFailedToInitializeException {
             return Optional.ofNullable(firestore)
                     .map(db -> db.collection("classrooms_test"))
                     .orElseThrow(DatabaseFailedToInitializeException::new);
         }
 
-        @Bean("collaboratorCollection")
+        @Bean("membersCollection")
         @DependsOn("firestore")
-        public CollectionReference getCollaboratorCollection() throws DatabaseFailedToInitializeException {
+        public CollectionReference getMembersCollection() throws DatabaseFailedToInitializeException {
             return Optional.ofNullable(firestore)
-                    .map(db -> db.collection("collaborators_test"))
+                    .map(db -> db.collection("members_test"))
                     .orElseThrow(DatabaseFailedToInitializeException::new);
         }
 
