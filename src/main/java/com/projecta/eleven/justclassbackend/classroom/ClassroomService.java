@@ -309,9 +309,6 @@ public class ClassroomService implements IClassroomOperationsService {
                 classroom.getSubject() != null && !originalClassroom.getSubject().equals(classroom.getSubject()) ||
                 classroom.getTheme() != null && !originalClassroom.getTheme().equals(classroom.getTheme());
 
-        // Processing public code here.
-        requestNewPublicCode = verifyNewPublicCodeRequest(originalClassroom.getPublicCode(), requestNewPublicCode);
-
         if (containChangesAfterCompareAndApplyUpdates(originalClassroom, classroom, requestNewPublicCode)) {
             var classroomMap = classroom.toMap();
             classroomMap.remove("classroomId");
@@ -334,19 +331,6 @@ public class ClassroomService implements IClassroomOperationsService {
         originalClassroom.setLastAccess(now);
         originalClassroom.setLastEdit(now);
         return Optional.of(originalClassroom);
-    }
-
-    /**
-     * null: No change
-     * true: Generate new public code
-     * false: switch off public code
-     */
-    private Boolean verifyNewPublicCodeRequest(String originalPublicCode, Boolean publicCodeRequest) {
-        if (publicCodeRequest != null && !publicCodeRequest ||
-                publicCodeRequest == null && originalPublicCode == null) {
-            return null;
-        }
-        return publicCodeRequest != null;
     }
 
     private void validateClassroomUpdateRequestInput(Classroom classroom, String localId) throws InvalidClassroomInformationException, InvalidUserInformationException {
@@ -395,11 +379,14 @@ public class ClassroomService implements IClassroomOperationsService {
             containChanges = true;
         }
         if (requireNewPublicCode != null) {
-            String newPublicCode = requireNewPublicCode ?
-                    generateNewPublicCode() :
-                    null;
-            newVersion.setPublicCode(newPublicCode);
-            oldVersion.setPublicCode(newPublicCode);
+            if (requireNewPublicCode) {
+                var newPublicCode = generateNewPublicCode();
+                newVersion.setPublicCode(newPublicCode);
+                oldVersion.setPublicCode(newPublicCode);
+            } else {
+                newVersion.setPublicCode(null);
+                oldVersion.setPublicCode(null);
+            }
             containChanges = true;
         }
         return containChanges;

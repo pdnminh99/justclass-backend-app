@@ -96,7 +96,7 @@ public class ClassroomController {
     public ResponseEntity<HashMap<String, Object>> update(
             @PathVariable("localId") String localId,
             @Nullable
-            @RequestParam(value = "requestNewPublicCode", required = false, defaultValue = "false") Boolean requestNewPublicCode,
+            @RequestParam(value = "requestNewPublicCode", required = false) Boolean requestNewPublicCode,
             @RequestBody Classroom newClassroomVersion)
             throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
         return service.update(newClassroomVersion, localId, requestNewPublicCode)
