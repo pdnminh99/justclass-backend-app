@@ -38,7 +38,7 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Stream<MinifiedClassroom> getClassrooms(String hostId, MemberRoles role, Timestamp lastRequest)
+    public Stream<MinifiedClassroom> get(String hostId, MemberRoles role, Timestamp lastRequest)
             throws InvalidUserInformationException, ExecutionException, InterruptedException {
         if (Objects.isNull(hostId) || hostId.trim().length() == 0) {
             throw new InvalidUserInformationException(
@@ -418,6 +418,68 @@ public class ClassroomService implements IClassroomOperationsService {
                         .delete());
         ApiFutures.allAsList(collaboratorsByClassroom);
         return Optional.of(true);
+    }
+
+    @Override
+    public Stream<MinifiedMember> invite(String localId, String classroomId, Stream<Invitation> invitationsStream) {
+        // TODO check if this user has enough authentication to invite.
+        if (invitationsStream.count() == 0) {
+            return Stream.empty();
+        }
+
+        // TODO do not filtering out OWNER. This API can be use to transfer OWNER role.
+        var invitations = invitationsStream
+                .filter(this::isValidInvitation)
+                .map(this::preprocessingInvitation).collect(Collectors.toList());
+        removeDuplicateInvitations(invitations);
+
+        return Stream.empty();
+    }
+
+    private void removeDuplicateInvitations(List<Invitation> invitations) {
+        var index = 0;
+        var subIndex = 1;
+        Invitation currentInvitation;
+        Invitation temp;
+
+        while (index < invitations.size()) {
+            currentInvitation = invitations.get(index);
+            subIndex = index + 1;
+
+            while (subIndex < invitations.size()) {
+                temp = invitations.get(subIndex);
+
+                if (currentInvitation.equal(temp, true)) {
+                    invitations.remove(subIndex);
+                    continue;
+                }
+                subIndex++;
+            }
+            index++;
+        }
+    }
+
+    private Invitation preprocessingInvitation(Invitation invitation) {
+        if (invitation.getRole() == null) {
+            invitation.setRole(MemberRoles.STUDENT);
+        }
+        return invitation;
+    }
+
+    private boolean isValidInvitation(Invitation invitation) {
+        String email = invitation.getEmail();
+        String localId = invitation.getLocalId();
+        MemberRoles role = invitation.getRole();
+
+        return (role != MemberRoles.OWNER) &&
+                ((email != null && email.trim().length() != 0) ||
+                        (localId != null && localId.trim().length() != 0));
+    }
+
+    // TODO implement this.
+    @Override
+    public Optional<Classroom> join(String localId, String publicCode) {
+        return Optional.empty();
     }
 
     private void validateRetrieveOrDeleteRequestInput(String localId, String classroomId)

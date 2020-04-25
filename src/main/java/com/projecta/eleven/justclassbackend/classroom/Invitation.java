@@ -3,6 +3,8 @@ package com.projecta.eleven.justclassbackend.classroom;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 
+import java.util.Objects;
+
 class Invitation {
     @Nullable
     @JsonProperty("localId")
@@ -49,6 +51,14 @@ class Invitation {
 
     public void setRole(@Nullable MemberRoles role) {
         this.role = role;
+    }
+
+    public boolean equal(Invitation otherInvitation, boolean replaceWithHigherRole) {
+        boolean isSameInfo = Objects.equals(email, otherInvitation.email) && Objects.equals(localId, otherInvitation.localId);
+        if (isSameInfo && getRole() != otherInvitation.getRole() && replaceWithHigherRole) {
+            setRole(MemberRoles.COLLABORATOR);
+        }
+        return isSameInfo;
     }
 
     @Override

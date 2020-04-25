@@ -420,13 +420,13 @@ public class IClassroomOperationsServiceTest {
     @ParameterizedTest
     @ValueSource(strings = {"100", "200", "300"})
     void getClassrooms_It_should_not_throw_classrooms_when_role_and_timestamp_are_nulls(String hostId) {
-        assertDoesNotThrow(() -> service.getClassrooms(hostId, null, null));
+        assertDoesNotThrow(() -> service.get(hostId, null, null));
     }
 
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_role_and_timestamp_are_nulls()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", null, null);
+        var results = service.get("100", null, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(3, resultsByList.size());
@@ -438,7 +438,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_owner_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", MemberRoles.OWNER, null);
+        var results = service.get("100", MemberRoles.OWNER, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -448,7 +448,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, null);
+        var results = service.get("100", MemberRoles.COLLABORATOR, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -458,7 +458,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_student_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("100", MemberRoles.STUDENT, null);
+        var results = service.get("100", MemberRoles.STUDENT, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -470,7 +470,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_null_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", null, timestamp);
+        var results = service.get("100", null, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(3, resultsByList.size());
@@ -484,7 +484,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_owner_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
+        var results = service.get("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -496,7 +496,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classrooms_when_user_is_Tom_with_student_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
+        var results = service.get("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -508,7 +508,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_25th_march(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
+        var results = service.get("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -520,7 +520,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_two_classrooms_when_user_is_Tom_with_null_role_and_at_around_timestamp_7th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", null, timestamp);
+        var results = service.get("100", null, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(2, resultsByList.size());
@@ -533,7 +533,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_around_timestamp_7th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
+        var results = service.get("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -544,7 +544,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_student_role_and_at_around_timestamp_7th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
+        var results = service.get("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -556,7 +556,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_two_classrooms_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_7th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
+        var results = service.get("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -568,7 +568,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_null_role_and_at_around_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", null, timestamp);
+        var results = service.get("100", null, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -580,7 +580,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_around_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
+        var results = service.get("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -591,7 +591,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_one_classroom_when_user_is_Tom_with_teacher_role_and_at_around_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
+        var results = service.get("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -603,7 +603,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_student_role_and_at_around_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
+        var results = service.get("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -614,7 +614,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_null_role_and_at_after_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", null, timestamp);
+        var results = service.get("100", null, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -625,7 +625,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_owner_role_and_at_after_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.OWNER, timestamp);
+        var results = service.get("100", MemberRoles.OWNER, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -636,7 +636,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_student_role_and_at_after_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.STUDENT, timestamp);
+        var results = service.get("100", MemberRoles.STUDENT, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -647,7 +647,7 @@ public class IClassroomOperationsServiceTest {
     void getClassrooms_It_should_return_empty_when_user_is_Tom_with_teacher_role_and_at_after_timestamp_15th_april(Long epoch)
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        var results = service.getClassrooms("100", MemberRoles.COLLABORATOR, timestamp);
+        var results = service.get("100", MemberRoles.COLLABORATOR, timestamp);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(0, resultsByList.size());
@@ -658,7 +658,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_role_and_timestamp_are_nulls()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("200", null, null);
+        var results = service.get("200", null, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(3, resultsByList.size());
@@ -670,7 +670,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_owner_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("200", MemberRoles.OWNER, null);
+        var results = service.get("200", MemberRoles.OWNER, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -680,7 +680,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_student_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("200", MemberRoles.STUDENT, null);
+        var results = service.get("200", MemberRoles.STUDENT, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -690,7 +690,7 @@ public class IClassroomOperationsServiceTest {
     @Test
     void getClassrooms_It_should_return_three_classrooms_when_user_is_Jerry_with_teacher_role_and_timestamp_is_null()
             throws InterruptedException, ExecutionException, InvalidUserInformationException {
-        var results = service.getClassrooms("200", MemberRoles.COLLABORATOR, null);
+        var results = service.get("200", MemberRoles.COLLABORATOR, null);
         var resultsByList = results.collect(Collectors.toList());
 
         assertEquals(1, resultsByList.size());
@@ -969,7 +969,7 @@ public class IClassroomOperationsServiceTest {
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_empty_with_owner_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", MemberRoles.OWNER, timestamp));
+        assertThrows(InvalidUserInformationException.class, () -> service.get("", MemberRoles.OWNER, timestamp));
     }
 
     @ParameterizedTest
@@ -987,7 +987,7 @@ public class IClassroomOperationsServiceTest {
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_empty_with_student_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", MemberRoles.STUDENT, timestamp));
+        assertThrows(InvalidUserInformationException.class, () -> service.get("", MemberRoles.STUDENT, timestamp));
     }
 
     @ParameterizedTest
@@ -1005,7 +1005,7 @@ public class IClassroomOperationsServiceTest {
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_empty_with_teacher_role_and_different_timestamp(Long epoch) {
         var timestamp = Timestamp.ofTimeMicroseconds(epoch);
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms("", MemberRoles.COLLABORATOR, timestamp));
+        assertThrows(InvalidUserInformationException.class, () -> service.get("", MemberRoles.COLLABORATOR, timestamp));
     }
 
     @ParameterizedTest
@@ -1022,7 +1022,7 @@ public class IClassroomOperationsServiceTest {
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_null_with_owner_role_and_different_timestamp(Long epoch) {
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, MemberRoles.OWNER, Timestamp.ofTimeMicroseconds(epoch)));
+        assertThrows(InvalidUserInformationException.class, () -> service.get(null, MemberRoles.OWNER, Timestamp.ofTimeMicroseconds(epoch)));
     }
 
     @ParameterizedTest
@@ -1039,7 +1039,7 @@ public class IClassroomOperationsServiceTest {
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_null_with_student_role_and_different_timestamp(Long epoch) {
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, MemberRoles.STUDENT, Timestamp.ofTimeMicroseconds(epoch)));
+        assertThrows(InvalidUserInformationException.class, () -> service.get(null, MemberRoles.STUDENT, Timestamp.ofTimeMicroseconds(epoch)));
     }
 
     @ParameterizedTest
@@ -1056,7 +1056,7 @@ public class IClassroomOperationsServiceTest {
             1_587_777_142_000_000L,
             1_588_209_142_000_000L})
     void getClassrooms_It_should_throw_when_user_null_with_teacher_role_and_different_timestamp(Long epoch) {
-        assertThrows(InvalidUserInformationException.class, () -> service.getClassrooms(null, MemberRoles.COLLABORATOR, Timestamp.ofTimeMicroseconds(epoch)));
+        assertThrows(InvalidUserInformationException.class, () -> service.get(null, MemberRoles.COLLABORATOR, Timestamp.ofTimeMicroseconds(epoch)));
     }
 
     @TestConfiguration

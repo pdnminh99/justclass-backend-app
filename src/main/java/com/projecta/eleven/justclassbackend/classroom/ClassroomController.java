@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,7 @@ public class ClassroomController {
 
     @GetMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     @ResponseStatus(HttpStatus.OK)
-    public Iterable<HashMap<String, Object>> getClassrooms(
+    public Iterable<HashMap<String, Object>> get(
             @PathVariable("localId") String localId,
             @Nullable
             @RequestParam(value = "role", required = false) MemberRoles role,
@@ -42,36 +43,9 @@ public class ClassroomController {
                     Long.parseLong(lastRequest) * 1000;
             lastRequestTimestamp = Timestamp.ofTimeMicroseconds(epochTime);
         }
-        return service.getClassrooms(localId, role, lastRequestTimestamp)
+        return service.get(localId, role, lastRequestTimestamp)
                 .map(MinifiedClassroom::toMap)
                 .collect(Collectors.toList());
-    }
-
-    @GetMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<HashMap<String, Object>> getClassroom(@PathVariable("localId") String localId,
-                                                                @PathVariable("classroomId") String classroomId)
-            throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
-        return service.get(localId, classroomId)
-                .map(this::handleRetrieveNotEmpty)
-                .orElseGet(this::handleResponseEmpty);
-    }
-
-    private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {
-        return ResponseEntity.ok(classroom.toMap());
-    }
-
-    @PutMapping(value = "{localId}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<Iterable<MinifiedMember>> inviteMembers(@PathVariable("localId") String localId,
-                                                                  @RequestBody Iterable<Invitation> invitations) {
-        invitations.forEach(invitation -> System.out.println(invitation.toString()));
-        return ResponseEntity.ok(null);
-    }
-
-    @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<HashMap<String, Object>> joinClassroom(@PathVariable("localId") String localId,
-                                                                 @PathVariable("publicCode") String publicCode) {
-        System.out.println("LocalId: " + localId + " | Public code: " + publicCode);
-        return ResponseEntity.ok(new HashMap<>());
     }
 
     @PostMapping(value = "{localId}", produces = "application/json;charset=utf-8")
@@ -81,15 +55,6 @@ public class ClassroomController {
         return service.create(request, localId)
                 .map(this::handleCreateNotEmpty)
                 .orElseGet(this::handleResponseEmpty);
-    }
-
-    private ResponseEntity<HashMap<String, Object>> handleCreateNotEmpty(Classroom createdClassroom) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(createdClassroom.toMap());
-    }
-
-    private ResponseEntity<HashMap<String, Object>> handleResponseEmpty() {
-        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
     // TODO why not allow null, new public code param.
@@ -106,13 +71,56 @@ public class ClassroomController {
                 .orElseGet(this::handleResponseEmpty);
     }
 
+    @GetMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
+    public ResponseEntity<HashMap<String, Object>> get(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId)
+            throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
+        return service.get(localId, classroomId)
+                .map(this::handleRetrieveNotEmpty)
+                .orElseGet(this::handleResponseEmpty);
+    }
+
+    @PatchMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
+    public ResponseEntity<Iterable<MinifiedMember>> invite(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId,
+            @RequestBody List<Invitation> invitations) {
+        return ResponseEntity.ok(
+                service.invite(localId, classroomId, invitations.stream())
+                        .collect(Collectors.toList())
+        );
+    }
+
+    @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
+    public ResponseEntity<HashMap<String, Object>> join(
+            @PathVariable("localId") String localId,
+            @PathVariable("publicCode") String publicCode) {
+        System.out.println("LocalId: " + localId + " | Public code: " + publicCode);
+        return ResponseEntity.ok(new HashMap<>());
+    }
+
     @DeleteMapping("{localId}/{classroomId}")
-    public ResponseEntity<Boolean> delete(@PathVariable("localId") String localId,
-                                          @PathVariable("classroomId") String classroomId)
+    public ResponseEntity<Boolean> delete(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId)
             throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
         return service.delete(localId, classroomId)
                 .map(this::handleDeleteStateNotEmpty)
                 .orElseGet(this::handleDeleteStateEmpty);
+    }
+
+    private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {
+        return ResponseEntity.ok(classroom.toMap());
+    }
+
+    private ResponseEntity<HashMap<String, Object>> handleCreateNotEmpty(Classroom createdClassroom) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(createdClassroom.toMap());
+    }
+
+    private ResponseEntity<HashMap<String, Object>> handleResponseEmpty() {
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
 
     private ResponseEntity<Boolean> handleDeleteStateNotEmpty(boolean state) {
