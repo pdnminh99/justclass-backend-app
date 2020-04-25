@@ -61,15 +61,17 @@ public class ClassroomController {
     }
 
     @PutMapping(value = "{localId}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<HashMap<String, Object>> inviteMembers(@PathVariable("localId") String localId,
-                                                                 @RequestBody Iterable<HashMap<String, String>> invitations) {
-        return ResponseEntity.ok(new HashMap<String, Object>());
+    public ResponseEntity<Iterable<MinifiedMember>> inviteMembers(@PathVariable("localId") String localId,
+                                                                  @RequestBody Iterable<Invitation> invitations) {
+        invitations.forEach(invitation -> System.out.println(invitation.toString()));
+        return ResponseEntity.ok(null);
     }
 
     @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> joinClassroom(@PathVariable("localId") String localId,
                                                                  @PathVariable("publicCode") String publicCode) {
-        return ResponseEntity.ok(new HashMap<String, Object>());
+        System.out.println("LocalId: " + localId + " | Public code: " + publicCode);
+        return ResponseEntity.ok(new HashMap<>());
     }
 
     @PostMapping(value = "{localId}", produces = "application/json;charset=utf-8")
@@ -89,7 +91,6 @@ public class ClassroomController {
     private ResponseEntity<HashMap<String, Object>> handleResponseEmpty() {
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
     }
-
 
     // TODO why not allow null, new public code param.
     @PatchMapping(value = "{localId}", produces = "application/json;charset=utf-8")
