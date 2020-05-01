@@ -82,22 +82,22 @@ public class ClassroomController {
     }
 
     @PatchMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<Iterable<MinifiedMember>> invite(
+    @ResponseStatus(HttpStatus.OK)
+    public void invite(
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId,
             @RequestBody List<Invitation> invitations) {
-        return ResponseEntity.ok(
-                service.invite(localId, classroomId, invitations.stream())
-                        .collect(Collectors.toList())
-        );
+        service.invite(localId, classroomId, invitations.stream());
     }
 
     @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> join(
             @PathVariable("localId") String localId,
-            @PathVariable("publicCode") String publicCode) {
-        System.out.println("LocalId: " + localId + " | Public code: " + publicCode);
-        return ResponseEntity.ok(new HashMap<>());
+            @PathVariable("publicCode") String publicCode) throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        return service.join(localId, publicCode)
+                .map(Classroom::toMap)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build());
     }
 
     @DeleteMapping("{localId}/{classroomId}")

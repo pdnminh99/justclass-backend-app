@@ -20,5 +20,5 @@ public interface IClassroomOperationsService {
 
     Stream<MinifiedMember> invite(String localId, String classroomId, Stream<Invitation> invitations);
 
-    Optional<Classroom> join(String localId, String publicCode);
+    Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException;
 }

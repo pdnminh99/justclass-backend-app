@@ -147,27 +147,28 @@ public class ClassroomService implements IClassroomOperationsService {
                 .get()
                 .get());
 
-        // Only get the metadata.
-        var queries = Lists.newArrayList(
-                repository.getMembers(classroomId, MemberRoles.COLLABORATOR),
-                repository.getMembers(classroomId, MemberRoles.STUDENT)
-        );
-        if (member.getRole() == MemberRoles.OWNER) {
-            var owner = new MinifiedUser(member.getUserReference().get().get());
-            classroom.setOwner(owner);
-        } else {
-            queries.add(repository.getMembers(classroomId, MemberRoles.OWNER));
-        }
-        var querySnapshots = ApiFutures.allAsList(queries)
-                .get();
-
-        // Parse queries'result.
-        classroom.setCollaboratorsCount(querySnapshots.get(0).size());
-        classroom.setStudentsCount(querySnapshots.get(1).size());
-        if (querySnapshots.size() == 3) {
-            var owner = new MinifiedUser(querySnapshots.get(2).getDocuments().get(0));
-            classroom.setOwner(owner);
-        }
+//        // Only get the metadata.
+//        var queries = Lists.newArrayList(
+//                repository.getMembers(classroomId, MemberRoles.COLLABORATOR),
+//                repository.getMembers(classroomId, MemberRoles.STUDENT)
+//        );
+//        if (member.getRole() == MemberRoles.OWNER) {
+//            var owner = new MinifiedUser(member.getUserReference().get().get());
+//            classroom.setOwner(owner);
+//        } else {
+//            queries.add(repository.getMembers(classroomId, MemberRoles.OWNER));
+//        }
+//        var querySnapshots = ApiFutures.allAsList(queries)
+//                .get();
+//
+//        // Parse queries'result.
+//        classroom.setCollaboratorsCount(querySnapshots.get(0).size());
+//        classroom.setStudentsCount(querySnapshots.get(1).size());
+//        if (querySnapshots.size() == 3) {
+//            var owner = new MinifiedUser(querySnapshots.get(2).getDocuments().get(0));
+//            classroom.setOwner(owner);
+//        }
+        getClassroomMetadata(classroom, member);
         classroom.setLastAccess(now);
         classroom.setRole(member.getRole());
 
@@ -476,10 +477,87 @@ public class ClassroomService implements IClassroomOperationsService {
                         (localId != null && localId.trim().length() != 0));
     }
 
-    // TODO implement this.
     @Override
-    public Optional<Classroom> join(String localId, String publicCode) {
-        return Optional.empty();
+    public Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+//        if (localId == null || localId.trim().length() == 0 || publicCode == null || publicCode.trim().length() == 0) {
+//            throw new IllegalArgumentException("LocalId is null or empty; Or public code is null or empty.");
+//        }
+        DocumentReference userRef = userService.getUserReference(localId);
+        if (!userRef.get().get().exists()) {
+            throw new InvalidUserInformationException("UserId does not exist");
+        }
+        var now = Timestamp.now();
+        var optionalClassroom = repository.getClassroomByPublicCode(publicCode);
+        if (optionalClassroom.isEmpty()) {
+            return Optional.empty();
+        }
+        var classroomRef = optionalClassroom.get();
+
+        DocumentSnapshot oldMemberSnapshot = repository.getMember(classroomRef.getId(), userRef.getId())
+                .get()
+                .get();
+
+        if (oldMemberSnapshot.exists()) {
+            var oldMemberInstance = new Member(oldMemberSnapshot);
+            var classroomInstance = new Classroom(classroomRef.get().get());
+            var updateMap = new HashMap<String, Object>();
+
+            classroomInstance.setRole(oldMemberInstance.getRole());
+            classroomInstance.setLastAccess(oldMemberInstance.getLastAccess());
+
+            updateMap.put("lastAccess", now);
+            oldMemberSnapshot.getReference()
+                    .update(updateMap);
+            getClassroomMetadata(classroomInstance, oldMemberInstance);
+            return Optional.of(classroomInstance);
+        }
+
+        // Found no new classroom, attempt to create new Member.
+        var member = new Member(
+                classroomRef.getId() + "_" + userRef.getId(),
+                classroomRef,
+                userRef,
+                now,
+                now,
+                MemberRoles.STUDENT
+        );
+        repository.createMember(member);
+
+        var classroomUpdateMap = new HashMap<String, Object>();
+        classroomUpdateMap.put("lastEdit", now);
+        classroomRef.update(classroomUpdateMap);
+
+        var classroomInstance = new Classroom(classroomRef.get().get());
+        classroomInstance.setRole(MemberRoles.STUDENT);
+        classroomInstance.setLastAccess(now);
+        classroomInstance.setLastEdit(now);
+        getClassroomMetadata(classroomInstance, member);
+
+        return Optional.of(classroomInstance);
+    }
+
+    private void getClassroomMetadata(Classroom classroom, Member member) throws ExecutionException, InterruptedException {
+        var queries = Lists.newArrayList(
+                repository.getMembers(classroom.getClassroomId(), MemberRoles.COLLABORATOR),
+                repository.getMembers(classroom.getClassroomId(), MemberRoles.STUDENT)
+        );
+        if (member.getRole() == MemberRoles.OWNER) {
+            var owner = new MinifiedUser(member.getUserReference().get().get());
+            classroom.setOwner(owner);
+        } else {
+            queries.add(repository.getMembers(classroom.getClassroomId(), MemberRoles.OWNER));
+        }
+        var querySnapshots = ApiFutures.allAsList(queries)
+                .get();
+
+        // Parse queries'result.
+        classroom.setCollaboratorsCount(querySnapshots.get(0).size());
+        classroom.setStudentsCount(querySnapshots.get(1).size());
+        if (querySnapshots.size() == 3) {
+            var ownerInstance = new Member(querySnapshots.get(2).getDocuments().get(0));
+            var owner = new MinifiedUser(ownerInstance.getUserReference().get().get());
+            classroom.setOwner(owner);
+        }
     }
 
     private void validateRetrieveOrDeleteRequestInput(String localId, String classroomId)

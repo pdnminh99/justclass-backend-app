@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
@@ -28,6 +29,17 @@ class ClassroomRepository implements IClassroomRepository {
     @Override
     public DocumentReference getClassroom(String classroomId) {
         return classroomsCollection.document(classroomId);
+    }
+
+    @Override
+    public Optional<DocumentReference> getClassroomByPublicCode(String publicCode) throws ExecutionException, InterruptedException {
+        return classroomsCollection.whereEqualTo("publicCode", publicCode)
+                .get()
+                .get()
+                .getDocuments()
+                .stream()
+                .findFirst()
+                .map(DocumentSnapshot::getReference);
     }
 
     @Override
