@@ -168,7 +168,7 @@ public class ClassroomService implements IClassroomOperationsService {
 //            var owner = new MinifiedUser(querySnapshots.get(2).getDocuments().get(0));
 //            classroom.setOwner(owner);
 //        }
-        getClassroomMetadata(classroom, member);
+        getMembersMetadataForClassroom(classroom, member);
         classroom.setLastAccess(now);
         classroom.setRole(member.getRole());
 
@@ -508,7 +508,7 @@ public class ClassroomService implements IClassroomOperationsService {
             updateMap.put("lastAccess", now);
             oldMemberSnapshot.getReference()
                     .update(updateMap);
-            getClassroomMetadata(classroomInstance, oldMemberInstance);
+            getMembersMetadataForClassroom(classroomInstance, oldMemberInstance);
             return Optional.of(classroomInstance);
         }
 
@@ -531,12 +531,12 @@ public class ClassroomService implements IClassroomOperationsService {
         classroomInstance.setRole(MemberRoles.STUDENT);
         classroomInstance.setLastAccess(now);
         classroomInstance.setLastEdit(now);
-        getClassroomMetadata(classroomInstance, member);
+        getMembersMetadataForClassroom(classroomInstance, member);
 
         return Optional.of(classroomInstance);
     }
 
-    private void getClassroomMetadata(Classroom classroom, Member member) throws ExecutionException, InterruptedException {
+    private void getMembersMetadataForClassroom(Classroom classroom, Member member) throws ExecutionException, InterruptedException {
         var queries = Lists.newArrayList(
                 repository.getMembers(classroom.getClassroomId(), MemberRoles.COLLABORATOR),
                 repository.getMembers(classroom.getClassroomId(), MemberRoles.STUDENT)
