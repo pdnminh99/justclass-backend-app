@@ -151,15 +151,26 @@ public class MinifiedClassroom implements MapSerializable {
     }
 
     @Override
-    public HashMap<String, Object> toMap() {
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
 
         ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("title", getTitle(), map);
         ifFieldNotNullThenPutToMap("subject", getSubject(), map);
         ifFieldNotNullThenPutToMap("theme", getTheme(), map);
-        ifFieldNotNullThenPutToMap("lastAccess", getLastAccess(), map);
-        ifFieldNotNullThenPutToMap("lastEdit", getLastEdit(), map);
+
+        ifFieldNotNullThenPutToMap("lastAccess",
+                isTimestampInMilliseconds && getLastAccess() != null ?
+                        getLastAccess().toDate().getTime() :
+                        getLastAccess()
+                , map);
+
+        ifFieldNotNullThenPutToMap("lastEdit",
+                isTimestampInMilliseconds && getLastEdit() != null ?
+                        getLastEdit().toDate().getTime() :
+                        getLastEdit()
+                , map);
+
         ifFieldNotNullThenPutToMap("role", getRole(), map);
         ifFieldNotNullThenPutToMap("studentsCount", getStudentsCount(), map);
         ifFieldNotNullThenPutToMap("collaboratorsCount", getCollaboratorsCount(), map);

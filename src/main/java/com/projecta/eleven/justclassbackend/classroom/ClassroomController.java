@@ -44,7 +44,7 @@ public class ClassroomController {
             lastRequestTimestamp = Timestamp.ofTimeMicroseconds(epochTime);
         }
         return service.get(localId, role, lastRequestTimestamp)
-                .map(MinifiedClassroom::toMap)
+                .map(classroom -> classroom.toMap(true))
                 .collect(Collectors.toList());
     }
 
@@ -66,7 +66,7 @@ public class ClassroomController {
             @RequestBody Classroom newClassroomVersion)
             throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
         return service.update(newClassroomVersion, localId, requestNewPublicCode)
-                .map(Classroom::toMap)
+                .map(classroom -> classroom.toMap(true))
                 .map(ResponseEntity::ok)
                 .orElseGet(this::handleResponseEmpty);
     }
@@ -95,7 +95,7 @@ public class ClassroomController {
             @PathVariable("localId") String localId,
             @PathVariable("publicCode") String publicCode) throws InterruptedException, ExecutionException, InvalidUserInformationException {
         return service.join(localId, publicCode)
-                .map(Classroom::toMap)
+                .map(classroom -> classroom.toMap(true))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).build());
     }
@@ -111,12 +111,12 @@ public class ClassroomController {
     }
 
     private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {
-        return ResponseEntity.ok(classroom.toMap());
+        return ResponseEntity.ok(classroom.toMap(true));
     }
 
     private ResponseEntity<HashMap<String, Object>> handleCreateNotEmpty(Classroom createdClassroom) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(createdClassroom.toMap());
+                .body(createdClassroom.toMap(true));
     }
 
     private ResponseEntity<HashMap<String, Object>> handleResponseEmpty() {

@@ -91,15 +91,23 @@ public class Member implements MapSerializable {
         this.createdTimestamp = createdTimestamp;
     }
 
-    public HashMap<String, Object> toMap() {
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
         ifFieldNotNullThenPutToMap("collaboratorId", getMemberId(), map);
         ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
         ifFieldNotNullThenPutToMap("userId", getUserId(), map);
         ifFieldNotNullThenPutToMap("userReference", getUserReference(), map);
-        ifFieldNotNullThenPutToMap("createTimestamp", getCreatedTimestamp(), map);
-        ifFieldNotNullThenPutToMap("lastAccess", getLastAccess(), map);
+        ifFieldNotNullThenPutToMap("createTimestamp",
+                isTimestampInMilliseconds && getCreatedTimestamp() != null ?
+                        getCreatedTimestamp().toDate().getTime() :
+                        getCreatedTimestamp()
+                , map);
+        ifFieldNotNullThenPutToMap("lastAccess",
+                isTimestampInMilliseconds && getLastAccess() != null ?
+                        getLastAccess().toDate().getTime() :
+                        getLastAccess()
+                , map);
         ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
         return map;
     }

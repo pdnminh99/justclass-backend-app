@@ -74,10 +74,14 @@ public class Classroom extends ClassroomRequestBody {
     }
 
     @Override
-    public HashMap<String, Object> toMap() {
-        var map = super.toMap();
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = super.toMap(isTimestampInMilliseconds);
 
-        ifFieldNotNullThenPutToMap("createdTimestamp", createdTimestamp, map);
+        ifFieldNotNullThenPutToMap("createdTimestamp",
+                isTimestampInMilliseconds && createdTimestamp != null ?
+                        createdTimestamp.toDate().getTime() :
+                        createdTimestamp
+                , map);
         ifFieldNotNullThenPutToMap("publicCode", publicCode, map);
         if (Objects.nonNull(studentsNotePermission)) {
             ifFieldNotNullThenPutToMap("studentsNotePermission", studentsNotePermission.toString(), map);

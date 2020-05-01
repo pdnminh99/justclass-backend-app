@@ -96,8 +96,9 @@ class ClassroomRequestBody extends MinifiedClassroom {
         return toClassroom(null);
     }
 
-    public HashMap<String, Object> toMap() {
-        var map = super.toMap();
+    @Override
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = super.toMap(isTimestampInMilliseconds);
         ifFieldNotNullThenPutToMap("description", getDescription(), map);
         ifFieldNotNullThenPutToMap("section", getSection(), map);
         ifFieldNotNullThenPutToMap("room", getRoom(), map);

@@ -5,7 +5,11 @@ import java.util.Objects;
 
 public interface MapSerializable {
 
-    HashMap<String, Object> toMap();
+    default HashMap<String, Object> toMap() {
+        return toMap(false);
+    }
+
+    HashMap<String, Object> toMap(boolean isTimestampInMilliseconds);
 
     default void ifFieldNotNullThenPutToMap(String field, Object value, HashMap<String, Object> map) {
         if (Objects.nonNull(value)) {
