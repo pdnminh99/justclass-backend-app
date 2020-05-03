@@ -289,10 +289,7 @@ public class ClassroomService implements IClassroomOperationsService {
         }
 
         var originalClassroom = new Classroom(originalClassroomSnapshot);
-        boolean shouldUpdateLastEdit = classroom.getTitle() != null && classroom.getTitle().trim().length() != 0 &&
-                !originalClassroom.getTitle().equals(classroom.getTitle()) ||
-                classroom.getSubject() != null && !originalClassroom.getSubject().equals(classroom.getSubject()) ||
-                classroom.getTheme() != null && !originalClassroom.getTheme().equals(classroom.getTheme());
+        boolean shouldUpdateLastEdit = shouldUpdateLastAccess(classroom, originalClassroom);
 
         if (containChangesAfterCompareAndApplyUpdates(originalClassroom, classroom, requestNewPublicCode)) {
             var classroomMap = classroom.toMap();
@@ -305,12 +302,17 @@ public class ClassroomService implements IClassroomOperationsService {
         }
 
         var now = Timestamp.now();
-        // Update `lastAccess` of collaborators.
+        // Update `lastEdit` of collaborators.
         if (shouldUpdateLastEdit) {
             var classroomUpdateMap = new HashMap<String, Object>();
             classroomUpdateMap.put("lastEdit", now);
             member.getClassroomReference().update(classroomUpdateMap);
         }
+        // Update `lastAccess` of owner.
+        var memberUpdateMap = new HashMap<String, Object>();
+        memberUpdateMap.put("lastAccess", now);
+        memberSnapshot.getReference()
+                .update(memberUpdateMap);
 
         originalClassroom.setRole(member.getRole());
         originalClassroom.setLastAccess(now);
@@ -330,6 +332,12 @@ public class ClassroomService implements IClassroomOperationsService {
             throw new InvalidUserInformationException("LocalId of current logged in user must include to execute the edit task.",
                     new NullPointerException("LocalId is null or empty."));
         }
+    }
+
+    private boolean shouldUpdateLastAccess(Classroom oldVersion, Classroom newVersion) {
+        return newVersion.getTitle() != null && newVersion.getTitle().trim().length() != 0 && !newVersion.getTitle().equals(oldVersion.getTitle()) ||
+                newVersion.getSubject() != null && !newVersion.getSubject().equals(oldVersion.getSubject()) ||
+                newVersion.getTheme() != null && !newVersion.getTheme().equals(oldVersion.getTheme());
     }
 
     private boolean containChangesAfterCompareAndApplyUpdates(Classroom oldVersion, Classroom newVersion, Boolean requireNewPublicCode) throws ExecutionException, InterruptedException {
