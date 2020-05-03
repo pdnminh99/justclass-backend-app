@@ -7,51 +7,55 @@ import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
 
-public class Collaborator implements MapSerializable {
-    private final String collaboratorId;
+public class Member implements MapSerializable {
+    private String memberId;
 
     private DocumentReference classroomReference;
 
     private DocumentReference userReference;
 
-    private CollaboratorRoles role;
+    private MemberRoles role;
 
     private Timestamp createdTimestamp;
 
-    private Timestamp lastAccessTimestamp;
+    private Timestamp lastAccess;
 
-    public Collaborator(String collaboratorId,
-                        DocumentReference classroomReference,
-                        DocumentReference userReference,
-                        Timestamp createdTimestamp,
-                        Timestamp lastAccessTimestamp,
-                        CollaboratorRoles role) {
-        this.collaboratorId = collaboratorId;
+    public Member(String memberId,
+                  DocumentReference classroomReference,
+                  DocumentReference userReference,
+                  Timestamp createdTimestamp,
+                  Timestamp lastAccess,
+                  MemberRoles role) {
+        this.memberId = memberId;
         this.classroomReference = classroomReference;
         this.userReference = userReference;
         this.createdTimestamp = createdTimestamp;
-        this.lastAccessTimestamp = lastAccessTimestamp;
+        this.lastAccess = lastAccess;
         this.role = role;
     }
 
-    public Collaborator(DocumentSnapshot snapshot) {
-        this.collaboratorId = snapshot.getId();
+    public Member(DocumentSnapshot snapshot) {
+        this.memberId = snapshot.getId();
         this.classroomReference = snapshot.get("classroomReference", DocumentReference.class);
         this.userReference = snapshot.get("userReference", DocumentReference.class);
         this.createdTimestamp = snapshot.getTimestamp("createTimestamp");
-        this.lastAccessTimestamp = snapshot.getTimestamp("lastAccessTimestamp");
-        this.role = CollaboratorRoles.fromText(snapshot.getString("role"));
+        this.lastAccess = snapshot.getTimestamp("lastAccess");
+        this.role = MemberRoles.fromText(snapshot.getString("role"));
     }
 
-    public String getCollaboratorId() {
-        return collaboratorId;
+    public String getMemberId() {
+        return memberId;
     }
 
-    public CollaboratorRoles getRole() {
+    public void setMemberId(String newId) {
+        this.memberId = newId;
+    }
+
+    public MemberRoles getRole() {
         return role;
     }
 
-    public void setRole(CollaboratorRoles role) {
+    public void setRole(MemberRoles role) {
         this.role = role;
     }
 
@@ -87,24 +91,32 @@ public class Collaborator implements MapSerializable {
         this.createdTimestamp = createdTimestamp;
     }
 
-    public HashMap<String, Object> toMap() {
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
-        ifFieldNotNullThenPutToMap("collaboratorId", getCollaboratorId(), map);
+        ifFieldNotNullThenPutToMap("collaboratorId", getMemberId(), map);
         ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
         ifFieldNotNullThenPutToMap("userId", getUserId(), map);
         ifFieldNotNullThenPutToMap("userReference", getUserReference(), map);
-        ifFieldNotNullThenPutToMap("createTimestamp", getCreatedTimestamp(), map);
-        ifFieldNotNullThenPutToMap("lastAccessTimestamp", getLastAccessTimestamp(), map);
+        ifFieldNotNullThenPutToMap("createTimestamp",
+                isTimestampInMilliseconds && getCreatedTimestamp() != null ?
+                        getCreatedTimestamp().toDate().getTime() :
+                        getCreatedTimestamp()
+                , map);
+        ifFieldNotNullThenPutToMap("lastAccess",
+                isTimestampInMilliseconds && getLastAccess() != null ?
+                        getLastAccess().toDate().getTime() :
+                        getLastAccess()
+                , map);
         ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
         return map;
     }
 
-    public Timestamp getLastAccessTimestamp() {
-        return lastAccessTimestamp;
+    public Timestamp getLastAccess() {
+        return lastAccess;
     }
 
-    public void setLastAccessTimestamp(Timestamp lastAccessTimestamp) {
-        this.lastAccessTimestamp = lastAccessTimestamp;
+    public void setLastAccess(Timestamp lastAccess) {
+        this.lastAccess = lastAccess;
     }
 }

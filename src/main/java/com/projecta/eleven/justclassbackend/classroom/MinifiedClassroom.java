@@ -11,14 +11,14 @@ import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 import java.util.HashMap;
 import java.util.Objects;
 
-@JsonIgnoreProperties(value = {"role", "lastAccessTimestamp", "owner", "studentsCount", "teachersCount"})
+@JsonIgnoreProperties(value = {"role", "lastAccess", "owner", "studentsCount", "collaboratorsCount", "lastEdit"})
 public class MinifiedClassroom implements MapSerializable {
 
     @JsonProperty("classroomId")
     private String classroomId;
 
     @JsonIgnore
-    private CollaboratorRoles role;
+    private MemberRoles role;
 
     @JsonProperty("title")
     private String title;
@@ -36,23 +36,28 @@ public class MinifiedClassroom implements MapSerializable {
     private Integer studentsCount;
 
     @JsonIgnore
-    private Integer teachersCount;
+    private Integer collaboratorsCount;
 
     @JsonIgnore
-    private Timestamp lastAccessTimestamp;
+    private Timestamp lastAccess;
+
+    @JsonIgnore
+    private Timestamp lastEdit;
 
     public MinifiedClassroom(String classroomId,
                              String title,
                              String subject,
                              Integer theme,
-                             CollaboratorRoles role,
-                             Timestamp lastAccessTimestamp) {
+                             MemberRoles role,
+                             Timestamp lastAccess,
+                             Timestamp lastEdit) {
         this.classroomId = classroomId;
         this.title = title;
         this.subject = subject;
         this.theme = theme;
         this.role = role;
-        this.lastAccessTimestamp = lastAccessTimestamp;
+        this.lastAccess = lastAccess;
+        this.lastEdit = lastEdit;
     }
 
     public MinifiedClassroom(DocumentSnapshot snapshot) {
@@ -60,8 +65,9 @@ public class MinifiedClassroom implements MapSerializable {
         this.title = snapshot.getString("title");
         this.subject = snapshot.getString("subject");
         this.theme = Objects.requireNonNull(snapshot.getLong("theme")).intValue();
-        this.role = CollaboratorRoles.fromText(snapshot.getString("role"));
-        this.lastAccessTimestamp = snapshot.getTimestamp("lastAccessTimestamp");
+        this.role = MemberRoles.fromText(snapshot.getString("role"));
+        this.lastAccess = snapshot.getTimestamp("lastAccess");
+        this.lastEdit = snapshot.getTimestamp("lastEdit");
     }
 
     public String getClassroomId() {
@@ -72,11 +78,11 @@ public class MinifiedClassroom implements MapSerializable {
         this.classroomId = classroomId;
     }
 
-    public CollaboratorRoles getRole() {
+    public MemberRoles getRole() {
         return role;
     }
 
-    public void setRole(CollaboratorRoles role) {
+    public void setRole(MemberRoles role) {
         this.role = role;
     }
 
@@ -104,12 +110,12 @@ public class MinifiedClassroom implements MapSerializable {
         this.theme = theme;
     }
 
-    public Timestamp getLastAccessTimestamp() {
-        return lastAccessTimestamp;
+    public Timestamp getLastAccess() {
+        return lastAccess;
     }
 
-    public void setLastAccessTimestamp(Timestamp lastAccessTimestamp) {
-        this.lastAccessTimestamp = lastAccessTimestamp;
+    public void setLastAccess(Timestamp lastAccess) {
+        this.lastAccess = lastAccess;
     }
 
     public MinifiedUser getOwner() {
@@ -128,26 +134,46 @@ public class MinifiedClassroom implements MapSerializable {
         this.studentsCount = studentsCount;
     }
 
-    public Integer getTeachersCount() {
-        return teachersCount;
+    public Integer getCollaboratorsCount() {
+        return collaboratorsCount;
     }
 
-    public void setTeachersCount(Integer teachersCount) {
-        this.teachersCount = teachersCount;
+    public void setCollaboratorsCount(Integer collaboratorsCount) {
+        this.collaboratorsCount = collaboratorsCount;
+    }
+
+    public Timestamp getLastEdit() {
+        return lastEdit;
+    }
+
+    public void setLastEdit(Timestamp lastEdit) {
+        this.lastEdit = lastEdit;
     }
 
     @Override
-    public HashMap<String, Object> toMap() {
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
 
         ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("title", getTitle(), map);
         ifFieldNotNullThenPutToMap("subject", getSubject(), map);
         ifFieldNotNullThenPutToMap("theme", getTheme(), map);
-        ifFieldNotNullThenPutToMap("lastAccessTimestamp", getLastAccessTimestamp(), map);
+
+        ifFieldNotNullThenPutToMap("lastAccess",
+                isTimestampInMilliseconds && getLastAccess() != null ?
+                        getLastAccess().toDate().getTime() :
+                        getLastAccess()
+                , map);
+
+        ifFieldNotNullThenPutToMap("lastEdit",
+                isTimestampInMilliseconds && getLastEdit() != null ?
+                        getLastEdit().toDate().getTime() :
+                        getLastEdit()
+                , map);
+
         ifFieldNotNullThenPutToMap("role", getRole(), map);
         ifFieldNotNullThenPutToMap("studentsCount", getStudentsCount(), map);
-        ifFieldNotNullThenPutToMap("teachersCount", getTeachersCount(), map);
+        ifFieldNotNullThenPutToMap("collaboratorsCount", getCollaboratorsCount(), map);
         ifFieldNotNullThenPutToMap("owner", getOwner(), map);
         return map;
     }

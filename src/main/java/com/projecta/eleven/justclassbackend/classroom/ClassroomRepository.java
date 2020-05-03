@@ -1,94 +1,100 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.api.core.ApiFuture;
-import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 @Repository
 class ClassroomRepository implements IClassroomRepository {
 
-    private final CollectionReference classroomCollection;
+    private final Firestore firestore;
+    private WriteBatch writeBatch;
 
-    private final CollectionReference collaboratorCollection;
+    private final CollectionReference classroomsCollection;
+
+    private final CollectionReference membersCollection;
 
     @Autowired
-    ClassroomRepository(@Qualifier("classroomCollection") CollectionReference classroomCollection,
-                        @Qualifier("collaboratorCollection") CollectionReference collaboratorCollection) {
-        this.classroomCollection = classroomCollection;
-        this.collaboratorCollection = collaboratorCollection;
+    ClassroomRepository(
+            Firestore firestore,
+            @Qualifier("classroomsCollection") CollectionReference classroomsCollection,
+            @Qualifier("membersCollection") CollectionReference membersCollection) {
+        this.firestore = firestore;
+        writeBatch = firestore.batch();
+        this.classroomsCollection = classroomsCollection;
+        this.membersCollection = membersCollection;
     }
 
     @Override
     public DocumentReference getClassroom(String classroomId) {
-        return classroomCollection.document(classroomId);
+        return classroomsCollection.document(classroomId);
     }
 
     @Override
-    public DocumentReference createClassroom(Map<String, Object> classroomMap)
-            throws ExecutionException, InterruptedException, InvalidClassroomInformationException {
-        if (Objects.isNull(classroomMap)) {
-            throw new InvalidClassroomInformationException("Parameter `classroomMap` (type of Classroom) for `create` method is null.", new NullPointerException("Classroom instance is null."));
-        }
-        return classroomCollection
-                .add(classroomMap)
+    public Optional<DocumentReference> getClassroomByPublicCode(String publicCode) throws ExecutionException, InterruptedException {
+        return classroomsCollection.whereEqualTo("publicCode", publicCode)
+                .get()
+                .get()
+                .getDocuments()
+                .stream()
+                .findFirst()
+                .map(DocumentSnapshot::getReference);
+    }
+
+    @Override
+    public DocumentReference createClassroom(Classroom classroom)
+            throws ExecutionException, InterruptedException {
+        return classroomsCollection
+                .add(classroom.toMap())
                 .get();
     }
 
     @Override
-    public DocumentReference updateClassroom(Map<String, Object> classroom, String classroomId)
-            throws ExecutionException, InterruptedException {
-        var classroomReference = classroomCollection.document(classroomId);
+    public DocumentReference updateClassroom(Map<String, Object> classroom, String classroomId) {
+        var classroomReference = classroomsCollection.document(classroomId);
         classroomReference.update(classroom);
         return classroomReference;
     }
 
     @Override
-    public DocumentReference createCollaborator(HashMap<String, Object> collaboratorMap, String keyCombination)
-            throws ExecutionException, InterruptedException {
-        var reference = collaboratorCollection
-                .document(keyCombination);
-        // if the collaborator already existed, returns null.
-        if (reference.get().get().exists()) {
-            return null;
-        }
-        reference.set(collaboratorMap);
+    public DocumentReference createMember(Member member) {
+        var reference = membersCollection
+                .document(member.getMemberId());
+        member.setMemberId(null);
+        reference.set(member.toMap());
         return reference;
     }
 
     @Override
-    public DocumentReference getCollaborator(String classroomId, String localId) {
-        if (Objects.isNull(classroomId) || Objects.isNull(localId)) {
-            return null;
-        }
-        return collaboratorCollection.document(classroomId + localId);
+    public DocumentReference getMember(String classroomId, String localId) {
+        return membersCollection.document(classroomId + "_" + localId);
     }
 
     @Override
-    public ApiFuture<QuerySnapshot> getCollaborators(String classroomId, CollaboratorRoles role) {
+    public ApiFuture<QuerySnapshot> getMembers(String classroomId, MemberRoles role) {
         if (classroomId == null) {
             return null;
         }
         return role == null ?
-                collaboratorCollection.whereEqualTo("classroomId", classroomId)
+                membersCollection.whereEqualTo("classroomId", classroomId)
                         .get() :
-                collaboratorCollection.whereEqualTo("classroomId", classroomId)
+                membersCollection.whereEqualTo("classroomId", classroomId)
                         .whereEqualTo("role", role.toString())
                         .get();
     }
 
     @Override
-    public Stream<DocumentReference> getCollaboratorsByClassroom(String classroomId)
+    public Stream<DocumentReference> getMembersByClassroom(String classroomId)
             throws ExecutionException, InterruptedException {
-        return collaboratorCollection
+        return membersCollection
                 .whereEqualTo("classroomId", classroomId)
                 .get()
                 .get()
@@ -98,48 +104,54 @@ class ClassroomRepository implements IClassroomRepository {
     }
 
     @Override
-    public Stream<QueryDocumentSnapshot> getCollaboratorsByUser(String hostId, CollaboratorRoles role, Timestamp lastRequest) throws ExecutionException, InterruptedException {
-//        System.out.println(role);
+    public Stream<QueryDocumentSnapshot> getMembersByUser(String hostId, MemberRoles role)
+            throws ExecutionException, InterruptedException {
         if (Objects.isNull(hostId) || hostId.trim().length() == 0) {
             return Stream.empty();
         }
-        if (Objects.isNull(role) && Objects.isNull(lastRequest)) {
-            return collaboratorCollection.whereEqualTo("userId", hostId)
-                    .orderBy("lastAccessTimestamp", Query.Direction.DESCENDING)
+        if (Objects.isNull(role)) {
+            return membersCollection.whereEqualTo("userId", hostId)
+                    .orderBy("lastAccess", Query.Direction.DESCENDING)
                     .get()
                     .get()
                     .getDocuments()
                     .stream();
         }
-        if (Objects.isNull(role)) {
-            return collaboratorCollection.whereEqualTo("userId", hostId)
-                    .orderBy("lastAccessTimestamp", Query.Direction.DESCENDING)
-                    .whereGreaterThanOrEqualTo("lastAccessTimestamp", lastRequest)
-                    .get()
-                    .get()
-                    .getDocuments()
-                    .stream();
-        } else if (Objects.isNull(lastRequest)) {
-            return collaboratorCollection.whereEqualTo("userId", hostId)
-                    .whereEqualTo("role", role.toString())
-                    .get()
-                    .get()
-                    .getDocuments()
-                    .stream();
-        } else return collaboratorCollection.whereEqualTo("userId", hostId)
-                .orderBy("lastAccessTimestamp", Query.Direction.DESCENDING)
-                .whereGreaterThanOrEqualTo("lastAccessTimestamp", lastRequest)
+        return membersCollection.whereEqualTo("userId", hostId)
                 .whereEqualTo("role", role.toString())
+                .orderBy("lastAccess", Query.Direction.DESCENDING)
                 .get()
                 .get()
                 .getDocuments()
                 .stream();
     }
 
-//    @Override
-//    public DocumentReference updateCollaborator(String key, HashMap<String, Object> map) {
-//        var ref = collaboratorCollection.document(key);
-//        ref.update(map);
-//        return ref;
-//    }
+    @Override
+    public boolean isPublicCodeAlreadyExist(String publicCode) throws ExecutionException, InterruptedException {
+        QuerySnapshot snapshots = classroomsCollection.whereEqualTo("publicCode", publicCode)
+                .get()
+                .get();
+        if (snapshots.size() == 0) {
+            return false;
+        }
+        // TODO save logs here
+        System.err.println("Found classrooms with duplicate public code: " + publicCode);
+        snapshots.getDocuments()
+                .stream()
+                .map(Classroom::new)
+                .forEach(System.out::println);
+        return true;
+    }
+
+    @Override
+    public void createMemberAsync(Member member) {
+        writeBatch.set(
+                membersCollection.document(member.getMemberId()),
+                member.toMap());
+    }
+
+    @Override
+    public void commit() {
+        writeBatch.commit();
+    }
 }

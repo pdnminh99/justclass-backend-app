@@ -9,7 +9,9 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import java.util.HashMap;
 import java.util.Objects;
 
-@JsonIgnoreProperties(value = {"publicCode", "createdTimestamp"})
+@JsonIgnoreProperties(value = {
+        "publicCode", "createdTimestamp", "role", "lastAccess",
+        "owner", "studentsCount", "collaboratorsCount", "lastEdit"})
 public class Classroom extends ClassroomRequestBody {
 
     @JsonIgnore
@@ -29,11 +31,12 @@ public class Classroom extends ClassroomRequestBody {
                      String room,
                      Integer theme,
                      Timestamp createdTimestamp,
-                     CollaboratorRoles role,
-                     Timestamp lastAccessTimestamp,
+                     MemberRoles role,
+                     Timestamp lastAccess,
+                     Timestamp lastEdit,
                      NotePermissions studentsNotePermission,
                      String publicCode) {
-        super(classroomId, title, description, section, subject, room, theme, role, lastAccessTimestamp);
+        super(classroomId, title, description, section, subject, room, theme, role, lastAccess, lastEdit);
         this.createdTimestamp = createdTimestamp;
         this.studentsNotePermission = studentsNotePermission;
         this.publicCode = publicCode;
@@ -71,10 +74,14 @@ public class Classroom extends ClassroomRequestBody {
     }
 
     @Override
-    public HashMap<String, Object> toMap() {
-        var map = super.toMap();
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = super.toMap(isTimestampInMilliseconds);
 
-        ifFieldNotNullThenPutToMap("createdTimestamp", createdTimestamp, map);
+        ifFieldNotNullThenPutToMap("createdTimestamp",
+                isTimestampInMilliseconds && createdTimestamp != null ?
+                        createdTimestamp.toDate().getTime() :
+                        createdTimestamp
+                , map);
         ifFieldNotNullThenPutToMap("publicCode", publicCode, map);
         if (Objects.nonNull(studentsNotePermission)) {
             ifFieldNotNullThenPutToMap("studentsNotePermission", studentsNotePermission.toString(), map);

@@ -6,6 +6,8 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.common.collect.Lists;
+import com.projecta.eleven.justclassbackend.invitation.Invitation;
+import com.projecta.eleven.justclassbackend.notification.NotificationService;
 import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -20,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.CRC32;
 
 @Service
 public class ClassroomService implements IClassroomOperationsService {
@@ -28,15 +32,19 @@ public class ClassroomService implements IClassroomOperationsService {
 
     private final IUserOperations userService;
 
+    private final NotificationService notificationService;
+
     @Autowired
     public ClassroomService(IClassroomRepository repository,
+                            NotificationService notificationService,
                             @Qualifier("defaultUserService") IUserOperations userService) {
         this.repository = repository;
+        this.notificationService = notificationService;
         this.userService = userService;
     }
 
     @Override
-    public Stream<MinifiedClassroom> getClassrooms(String hostId, CollaboratorRoles role, Timestamp lastRequest)
+    public Stream<MinifiedClassroom> get(String hostId, MemberRoles role, Timestamp lastRequest)
             throws InvalidUserInformationException, ExecutionException, InterruptedException {
         if (Objects.isNull(hostId) || hostId.trim().length() == 0) {
             throw new InvalidUserInformationException(
@@ -44,46 +52,18 @@ public class ClassroomService implements IClassroomOperationsService {
                     new NullPointerException("LocalId is null."));
         }
 
-        var collaborators = repository.getCollaboratorsByUser(hostId, role, lastRequest)
-                .map(Collaborator::new)
+        var members = repository.getMembersByUser(hostId, role)
+                .map(Member::new)
                 .collect(Collectors.toList());
 
-        if (collaborators.isEmpty()) {
+        if (members.isEmpty()) {
             return Stream.empty();
         }
 
-        // TODO what if you don't find any owner of a classroom?
-        var ownersCollaborators = ApiFutures.allAsList(
-                collaborators
-                        .parallelStream()
-                        .map(Collaborator::getClassroomId)
-                        .map(c -> repository.getCollaborators(c, CollaboratorRoles.OWNER))
-                        .collect(Collectors.toList()))
-                .get()
-                .parallelStream()
-                .map(QuerySnapshot::getDocuments)
-                .map(c -> c.get(0))
-                .map(Collaborator::new)
-                .map(Collaborator::getUserReference)
-                .map(DocumentReference::get)
-                .collect(Collectors.toList());
-
-        var owners = ApiFutures.allAsList(ownersCollaborators)
-                .get()
-                .parallelStream()
-                .map(MinifiedUser::new)
-                .collect(Collectors.toList());
-
-        var studentsCount = getCollaboratorsCount(
-                collaborators.parallelStream().map(Collaborator::getClassroomId), CollaboratorRoles.STUDENT);
-
-        var teachersCount = getCollaboratorsCount(
-                collaborators.parallelStream().map(Collaborator::getClassroomId), CollaboratorRoles.TEACHER);
-
         var classrooms = ApiFutures.allAsList(
-                collaborators
+                members
                         .parallelStream()
-                        .map(Collaborator::getClassroomReference)
+                        .map(Member::getClassroomReference)
                         .map(DocumentReference::get)
                         .collect(Collectors.toList()))
                 .get()
@@ -91,23 +71,64 @@ public class ClassroomService implements IClassroomOperationsService {
                 .map(MinifiedClassroom::new)
                 .collect(Collectors.toList());
 
+        if (lastRequest != null) {
+            var index = 0;
+
+            while (index < classrooms.size()) {
+                if (classrooms.get(index).getLastEdit().compareTo(lastRequest) < 0) {
+                    classrooms.remove(index);
+                    members.remove(index);
+                    continue;
+                }
+                index++;
+            }
+        }
+
+        // TODO what if you don't find any owner of a classroom?
+        var ownersReferences = ApiFutures.allAsList(
+                members
+                        .parallelStream()
+                        .map(Member::getClassroomId)
+                        .map(c -> repository.getMembers(c, MemberRoles.OWNER))
+                        .collect(Collectors.toList()))
+                .get()
+                .parallelStream()
+                .map(QuerySnapshot::getDocuments)
+                .map(c -> c.get(0))
+                .map(Member::new)
+                .map(Member::getUserReference)
+                .map(DocumentReference::get)
+                .collect(Collectors.toList());
+
+        var owners = ApiFutures.allAsList(ownersReferences)
+                .get()
+                .parallelStream()
+                .map(MinifiedUser::new)
+                .collect(Collectors.toList());
+
+        var studentsCount = getMembersCount(
+                members.parallelStream().map(Member::getClassroomId), MemberRoles.STUDENT);
+
+        var collaboratorsCount = getMembersCount(
+                members.parallelStream().map(Member::getClassroomId), MemberRoles.COLLABORATOR);
+
         for (int index = 0; index < classrooms.size(); index++) {
             var currentClassroom = classrooms.get(index);
-            currentClassroom.setRole(collaborators.get(index).getRole());
-            currentClassroom.setLastAccessTimestamp(collaborators.get(index).getLastAccessTimestamp());
+            currentClassroom.setRole(members.get(index).getRole());
+            currentClassroom.setLastAccess(members.get(index).getLastAccess());
             currentClassroom.setOwner(owners.get(index));
-            currentClassroom.setTeachersCount(teachersCount.get(index));
+            currentClassroom.setCollaboratorsCount(collaboratorsCount.get(index));
             currentClassroom.setStudentsCount(studentsCount.get(index));
             classrooms.set(index, currentClassroom);
         }
         return classrooms.stream();
     }
 
-    private List<Integer> getCollaboratorsCount(Stream<String> classroomIdStream, CollaboratorRoles role)
+    private List<Integer> getMembersCount(Stream<String> classroomIdStream, MemberRoles role)
             throws ExecutionException, InterruptedException {
         return ApiFutures.allAsList(
                 classroomIdStream
-                        .map(id -> repository.getCollaborators(id, role))
+                        .map(id -> repository.getMembers(id, role))
                         .collect(Collectors.toList()))
                 .get()
                 .parallelStream()
@@ -119,92 +140,102 @@ public class ClassroomService implements IClassroomOperationsService {
     public Optional<Classroom> get(String localId, String classroomId)
             throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
         validateRetrieveOrDeleteRequestInput(localId, classroomId);
-        var collaboratorSnapshot = repository.getCollaborator(classroomId, localId)
+        DocumentSnapshot memberSnapshot = repository.getMember(classroomId, localId)
                 .get()
                 .get();
-        if (!collaboratorSnapshot.exists()) {
+        if (!memberSnapshot.exists()) {
             throw new InvalidClassroomInformationException("Classroom does not exist, or user does not have permission to perform `GET` task.");
         }
         var now = Timestamp.now();
-        var collaboratorInstance = new Collaborator(collaboratorSnapshot);
-        var classroomInstance = new Classroom(collaboratorInstance
+        var member = new Member(memberSnapshot);
+        var classroom = new Classroom(member
                 .getClassroomReference()
                 .get()
                 .get());
-
-        // Only get the metadata.
-        var queries = Lists.newArrayList(
-                repository.getCollaborators(classroomId, CollaboratorRoles.TEACHER),
-                repository.getCollaborators(classroomId, CollaboratorRoles.STUDENT)
-        );
-        if (collaboratorInstance.getRole() == CollaboratorRoles.OWNER) {
-            var owner = new MinifiedUser(collaboratorInstance.getUserReference().get().get());
-            classroomInstance.setOwner(owner);
-        } else {
-            queries.add(repository.getCollaborators(classroomId, CollaboratorRoles.OWNER));
-        }
-        var querySnapshots = ApiFutures.allAsList(queries)
-                .get();
-
-        // Parse queries'result.
-        classroomInstance.setTeachersCount(querySnapshots.get(0).size());
-        classroomInstance.setStudentsCount(querySnapshots.get(1).size());
-        if (querySnapshots.size() == 3) {
-            var owner = new MinifiedUser(querySnapshots.get(2).getDocuments().get(0));
-            classroomInstance.setOwner(owner);
-        }
-        classroomInstance.setLastAccessTimestamp(now);
-        classroomInstance.setRole(collaboratorInstance.getRole());
+        getMembersMetadataForClassroom(classroom, member);
+        classroom.setLastAccess(now);
+        classroom.setRole(member.getRole());
 
         // Update collaborators info.
-        // TODO considering whether should update this field.
-//        var collaboratorUpdateMap = new HashMap<String, Object>();
-//        collaboratorUpdateMap.put("lastAccessTimestamp", now);
-//        collaboratorSnapshot.getReference()
-//                .update(collaboratorUpdateMap);
+        var memberUpdateMap = new HashMap<String, Object>();
+        memberUpdateMap.put("lastAccess", now);
+        memberSnapshot.getReference()
+                .update(memberUpdateMap);
 
-        return Optional.of(classroomInstance);
+        return Optional.of(classroom);
     }
 
     @Override
     public Optional<Classroom> create(ClassroomRequestBody classroomRequestBody, String localId)
             throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
         validateCreateRequestInput(classroomRequestBody, localId);
-
-        var userReference = userService.getUserReference(localId);
-
-        if (!userReference.get().get().exists()) {
-            throw new InvalidUserInformationException("User with localID [" + localId + "] does not exist.");
-        }
+        DocumentReference userReference = verifyUserExistenceOrElseThrow(localId);
 
         var now = Timestamp.now();
-        // TODO: generate public code and pass to `toClassroom` method.
-        var classroomInstance = classroomRequestBody.toClassroom(
-                now, now, NotePermissions.VIEW_COMMENT_POST);
-        var classroomMap = classroomInstance.toMap();
+        var classroom = classroomRequestBody.toClassroom(
+                now, NotePermissions.VIEW_COMMENT_POST, generateNewPublicCode());
+        classroom.setLastEdit(now);
 
-        // Since ClassroomRequestBody constructor also include these three fields,
-        // we must exclude them to prevent side effects.
-        classroomMap.remove("classroomId");
-        classroomMap.remove("role");
-        classroomMap.remove("lastAccessTimestamp");
+        DocumentReference classroomReference = createClassroomDocument(classroom);
+        createMemberDocument(classroomReference, userReference, now);
 
-        var createdClassroomReference = repository.createClassroom(classroomMap);
-        classroomInstance.setClassroomId(createdClassroomReference.getId());
+        classroom.setClassroomId(classroomReference.getId());
+        classroom.setRole(MemberRoles.OWNER);
+        classroom.setLastAccess(now);
+        return Optional.of(classroom);
+    }
 
-        var collaboratorId = classroomInstance.getClassroomId() + localId;
-        var collaboratorMap = (new Collaborator(
-                null,
-                createdClassroomReference,
+    private String generateNewPublicCode() throws ExecutionException, InterruptedException {
+        var isCorrect = false;
+        var crc = new CRC32();
+        String newPublicCode = "";
+        long currentMillis;
+
+        while (!isCorrect) {
+            currentMillis = System.currentTimeMillis();
+            crc.update(longToBytes(currentMillis));
+            newPublicCode = Long.toHexString(crc.getValue());
+            isCorrect = !repository.isPublicCodeAlreadyExist(newPublicCode);
+        }
+
+        return newPublicCode;
+    }
+
+    private byte[] longToBytes(long x) {
+        var buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(x);
+        return buffer.array();
+    }
+
+    private DocumentReference verifyUserExistenceOrElseThrow(String localId) throws InvalidUserInformationException, ExecutionException, InterruptedException {
+        DocumentReference ref = userService.getUserReference(localId);
+
+        if (!ref.get().get().exists()) {
+            throw new InvalidUserInformationException("User with localID [" + localId + "] does not exist.");
+        }
+        return ref;
+    }
+
+    private void createMemberDocument(DocumentReference classroomReference, DocumentReference userReference, Timestamp createdTimestamp) throws ExecutionException, InterruptedException {
+        var member = new Member(
+                classroomReference.getId() + "_" + userReference.getId(),
+                classroomReference,
                 userReference,
-                now,
-                now,
-                CollaboratorRoles.OWNER)).toMap();
-        repository.createCollaborator(collaboratorMap, collaboratorId);
+                createdTimestamp,
+                createdTimestamp,
+                MemberRoles.OWNER);
 
-        classroomInstance.setRole(CollaboratorRoles.OWNER);
+        repository.createMember(member);
+    }
 
-        return Optional.of(classroomInstance);
+    private DocumentReference createClassroomDocument(Classroom classroom) throws InterruptedException, ExecutionException, InvalidClassroomInformationException {
+        // Since ClassroomRequestBody constructor also include these four fields,
+        // we must exclude them to prevent side effects.
+        classroom.setClassroomId(null);
+        classroom.setRole(null);
+        classroom.setLastAccess(null);
+
+        return repository.createClassroom(classroom);
     }
 
     private void validateCreateRequestInput(ClassroomRequestBody classroomRequestBody, String localId)
@@ -231,66 +262,62 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Classroom> update(Classroom classroom, String localId)
+    public Optional<Classroom> update(Classroom classroom, String localId, Boolean requestNewPublicCode)
             throws InvalidClassroomInformationException, InvalidUserInformationException, ExecutionException, InterruptedException {
         validateClassroomUpdateRequestInput(classroom, localId);
         var classroomId = classroom.getClassroomId();
-        var collaboratorSnapshot = repository
-                .getCollaborator(classroomId, localId)
+        DocumentSnapshot memberSnapshot = repository
+                .getMember(classroomId, localId)
                 .get()
                 .get();
 
-        if (!collaboratorSnapshot.exists()) {
+        if (!memberSnapshot.exists()) {
             throw new IllegalArgumentException("User " + localId + " is not part of classroom [" + classroomId + "]. Or this classroom does not exist.");
         }
-        var collaboratorRole = (new Collaborator(collaboratorSnapshot))
-                .getRole();
+        var member = new Member(memberSnapshot);
 
-        // Only OWNER and TEACHER have permissions to edit class.
-        if (Objects.isNull(collaboratorRole) || collaboratorRole == CollaboratorRoles.STUDENT) {
-            throw new IllegalArgumentException("User " + localId + " (role STUDENT) does not have permission to edit classroom [" + classroomId + "] info.");
+        // Only OWNER have permissions to edit class.
+        if (Objects.isNull(member.getRole()) || member.getRole() != MemberRoles.OWNER) {
+            throw new IllegalArgumentException("User " + localId + " does not have permission to edit classroom [" + classroomId + "] info.");
         }
 
-        var oldClassroomSnapshot = repository.getClassroom(classroomId)
+        var originalClassroomSnapshot = repository.getClassroom(classroomId)
                 .get()
                 .get();
-        if (!oldClassroomSnapshot.exists()) {
+        if (!originalClassroomSnapshot.exists()) {
             throw new InvalidClassroomInformationException("Classroom [" + classroomId + "] does not exist. Use POST method if you want to create new classroom.");
         }
 
-        var oldClassroomInstance = new Classroom(oldClassroomSnapshot);
-        var now = Timestamp.now();
-        var shouldUpdateLastAccessTimestamp = classroom.getTitle() != null && classroom.getTitle().trim().length() != 0 &&
-                !oldClassroomInstance.getTitle().equals(classroom.getTitle()) ||
-                classroom.getSubject() != null && !oldClassroomInstance.getSubject().equals(classroom.getSubject());
+        var originalClassroom = new Classroom(originalClassroomSnapshot);
+        boolean shouldUpdateLastEdit = shouldUpdateLastAccess(classroom, originalClassroom);
 
-        if (containChangesAfterCompareAndApplyUpdates(oldClassroomInstance, classroom)) {
+        if (containChangesAfterCompareAndApplyUpdates(originalClassroom, classroom, requestNewPublicCode)) {
             var classroomMap = classroom.toMap();
             classroomMap.remove("classroomId");
-            if (classroomMap.isEmpty()) {
-                throw new IllegalArgumentException("There is nothing to update. If you want to retrieve full data of classroom. Try the `GET` method.");
+            if (requestNewPublicCode != null && !requestNewPublicCode) {
+                classroomMap.put("publicCode", null);
             }
             // No need to exclude `publicCode` and `createdTimestamp` from `classroomMap`, since these fields are marked as @JsonIgnore.
             repository.updateClassroom(classroomMap, classroomId);
         }
 
-        // Update `lastAccessTimestamp` of collaborator.
-        if (shouldUpdateLastAccessTimestamp) {
-            var collaboratorMap = new HashMap<String, Object>();
-            collaboratorMap.put("lastAccessTimestamp", now);
-
-            var collaboratorsReferencesByClassroom = repository.getCollaborators(classroomId, null)
-                    .get()
-                    .getDocuments()
-                    .parallelStream()
-                    .map(DocumentSnapshot::getReference)
-                    .map(c -> c.update(collaboratorMap));
-            ApiFutures.allAsList(collaboratorsReferencesByClassroom.collect(Collectors.toList()));
+        var now = Timestamp.now();
+        // Update `lastEdit` of collaborators.
+        if (shouldUpdateLastEdit) {
+            var classroomUpdateMap = new HashMap<String, Object>();
+            classroomUpdateMap.put("lastEdit", now);
+            member.getClassroomReference().update(classroomUpdateMap);
         }
+        // Update `lastAccess` of owner.
+        var memberUpdateMap = new HashMap<String, Object>();
+        memberUpdateMap.put("lastAccess", now);
+        memberSnapshot.getReference()
+                .update(memberUpdateMap);
 
-        oldClassroomInstance.setRole(collaboratorRole);
-        oldClassroomInstance.setLastAccessTimestamp(now);
-        return Optional.of(oldClassroomInstance);
+        originalClassroom.setRole(member.getRole());
+        originalClassroom.setLastAccess(now);
+        originalClassroom.setLastEdit(now);
+        return Optional.of(originalClassroom);
     }
 
     private void validateClassroomUpdateRequestInput(Classroom classroom, String localId) throws InvalidClassroomInformationException, InvalidUserInformationException {
@@ -307,7 +334,13 @@ public class ClassroomService implements IClassroomOperationsService {
         }
     }
 
-    private boolean containChangesAfterCompareAndApplyUpdates(Classroom oldVersion, Classroom newVersion) {
+    private boolean shouldUpdateLastAccess(Classroom oldVersion, Classroom newVersion) {
+        return newVersion.getTitle() != null && newVersion.getTitle().trim().length() != 0 && !newVersion.getTitle().equals(oldVersion.getTitle()) ||
+                newVersion.getSubject() != null && !newVersion.getSubject().equals(oldVersion.getSubject()) ||
+                newVersion.getTheme() != null && !newVersion.getTheme().equals(oldVersion.getTheme());
+    }
+
+    private boolean containChangesAfterCompareAndApplyUpdates(Classroom oldVersion, Classroom newVersion, Boolean requireNewPublicCode) throws ExecutionException, InterruptedException {
         var containChanges = false;
 
         if (newVersion.getTitle() != null && newVersion.getTitle().trim().length() != 0 && !newVersion.getTitle().equals(oldVersion.getTitle())) {
@@ -338,6 +371,17 @@ public class ClassroomService implements IClassroomOperationsService {
             oldVersion.setTheme(newVersion.getTheme());
             containChanges = true;
         }
+        if (requireNewPublicCode != null) {
+            if (requireNewPublicCode) {
+                var newPublicCode = generateNewPublicCode();
+                newVersion.setPublicCode(newPublicCode);
+                oldVersion.setPublicCode(newPublicCode);
+            } else {
+                newVersion.setPublicCode(null);
+                oldVersion.setPublicCode(null);
+            }
+            containChanges = true;
+        }
         return containChanges;
     }
 
@@ -346,25 +390,154 @@ public class ClassroomService implements IClassroomOperationsService {
             throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException {
         validateRetrieveOrDeleteRequestInput(localId, classroomId);
         // Check if user has permission to perform delete task.
-        var collaboratorSnapshot = repository.getCollaborator(classroomId, localId)
+        var memberSnapshot = repository.getMember(classroomId, localId)
                 .get()
                 .get();
-        if (!collaboratorSnapshot.exists()) {
+        if (!memberSnapshot.exists()) {
             throw new InvalidClassroomInformationException("Classroom does not exist, or user does not have permission to perform `DELETE` task.");
         }
-        var collaboratorInstance = new Collaborator(collaboratorSnapshot);
-        if (collaboratorInstance.getRole() != CollaboratorRoles.OWNER) {
+        var member = new Member(memberSnapshot);
+        if (member.getRole() != MemberRoles.OWNER) {
             throw new InvalidUserInformationException("User with Id [" + localId + "] does not have permission to delete classroom [" + classroomId + "].");
         }
         // No need to check classroomReference for
-        var classroomDeleteQuery = Objects.requireNonNull(collaboratorSnapshot.get("classroomReference", DocumentReference.class))
-                .delete();
-        var collaboratorsByClassroom = repository.getCollaboratorsByClassroom(classroomId)
+        var collaboratorsByClassroom = repository.getMembersByClassroom(classroomId)
                 .map(DocumentReference::delete)
                 .collect(Collectors.toList());
-        collaboratorsByClassroom.add(classroomDeleteQuery);
+
+        collaboratorsByClassroom.add(
+                Objects.requireNonNull(memberSnapshot
+                        .get("classroomReference", DocumentReference.class))
+                        .delete());
         ApiFutures.allAsList(collaboratorsByClassroom);
         return Optional.of(true);
+    }
+
+    @Override
+    public Stream<MinifiedMember> invite(String localId, String classroomId, Stream<Invitation> invitationsStream) {
+        // TODO check if this user has enough authentication to invite.
+        if (invitationsStream.count() == 0) {
+            return Stream.empty();
+        }
+
+        var finalInvitationsStream = invitationsStream
+                .filter(this::isValidInvitation)
+                .filter(invitation -> !hasDuplicate(invitation, invitationsStream))
+                .peek(invitation -> {
+                    if (invitation.getRole() == null) {
+                        invitation.setRole(MemberRoles.STUDENT);
+                    }
+                });
+
+        var now = Timestamp.now();
+        var inviteAsOwner = finalInvitationsStream
+                .filter(i -> i.getRole() == MemberRoles.OWNER)
+                .findFirst();
+
+        var inviteAsStudent = finalInvitationsStream
+                .filter(i -> i.getRole() == MemberRoles.STUDENT);
+        var inviteAsCollaborator = finalInvitationsStream
+                .filter(i -> i.getRole() == MemberRoles.COLLABORATOR);
+        return Stream.empty();
+    }
+
+    private boolean isValidInvitation(Invitation invitation) {
+        return !(invitation.getLocalId() == null && invitation.getEmail() == null);
+    }
+
+    private boolean hasDuplicate(Invitation invitation, Stream<Invitation> invitationsStream) {
+        return invitationsStream
+                .noneMatch(i -> isInvitationEqual(i, invitation));
+    }
+
+    private boolean isInvitationEqual(Invitation first, Invitation second) {
+        return first.getLocalId() != null && second.getLocalId() != null
+                && first.getLocalId().equals(second.getLocalId()) ||
+                first.getEmail() != null && second.getEmail() != null
+                        && first.getEmail().equals(second.getEmail());
+    }
+
+    @Override
+    public Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+//        if (localId == null || localId.trim().length() == 0 || publicCode == null || publicCode.trim().length() == 0) {
+//            throw new IllegalArgumentException("LocalId is null or empty; Or public code is null or empty.");
+//        }
+        DocumentReference userRef = userService.getUserReference(localId);
+        if (!userRef.get().get().exists()) {
+            throw new InvalidUserInformationException("UserId does not exist");
+        }
+        var now = Timestamp.now();
+        var optionalClassroom = repository.getClassroomByPublicCode(publicCode);
+        if (optionalClassroom.isEmpty()) {
+            return Optional.empty();
+        }
+        var classroomRef = optionalClassroom.get();
+
+        DocumentSnapshot oldMemberSnapshot = repository.getMember(classroomRef.getId(), userRef.getId())
+                .get()
+                .get();
+
+        if (oldMemberSnapshot.exists()) {
+            var oldMemberInstance = new Member(oldMemberSnapshot);
+            var classroomInstance = new Classroom(classroomRef.get().get());
+            var updateMap = new HashMap<String, Object>();
+
+            classroomInstance.setRole(oldMemberInstance.getRole());
+            classroomInstance.setLastAccess(oldMemberInstance.getLastAccess());
+
+            updateMap.put("lastAccess", now);
+            oldMemberSnapshot.getReference()
+                    .update(updateMap);
+            getMembersMetadataForClassroom(classroomInstance, oldMemberInstance);
+            return Optional.of(classroomInstance);
+        }
+
+        // Found no new classroom, attempt to create new Member.
+        var member = new Member(
+                classroomRef.getId() + "_" + userRef.getId(),
+                classroomRef,
+                userRef,
+                now,
+                now,
+                MemberRoles.STUDENT
+        );
+        repository.createMember(member);
+
+        var classroomUpdateMap = new HashMap<String, Object>();
+        classroomUpdateMap.put("lastEdit", now);
+        classroomRef.update(classroomUpdateMap);
+
+        var classroomInstance = new Classroom(classroomRef.get().get());
+        classroomInstance.setRole(MemberRoles.STUDENT);
+        classroomInstance.setLastAccess(now);
+        classroomInstance.setLastEdit(now);
+        getMembersMetadataForClassroom(classroomInstance, member);
+
+        return Optional.of(classroomInstance);
+    }
+
+    private void getMembersMetadataForClassroom(Classroom classroom, Member member) throws ExecutionException, InterruptedException {
+        var queries = Lists.newArrayList(
+                repository.getMembers(classroom.getClassroomId(), MemberRoles.COLLABORATOR),
+                repository.getMembers(classroom.getClassroomId(), MemberRoles.STUDENT)
+        );
+        if (member.getRole() == MemberRoles.OWNER) {
+            var owner = new MinifiedUser(member.getUserReference().get().get());
+            classroom.setOwner(owner);
+        } else {
+            queries.add(repository.getMembers(classroom.getClassroomId(), MemberRoles.OWNER));
+        }
+        var querySnapshots = ApiFutures.allAsList(queries)
+                .get();
+
+        // Parse queries'result.
+        classroom.setCollaboratorsCount(querySnapshots.get(0).size());
+        classroom.setStudentsCount(querySnapshots.get(1).size());
+        if (querySnapshots.size() == 3) {
+            var ownerInstance = new Member(querySnapshots.get(2).getDocuments().get(0));
+            var owner = new MinifiedUser(ownerInstance.getUserReference().get().get());
+            classroom.setOwner(owner);
+        }
     }
 
     private void validateRetrieveOrDeleteRequestInput(String localId, String classroomId)

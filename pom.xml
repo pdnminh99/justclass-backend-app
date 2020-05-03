@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.projecta.eleven</groupId>
     <artifactId>justclass-backend</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.04.23</version>
     <name>justclass-backend</name>
     <description>Back-end for JustClass Flutter Application</description>
 
@@ -33,8 +33,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-firestore</artifactId>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>6.12.2</version>
         </dependency>
 
         <dependency>

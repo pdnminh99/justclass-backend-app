@@ -24,9 +24,10 @@ class ClassroomRequestBody extends MinifiedClassroom {
             String subject,
             String room,
             Integer theme,
-            CollaboratorRoles role,
-            Timestamp lastAccessTimestamp) {
-        super(classroomId, title, subject, theme, role, lastAccessTimestamp);
+            MemberRoles role,
+            Timestamp lastAccess,
+            Timestamp lastEdit) {
+        super(classroomId, title, subject, theme, role, lastAccess, lastEdit);
         this.description = description;
         this.section = section;
         this.room = room;
@@ -64,7 +65,6 @@ class ClassroomRequestBody extends MinifiedClassroom {
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp,
-                                 Timestamp lastTimestamp,
                                  NotePermissions studentsNotePermission,
                                  String publicCode) {
         return new Classroom(getClassroomId(),
@@ -76,20 +76,16 @@ class ClassroomRequestBody extends MinifiedClassroom {
                 getTheme(),
                 createdTimestamp,
                 getRole(),
-                lastTimestamp,
+                getLastAccess(),
+                getLastEdit(),
                 studentsNotePermission,
                 publicCode
         );
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp,
-                                 Timestamp lastAccessTimestamp,
                                  NotePermissions studentsNotePermission) {
-        return toClassroom(createdTimestamp, lastAccessTimestamp, studentsNotePermission, null);
-    }
-
-    public Classroom toClassroom(Timestamp createdTimestamp, Timestamp lastAccessTimestamp) {
-        return toClassroom(createdTimestamp, lastAccessTimestamp, null);
+        return toClassroom(createdTimestamp, studentsNotePermission, null);
     }
 
     public Classroom toClassroom(Timestamp createdTimestamp) {
@@ -100,8 +96,9 @@ class ClassroomRequestBody extends MinifiedClassroom {
         return toClassroom(null);
     }
 
-    public HashMap<String, Object> toMap() {
-        var map = super.toMap();
+    @Override
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = super.toMap(isTimestampInMilliseconds);
         ifFieldNotNullThenPutToMap("description", getDescription(), map);
         ifFieldNotNullThenPutToMap("section", getSection(), map);
         ifFieldNotNullThenPutToMap("room", getRoom(), map);

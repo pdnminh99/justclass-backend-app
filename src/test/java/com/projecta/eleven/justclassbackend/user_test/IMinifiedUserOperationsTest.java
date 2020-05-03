@@ -35,8 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true")
 public class IMinifiedUserOperationsTest {
 
-    private final CollectionReference userCollection;
-    private final CollectionReference friendCollection;
+    private final CollectionReference usersCollection;
+    private final CollectionReference friendsCollection;
 
     private final IMinifiedUserOperations service;
     private Collection<String> sampleLocalIds = new ArrayList<>();
@@ -44,11 +44,11 @@ public class IMinifiedUserOperationsTest {
 
     @Autowired
     IMinifiedUserOperationsTest(IMinifiedUserOperations service,
-                                @Qualifier("userCollection") CollectionReference userCollection,
-                                @Qualifier("friendCollection") CollectionReference friendCollection) {
+                                @Qualifier("usersCollection") CollectionReference usersCollection,
+                                @Qualifier("friendsCollection") CollectionReference friendsCollection) {
         this.service = service;
-        this.userCollection = userCollection;
-        this.friendCollection = friendCollection;
+        this.usersCollection = usersCollection;
+        this.friendsCollection = friendsCollection;
     }
 
     @BeforeAll
@@ -112,9 +112,9 @@ public class IMinifiedUserOperationsTest {
 
         List<DocumentSnapshot> snapshots = ApiFutures.allAsList(
                 Lists.newArrayList(
-                        userCollection.document("8667dadc-aecf-4678-bf14-b1a6611aa0c4").get(),
-                        userCollection.document("982da0a1-673e-4c7d-8fb8-ff3e51f74408").get(),
-                        userCollection.document("51b5b274-8142-46d2-bccc-e2e894061e7f").get()))
+                        usersCollection.document("8667dadc-aecf-4678-bf14-b1a6611aa0c4").get(),
+                        usersCollection.document("982da0a1-673e-4c7d-8fb8-ff3e51f74408").get(),
+                        usersCollection.document("51b5b274-8142-46d2-bccc-e2e894061e7f").get()))
                 .get();
 
         var bruceReference = snapshots.get(0).getReference();
@@ -150,14 +150,14 @@ public class IMinifiedUserOperationsTest {
     private ApiFuture<WriteResult> transformRelationshipMapToFirestoreDocument(Map<String, Object> map) {
         var relationshipId = (String) map.get("relationshipId");
         map.remove("relationshipId");
-        return friendCollection.document(relationshipId)
+        return friendsCollection.document(relationshipId)
                 .set(map);
     }
 
     private ApiFuture<WriteResult> transformUserMapToFirestoreDocument(Map<String, Object> map) {
         var localId = (String) map.get("localId");
         map.remove("localId");
-        return userCollection.document(localId)
+        return usersCollection.document(localId)
                 .set(map);
     }
 
@@ -175,12 +175,12 @@ public class IMinifiedUserOperationsTest {
     }
 
     private ApiFuture<WriteResult> transformUserDeleteQuery(String id) {
-        return userCollection.document(id)
+        return usersCollection.document(id)
                 .delete();
     }
 
     private ApiFuture<WriteResult> transformRelationshipDeleteQuery(String id) {
-        return friendCollection.document(id)
+        return friendsCollection.document(id)
                 .delete();
     }
 
@@ -391,17 +391,17 @@ public class IMinifiedUserOperationsTest {
             this.firestore = firestore;
         }
 
-        @Bean("userCollection")
+        @Bean("usersCollection")
         @DependsOn("firestore")
-        public CollectionReference getUserCollection() throws DatabaseFailedToInitializeException {
+        public CollectionReference getUsersCollection() throws DatabaseFailedToInitializeException {
             return Optional.ofNullable(firestore)
                     .map(db -> db.collection("users_test"))
                     .orElseThrow(DatabaseFailedToInitializeException::new);
         }
 
-        @Bean("friendCollection")
+        @Bean("friendsCollection")
         @DependsOn("firestore")
-        public CollectionReference getFriendCollection() throws DatabaseFailedToInitializeException {
+        public CollectionReference getFriendsCollection() throws DatabaseFailedToInitializeException {
             return Optional.ofNullable(firestore)
                     .map(db -> db.collection("friends_test"))
                     .orElseThrow(DatabaseFailedToInitializeException::new);
