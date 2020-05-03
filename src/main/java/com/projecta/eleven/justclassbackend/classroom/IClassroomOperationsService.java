@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.cloud.Timestamp;
+import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 
 import java.util.Optional;

@@ -13,12 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 @DisplayName("Unit Tests for Firestore Bean.")
 @DisplayNameGeneration(CustomReplaceUnderscore.class)
-public class FirestoreConfigurationTest {
+public class FirebaseConfigurationTest {
 
     private final Firestore firestore;
 
     @Autowired
-    public FirestoreConfigurationTest(Firestore firestore) {
+    public FirebaseConfigurationTest(Firestore firestore) {
         this.firestore = firestore;
     }
 

@@ -1,6 +1,5 @@
 package com.projecta.eleven.justclassbackend.configuration;
 
-
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +56,15 @@ public class CollectionsConfig {
     public CollectionReference getClassroomsCollection() throws DatabaseFailedToInitializeException {
         return Optional.ofNullable(firestore)
                 .map(db -> db.collection(isDeploymentEnvironment ? "classrooms" : "classrooms_dev"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
+
+    @Bean("notificationsCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getNotificationsCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection(isDeploymentEnvironment ? "notifications" : "notifications_dev"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
 }

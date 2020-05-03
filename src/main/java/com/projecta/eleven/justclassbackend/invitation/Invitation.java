@@ -1,11 +1,17 @@
-package com.projecta.eleven.justclassbackend.classroom;
+package com.projecta.eleven.justclassbackend.invitation;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.projecta.eleven.justclassbackend.classroom.MemberRoles;
 import org.springframework.lang.Nullable;
 
-import java.util.Objects;
+import java.sql.Timestamp;
 
-class Invitation {
+@JsonIgnoreProperties({"invitationId", "invokeTime"})
+public class Invitation {
+
+    private String invitationId;
+
     @Nullable
     @JsonProperty("localId")
     private String localId;
@@ -17,6 +23,8 @@ class Invitation {
     @Nullable
     @JsonProperty("role")
     private MemberRoles role;
+
+    private Timestamp invokeTime;
 
     public Invitation(@Nullable String localId,
                       @Nullable String email,
@@ -53,14 +61,6 @@ class Invitation {
         this.role = role;
     }
 
-    public boolean equal(Invitation otherInvitation, boolean replaceWithHigherRole) {
-        boolean isSameInfo = Objects.equals(email, otherInvitation.email) && Objects.equals(localId, otherInvitation.localId);
-        if (isSameInfo && getRole() != otherInvitation.getRole() && replaceWithHigherRole) {
-            setRole(MemberRoles.COLLABORATOR);
-        }
-        return isSameInfo;
-    }
-
     @Override
     public String toString() {
         return "Invitation{" +
@@ -68,5 +68,21 @@ class Invitation {
                 ", email='" + email + '\'' +
                 ", role=" + role +
                 '}';
+    }
+
+    public String getInvitationId() {
+        return invitationId;
+    }
+
+    public void setInvitationId(String invitationId) {
+        this.invitationId = invitationId;
+    }
+
+    public Timestamp getInvokeTime() {
+        return invokeTime;
+    }
+
+    public void setInvokeTime(Timestamp invokeTime) {
+        this.invokeTime = invokeTime;
     }
 }

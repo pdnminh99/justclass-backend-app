@@ -6,6 +6,8 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.common.collect.Lists;
+import com.projecta.eleven.justclassbackend.invitation.Invitation;
+import com.projecta.eleven.justclassbackend.notification.NotificationService;
 import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
@@ -30,10 +32,14 @@ public class ClassroomService implements IClassroomOperationsService {
 
     private final IUserOperations userService;
 
+    private final NotificationService notificationService;
+
     @Autowired
     public ClassroomService(IClassroomRepository repository,
+                            NotificationService notificationService,
                             @Qualifier("defaultUserService") IUserOperations userService) {
         this.repository = repository;
+        this.notificationService = notificationService;
         this.userService = userService;
     }
 
@@ -428,53 +434,41 @@ public class ClassroomService implements IClassroomOperationsService {
             return Stream.empty();
         }
 
-        // TODO do not filtering out OWNER. This API can be use to transfer OWNER role.
-        var invitations = invitationsStream
+        var finalInvitationsStream = invitationsStream
                 .filter(this::isValidInvitation)
-                .map(this::preprocessingInvitation).collect(Collectors.toList());
-        removeDuplicateInvitations(invitations);
+                .filter(invitation -> !hasDuplicate(invitation, invitationsStream))
+                .peek(invitation -> {
+                    if (invitation.getRole() == null) {
+                        invitation.setRole(MemberRoles.STUDENT);
+                    }
+                });
 
+        var now = Timestamp.now();
+        var inviteAsOwner = finalInvitationsStream
+                .filter(i -> i.getRole() == MemberRoles.OWNER)
+                .findFirst();
+
+        var inviteAsStudent = finalInvitationsStream
+                .filter(i -> i.getRole() == MemberRoles.STUDENT);
+        var inviteAsCollaborator = finalInvitationsStream
+                .filter(i -> i.getRole() == MemberRoles.COLLABORATOR);
         return Stream.empty();
     }
 
-    private void removeDuplicateInvitations(List<Invitation> invitations) {
-        var index = 0;
-        var subIndex = 1;
-        Invitation currentInvitation;
-        Invitation temp;
-
-        while (index < invitations.size()) {
-            currentInvitation = invitations.get(index);
-            subIndex = index + 1;
-
-            while (subIndex < invitations.size()) {
-                temp = invitations.get(subIndex);
-
-                if (currentInvitation.equal(temp, true)) {
-                    invitations.remove(subIndex);
-                    continue;
-                }
-                subIndex++;
-            }
-            index++;
-        }
-    }
-
-    private Invitation preprocessingInvitation(Invitation invitation) {
-        if (invitation.getRole() == null) {
-            invitation.setRole(MemberRoles.STUDENT);
-        }
-        return invitation;
-    }
-
     private boolean isValidInvitation(Invitation invitation) {
-        String email = invitation.getEmail();
-        String localId = invitation.getLocalId();
-        MemberRoles role = invitation.getRole();
+        return !(invitation.getLocalId() == null && invitation.getEmail() == null);
+    }
 
-        return (role != MemberRoles.OWNER) &&
-                ((email != null && email.trim().length() != 0) ||
-                        (localId != null && localId.trim().length() != 0));
+    private boolean hasDuplicate(Invitation invitation, Stream<Invitation> invitationsStream) {
+        return invitationsStream
+                .noneMatch(i -> isInvitationEqual(i, invitation));
+    }
+
+    private boolean isInvitationEqual(Invitation first, Invitation second) {
+        return first.getLocalId() != null && second.getLocalId() != null
+                && first.getLocalId().equals(second.getLocalId()) ||
+                first.getEmail() != null && second.getEmail() != null
+                        && first.getEmail().equals(second.getEmail());
     }
 
     @Override

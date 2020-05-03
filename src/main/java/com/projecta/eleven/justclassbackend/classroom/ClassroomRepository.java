@@ -15,13 +15,20 @@ import java.util.stream.Stream;
 @Repository
 class ClassroomRepository implements IClassroomRepository {
 
+    private final Firestore firestore;
+    private WriteBatch writeBatch;
+
     private final CollectionReference classroomsCollection;
 
     private final CollectionReference membersCollection;
 
     @Autowired
-    ClassroomRepository(@Qualifier("classroomsCollection") CollectionReference classroomsCollection,
-                        @Qualifier("membersCollection") CollectionReference membersCollection) {
+    ClassroomRepository(
+            Firestore firestore,
+            @Qualifier("classroomsCollection") CollectionReference classroomsCollection,
+            @Qualifier("membersCollection") CollectionReference membersCollection) {
+        this.firestore = firestore;
+        writeBatch = firestore.batch();
         this.classroomsCollection = classroomsCollection;
         this.membersCollection = membersCollection;
     }
@@ -134,5 +141,17 @@ class ClassroomRepository implements IClassroomRepository {
                 .map(Classroom::new)
                 .forEach(System.out::println);
         return true;
+    }
+
+    @Override
+    public void createMemberAsync(Member member) {
+        writeBatch.set(
+                membersCollection.document(member.getMemberId()),
+                member.toMap());
+    }
+
+    @Override
+    public void commit() {
+        writeBatch.commit();
     }
 }

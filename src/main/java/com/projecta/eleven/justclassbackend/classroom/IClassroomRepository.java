@@ -31,5 +31,10 @@ interface IClassroomRepository {
     Stream<QueryDocumentSnapshot> getMembersByUser(String hostId, MemberRoles role) throws ExecutionException, InterruptedException;
 
     boolean isPublicCodeAlreadyExist(String publicCode) throws ExecutionException, InterruptedException;
-    //    DocumentReference updateCollaborator(String key, HashMap<String, Object> map);
+
+    // New code goes here.
+
+    void createMemberAsync(Member member);
+
+    void commit();
 }

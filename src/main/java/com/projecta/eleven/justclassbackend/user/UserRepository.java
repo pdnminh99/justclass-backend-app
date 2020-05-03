@@ -40,39 +40,6 @@ class UserRepository implements IUserRepository {
         return Optional.of(user.toUser(now, true));
     }
 
-//    @Override
-//    public List<MinifiedUser> getUsers(Iterable<String> localIds) throws ExecutionException, InterruptedException {
-//        return ApiFutures.allAsList(StreamSupport
-//                .stream(localIds.spliterator(), false)
-//                .map(s -> userCollection.document(s).get())
-//                .collect(Collectors.toList()))
-//                .get()
-//                .stream()
-//                .map(MinifiedUser::new)
-//                .collect(Collectors.toList());
-//    }
-
-//    @Override
-//    public Optional<MinifiedUser> getMinifiedUser(String localId) {
-//        try {
-//            DocumentSnapshot snapshot = userCollection
-//                    .document(localId)
-//                    .get()
-//                    .get();
-//            return Optional.of(new MinifiedUser(snapshot));
-//        } catch (InterruptedException | ExecutionException e) {
-//            e.printStackTrace();
-//            return Optional.empty();
-//        }
-//    }
-//
-//    @Override
-//    public boolean isUserExist(String localId) throws ExecutionException, InterruptedException {
-//        DocumentReference documentReference = userCollection
-//                .document(localId);
-//        return documentReference.get().get().exists();
-//    }
-
     @Override
     public void edit(String localId, HashMap<String, Object> changesMap) {
         DocumentReference documentReference = usersCollection
