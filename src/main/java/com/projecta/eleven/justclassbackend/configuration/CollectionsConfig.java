@@ -67,4 +67,13 @@ public class CollectionsConfig {
                 .map(db -> db.collection(isDeploymentEnvironment ? "notifications" : "notifications_dev"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
+
+    @Bean("invitationsCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getInvitationsCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection(isDeploymentEnvironment ? "invitations" : "invitations_dev"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
 }

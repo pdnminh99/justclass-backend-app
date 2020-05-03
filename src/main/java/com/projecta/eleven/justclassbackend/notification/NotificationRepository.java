@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import java.util.concurrent.ExecutionException;
-
 @Repository
 class NotificationRepository {
 
@@ -16,8 +14,9 @@ class NotificationRepository {
     private final FirebaseMessaging fcmDelivery;
 
     @Autowired
-    NotificationRepository(@Qualifier("notificationsCollection") CollectionReference notificationsCollection,
-                           FirebaseMessaging fcmDelivery) throws ExecutionException, InterruptedException {
+    NotificationRepository(
+            @Qualifier("notificationsCollection") CollectionReference notificationsCollection,
+            FirebaseMessaging fcmDelivery) {
         this.fcmDelivery = fcmDelivery;
         this.notificationsCollection = notificationsCollection;
     }

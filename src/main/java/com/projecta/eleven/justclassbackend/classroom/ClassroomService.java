@@ -152,28 +152,6 @@ public class ClassroomService implements IClassroomOperationsService {
                 .getClassroomReference()
                 .get()
                 .get());
-
-//        // Only get the metadata.
-//        var queries = Lists.newArrayList(
-//                repository.getMembers(classroomId, MemberRoles.COLLABORATOR),
-//                repository.getMembers(classroomId, MemberRoles.STUDENT)
-//        );
-//        if (member.getRole() == MemberRoles.OWNER) {
-//            var owner = new MinifiedUser(member.getUserReference().get().get());
-//            classroom.setOwner(owner);
-//        } else {
-//            queries.add(repository.getMembers(classroomId, MemberRoles.OWNER));
-//        }
-//        var querySnapshots = ApiFutures.allAsList(queries)
-//                .get();
-//
-//        // Parse queries'result.
-//        classroom.setCollaboratorsCount(querySnapshots.get(0).size());
-//        classroom.setStudentsCount(querySnapshots.get(1).size());
-//        if (querySnapshots.size() == 3) {
-//            var owner = new MinifiedUser(querySnapshots.get(2).getDocuments().get(0));
-//            classroom.setOwner(owner);
-//        }
         getMembersMetadataForClassroom(classroom, member);
         classroom.setLastAccess(now);
         classroom.setRole(member.getRole());
@@ -311,7 +289,7 @@ public class ClassroomService implements IClassroomOperationsService {
         }
 
         var originalClassroom = new Classroom(originalClassroomSnapshot);
-        boolean shouldUpdateLastAccess = classroom.getTitle() != null && classroom.getTitle().trim().length() != 0 &&
+        boolean shouldUpdateLastEdit = classroom.getTitle() != null && classroom.getTitle().trim().length() != 0 &&
                 !originalClassroom.getTitle().equals(classroom.getTitle()) ||
                 classroom.getSubject() != null && !originalClassroom.getSubject().equals(classroom.getSubject()) ||
                 classroom.getTheme() != null && !originalClassroom.getTheme().equals(classroom.getTheme());
@@ -328,7 +306,7 @@ public class ClassroomService implements IClassroomOperationsService {
 
         var now = Timestamp.now();
         // Update `lastAccess` of collaborators.
-        if (shouldUpdateLastAccess) {
+        if (shouldUpdateLastEdit) {
             var classroomUpdateMap = new HashMap<String, Object>();
             classroomUpdateMap.put("lastEdit", now);
             member.getClassroomReference().update(classroomUpdateMap);
