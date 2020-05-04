@@ -6,7 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.projecta.eleven.justclassbackend.classroom.MemberRoles;
+import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 import org.springframework.lang.Nullable;
+
+import java.util.HashMap;
 
 
 @JsonIgnoreProperties({
@@ -17,7 +20,7 @@ import org.springframework.lang.Nullable;
         "invitorLocalId",
         "invitorReference"
 })
-public class Invitation {
+public class Invitation implements MapSerializable {
 
     private String invitationId;
 
@@ -144,5 +147,24 @@ public class Invitation {
                 ", invitorReference=" + invitorReference +
                 ", invokeTime=" + invokeTime +
                 '}';
+    }
+
+    @Override
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = new HashMap<String, Object>();
+
+        ifFieldNotNullThenPutToMap("invitationId", getInvitationId(), map);
+        ifFieldNotNullThenPutToMap("localId", getLocalId(), map);
+        if (getRole() != null) {
+            ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
+        }
+        ifFieldNotNullThenPutToMap("classroomId", classroomId, map);
+        ifFieldNotNullThenPutToMap("classroomReference", classroomReference, map);
+        ifFieldNotNullThenPutToMap("invitorLocalId", invitorLocalId, map);
+        ifFieldNotNullThenPutToMap("invitorReference", invitorReference, map);
+        ifFieldNotNullThenPutToMap("invokeTime", invokeTime != null && isTimestampInMilliseconds ?
+                invokeTime.toDate().getTime() :
+                invokeTime, map);
+        return map;
     }
 }

@@ -9,6 +9,7 @@ import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.invitation.InvitationService;
 import com.projecta.eleven.justclassbackend.notification.InviteNotification;
 import com.projecta.eleven.justclassbackend.notification.NotificationService;
+import com.projecta.eleven.justclassbackend.notification.NotificationType;
 import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
@@ -512,9 +513,11 @@ public class ClassroomService implements IClassroomOperationsService {
                 DocumentSnapshot userSnapshot = usersByIdSnapshot.get(index);
 
                 if (memberSnapshot.exists()) {
-                    // TODO Check if `invitation` has the same role as `memberSnapshot`.
+                    var role = MemberRoles.fromText(memberSnapshot.getString("role"));
                     wrapper = new InvitationWrapper(memberSnapshot, userSnapshot, invitation);
-                    inviteesAlreadyInClass.add(wrapper);
+                    if (role != invitation.getRole()) {
+                        inviteesAlreadyInClass.add(wrapper);
+                    }
                 } else if (userSnapshot.exists()) {
                     wrapper = new InvitationWrapper(null, userSnapshot, invitation);
                     inviteesNotInClass.add(wrapper);
@@ -567,13 +570,14 @@ public class ClassroomService implements IClassroomOperationsService {
                     continue;
                 }
                 if (memberSnapshot.exists()) {
-                    // TODO Check if `associateInvitation` has the same role as `memberSnapshot`.
                     wrapper = new InvitationWrapper(
                             memberSnapshot,
                             userSnapshot,
                             associateInvitation
                     );
-                    if (isInvitationNotYetExisted(wrapper, inviteesAlreadyInClass)) {
+                    var role = MemberRoles.fromText(memberSnapshot.getString("role"));
+                    if (role != associateInvitation.getRole()
+                            && isInvitationNotYetExisted(wrapper, inviteesAlreadyInClass)) {
                         inviteesAlreadyInClass.add(wrapper);
                     }
                 } else {
@@ -589,18 +593,28 @@ public class ClassroomService implements IClassroomOperationsService {
             }
         }
 
-        // TODO scan invitees in class and invitees not in class.
-
-        // TODO considering whether COLLABORATORs have permission to change users'roles.
-        List<InviteNotification> notifications = new ArrayList<>();
-        List<Invitation> finalInvitations = new ArrayList<>();
-
+        // TODO considering whether COLLABORATORS have permission to change users'roles.
         for (var invitation : inviteesAlreadyInClass) {
-            var user = MinifiedMember.toMinifiedMember(
+            Invitation finalInvitation = invitation.invitation;
+            MinifiedMember user = MinifiedMember.toMinifiedMember(
                     invitation.user,
                     invitation.invitation.getRole(),
                     invitation.member.getCreatedTimestamp());
-            System.err.println(invitation.invitation.toString());
+
+            // Save notifications.
+            var notification = new InviteNotification(
+                    null,
+                    now,
+                    localId,
+                    memberInstance.getUserReference(),
+                    finalInvitation.getLocalId(),
+                    invitation.userSnapshot.getReference(),
+                    finalInvitation.getClassroomId(),
+                    finalInvitation.getClassroomReference(),
+                    NotificationType.ROLE_CHANGE,
+                    finalInvitation.getRole()
+            );
+            notificationService.add(notification);
             newMembers.add(user);
         }
 
@@ -616,7 +630,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 finalInvitation.setEmail(invitation.userSnapshot.getString("email"));
             }
             finalInvitation.setInvitationId(classroomId + "_" + finalInvitation.getLocalId());
-            finalInvitations.add(finalInvitation);
+            invitationService.addInvitation(finalInvitation);
 
             // Save notifications.
             var notification = new InviteNotification(
@@ -626,13 +640,16 @@ public class ClassroomService implements IClassroomOperationsService {
                     memberInstance.getUserReference(),
                     finalInvitation.getLocalId(),
                     invitation.userSnapshot.getReference(),
-                    null,
                     finalInvitation.getClassroomId(),
-                    finalInvitation.getClassroomReference()
+                    finalInvitation.getClassroomReference(),
+                    NotificationType.INVITATION,
+                    finalInvitation.getRole()
             );
-            notifications.add(notification);
+            notificationService.add(notification);
             newMembers.add(user);
         }
+        invitationService.send();
+        notificationService.send();
         return newMembers.stream();
     }
 

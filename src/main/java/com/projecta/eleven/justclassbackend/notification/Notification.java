@@ -2,8 +2,11 @@ package com.projecta.eleven.justclassbackend.notification;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
-public class Notification {
+import java.util.HashMap;
+
+public class Notification implements MapSerializable {
     private String notificationId;
 
     private Timestamp invokeTimestamp;
@@ -16,7 +19,7 @@ public class Notification {
 
     private DocumentReference ownerReference;
 
-    private Timestamp seen;
+    private NotificationType notificationType;
 
     public Notification(
             String notificationId,
@@ -25,14 +28,14 @@ public class Notification {
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
-            Timestamp seen) {
+            NotificationType notificationType) {
         this.notificationId = notificationId;
         this.invokeTimestamp = invokeTimestamp;
         this.invokerId = invokerId;
         this.invokerReference = invokerReference;
         this.ownerId = ownerId;
         this.ownerReference = ownerReference;
-        this.seen = seen;
+        this.notificationType = notificationType;
     }
 
     public Timestamp getInvokeTimestamp() {
@@ -75,19 +78,38 @@ public class Notification {
         this.ownerReference = ownerReference;
     }
 
-    public Timestamp getSeen() {
-        return seen;
-    }
-
-    public void setSeen(Timestamp seen) {
-        this.seen = seen;
-    }
-
     public String getNotificationId() {
         return notificationId;
     }
 
     public void setNotificationId(String notificationId) {
         this.notificationId = notificationId;
+    }
+
+    public NotificationType getNotificationType() {
+        return notificationType;
+    }
+
+    public void setNotificationType(NotificationType notificationType) {
+        this.notificationType = notificationType;
+    }
+
+    @Override
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = new HashMap<String, Object>();
+
+        ifFieldNotNullThenPutToMap("notificationId", getNotificationId(), map);
+        ifFieldNotNullThenPutToMap("invokeTimestamp", getInvokeTimestamp() != null && isTimestampInMilliseconds ?
+                getInvokeTimestamp().toDate().getTime() :
+                getInvokeTimestamp(), map);
+        ifFieldNotNullThenPutToMap("invokerId", getInvokerId(), map);
+        ifFieldNotNullThenPutToMap("invokerReference", getInvokerReference(), map);
+        ifFieldNotNullThenPutToMap("ownerId", getOwnerId(), map);
+        ifFieldNotNullThenPutToMap("ownerReference", getOwnerReference(), map);
+        if (getNotificationType() != null) {
+            ifFieldNotNullThenPutToMap("notificationType", getNotificationType().toString(), map);
+        }
+
+        return map;
     }
 }
