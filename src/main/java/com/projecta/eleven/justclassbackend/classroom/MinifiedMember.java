@@ -40,10 +40,13 @@ class MinifiedMember extends MinifiedUser implements MapSerializable {
     }
 
     public static MinifiedMember toMinifiedMember(MinifiedUser user, MemberRoles role, Timestamp join) {
-        MinifiedMember member = (MinifiedMember) user;
-        member.setRole(role);
-        member.setJoinDatetime(join);
-        return member;
+        return new MinifiedMember(
+                user.getLocalId(),
+                user.getDisplayName(),
+                user.getPhotoUrl(),
+                role,
+                join
+        );
     }
 
     @Override

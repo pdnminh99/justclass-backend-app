@@ -8,7 +8,9 @@ import java.util.stream.Stream;
 
 @Service
 public class InvitationService {
+
     private final InvitationRepository repository;
+
     private List<Invitation> invitations;
 
     @Autowired

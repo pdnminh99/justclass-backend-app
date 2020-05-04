@@ -24,7 +24,6 @@ public class InviteNotification extends Notification {
         this.classroomReference = classroomReference;
     }
 
-
     public String getClassroomId() {
         return classroomId;
     }

@@ -83,15 +83,6 @@ public class Invitation {
         this.role = role;
     }
 
-    @Override
-    public String toString() {
-        return "Invitation{" +
-                "localId='" + localId + '\'' +
-                ", email='" + email + '\'' +
-                ", role=" + role +
-                '}';
-    }
-
     public String getInvitationId() {
         return invitationId;
     }
@@ -138,5 +129,20 @@ public class Invitation {
 
     public void setInvitorReference(DocumentReference invitorReference) {
         this.invitorReference = invitorReference;
+    }
+
+    @Override
+    public String toString() {
+        return "Invitation{" +
+                "invitationId='" + invitationId + '\'' +
+                ", localId='" + localId + '\'' +
+                ", email='" + email + '\'' +
+                ", role=" + role +
+                ", classroomId='" + classroomId + '\'' +
+                ", classroomReference=" + classroomReference +
+                ", invitorLocalId='" + invitorLocalId + '\'' +
+                ", invitorReference=" + invitorReference +
+                ", invokeTime=" + invokeTime +
+                '}';
     }
 }
