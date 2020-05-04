@@ -56,6 +56,15 @@ class UserRepository implements IUserRepository {
     }
 
     @Override
+    public Stream<QueryDocumentSnapshot> getUsersByEmail(List<String> emails) throws ExecutionException, InterruptedException {
+        return usersCollection.whereIn("email", emails)
+                .get()
+                .get()
+                .getDocuments()
+                .stream();
+    }
+
+    @Override
     public Optional<User> getUser(String localId) throws ExecutionException, InterruptedException {
         DocumentSnapshot document = usersCollection
                 .document(localId)

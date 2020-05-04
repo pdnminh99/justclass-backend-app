@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
@@ -31,6 +32,8 @@ interface IClassroomRepository {
     Stream<QueryDocumentSnapshot> getMembersByUser(String hostId, MemberRoles role) throws ExecutionException, InterruptedException;
 
     boolean isPublicCodeAlreadyExist(String publicCode) throws ExecutionException, InterruptedException;
+
+    MinifiedMember promoteOwner(Member originalOwner, Member newOwner, Timestamp now) throws ExecutionException, InterruptedException;
 
     // New code goes here.
 

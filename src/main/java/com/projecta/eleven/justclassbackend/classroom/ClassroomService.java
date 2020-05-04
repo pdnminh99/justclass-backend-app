@@ -1,10 +1,9 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.QuerySnapshot;
+import com.google.cloud.firestore.*;
 import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.notification.NotificationService;
@@ -16,10 +15,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -414,40 +410,240 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Stream<MinifiedMember> invite(String localId, String classroomId, Stream<Invitation> invitationsStream) {
-        // TODO check if this user has enough authentication to invite.
-        if (invitationsStream.count() == 0) {
+    public Stream<MinifiedMember> invite(
+            String localId,
+            String classroomId,
+            List<Invitation> invitations)
+            throws ExecutionException, InterruptedException, InvalidClassroomInformationException, InvalidUserInformationException {
+        if (invitations.size() == 0) {
             return Stream.empty();
         }
-
-        var finalInvitationsStream = invitationsStream
-                .filter(this::isValidInvitation)
-                .filter(invitation -> !hasDuplicate(invitation, invitationsStream))
-                .peek(invitation -> {
-                    if (invitation.getRole() == null) {
-                        invitation.setRole(MemberRoles.STUDENT);
-                    }
-                });
-
+        // check if those invitations are valid.
+        // check if those invitations are from users that already in the class.
+        // check if invitations are sent.
+        DocumentReference classroomReference = repository.getClassroom(classroomId);
+        if (!classroomReference.get().get().exists()) {
+            throw new InvalidClassroomInformationException("Classroom with ID " + classroomId + " does not exist.");
+        }
+        Member memberInstance = verifyMember(classroomId, localId);
         var now = Timestamp.now();
-        var inviteAsOwner = finalInvitationsStream
+
+        // PROMOTE OWNER
+        List<Invitation> validInvitations = invitations
+                .stream()
+                .filter(this::isValidInvitation)
+                .filter(i -> i.getLocalId() == null || !i.getLocalId().equals(localId))
+                .collect(Collectors.toList());
+        Optional<Invitation> ownerMember = validInvitations
+                .stream()
                 .filter(i -> i.getRole() == MemberRoles.OWNER)
                 .findFirst();
+        var newMembers = new ArrayList<MinifiedMember>();
 
-        var inviteAsStudent = finalInvitationsStream
-                .filter(i -> i.getRole() == MemberRoles.STUDENT);
-        var inviteAsCollaborator = finalInvitationsStream
-                .filter(i -> i.getRole() == MemberRoles.COLLABORATOR);
-        return Stream.empty();
+        if (ownerMember.isPresent() && memberInstance.getRole() == MemberRoles.OWNER) {
+            var newOwner = promoteOwner(
+                    memberInstance,
+                    ownerMember.get().getLocalId(), classroomId);
+            if (newOwner != null) {
+                newMembers.add(newOwner);
+            }
+        }
+
+        // SENT OTHERS INVITATIONS
+        validInvitations = validInvitations
+                .stream()
+                .filter(invitation -> invitation.getRole() != MemberRoles.OWNER)
+                .peek(invitation -> {
+                    invitation.setClassroomId(classroomId);
+                    invitation.setClassroomReference(classroomReference);
+                    invitation.setInvitorLocalId(localId);
+                    invitation.setInvitorReference(memberInstance.getUserReference());
+                    invitation.setInvokeTime(now);
+                })
+                .collect(Collectors.toList());
+        if (validInvitations.size() == 0) {
+            return newMembers.stream();
+        }
+
+        class InvitationWrapper {
+            DocumentSnapshot memberSnapshot;
+
+            DocumentSnapshot userSnapshot;
+
+            MinifiedUser user;
+
+            Invitation invitation;
+
+            Member member;
+
+            public InvitationWrapper(
+                    DocumentSnapshot memberSnapshot,
+                    DocumentSnapshot userSnapshot,
+                    Invitation invitation) {
+                this.userSnapshot = userSnapshot;
+                this.memberSnapshot = memberSnapshot;
+                this.invitation = invitation;
+                this.member = memberSnapshot != null && memberSnapshot.exists() ?
+                        new Member(memberSnapshot) :
+                        null;
+                this.user = userSnapshot != null && userSnapshot.exists() ?
+                        new MinifiedUser(userSnapshot) :
+                        null;
+            }
+        }
+
+        List<InvitationWrapper> inviteesAlreadyInClass = new ArrayList<>();
+        List<InvitationWrapper> inviteesNotInClass = new ArrayList<>();
+
+        // Invite using ID
+        List<Invitation> inviteesById = validInvitations
+                .stream()
+                .filter(i -> i.getLocalId() != null)
+                .collect(Collectors.toList());
+
+        if (inviteesById.size() > 0) {
+            List<DocumentSnapshot> inviteeByIdSnapshots = ApiFutures
+                    .allAsList(
+                            inviteesById
+                                    .stream()
+                                    .map(i -> repository.getMember(i.getClassroomId(), i.getLocalId()))
+                                    .map(DocumentReference::get)
+                                    .collect(Collectors.toList())
+                    )
+                    .get();
+
+            for (var index = 0; index < inviteeByIdSnapshots.size(); index++) {
+                var wrapper = new InvitationWrapper(
+                        inviteeByIdSnapshots.get(index),
+                        null,
+                        inviteesById.get(index));
+
+                if (wrapper.memberSnapshot.exists()) {
+                    inviteesAlreadyInClass.add(wrapper);
+                } else {
+                    inviteesNotInClass.add(wrapper);
+                }
+            }
+        }
+
+        // Invite using email.
+        var inviteesByEmail = validInvitations
+                .stream()
+                .filter(i -> i.getLocalId() == null)
+                .collect(Collectors.toList());
+        // TODO filtering out duplicate emails.
+
+        if (inviteesByEmail.size() > 0) {
+            List<QueryDocumentSnapshot> inviteeByEmailSnapshots = userService
+                    .getUsersByEmail(
+                            inviteesByEmail
+                                    .stream()
+                                    .map(Invitation::getEmail)
+                                    .collect(Collectors.toList())
+                    )
+                    .collect(Collectors.toList());
+
+            List<DocumentSnapshot> inviteeMemberSnapshots = ApiFutures.allAsList(
+                    inviteeByEmailSnapshots
+                            .stream()
+                            .map(DocumentSnapshot::getId)
+                            .map(id -> repository.getMember(classroomId, id))
+                            .map(DocumentReference::get)
+                            .collect(Collectors.toList())
+            )
+                    .get();
+
+            for (var index = 0; index < inviteeByEmailSnapshots.size(); index++) {
+                InvitationWrapper wrapper;
+                // Member snapshot may not exist.
+                DocumentSnapshot memberSnapshot = inviteeMemberSnapshots.get(index);
+                // Assume this snapshot is exist.
+                DocumentSnapshot userSnapshot = inviteeByEmailSnapshots.get(index);
+
+                // TODO find associate invitation.
+                Invitation associateInvitation = inviteesByEmail
+                        .stream()
+                        .filter(i -> i.getEmail() == userSnapshot.get("email"))
+                        .findAny()
+                        .get();
+
+                if (memberSnapshot.exists()) {
+                    wrapper = new InvitationWrapper(
+                            memberSnapshot,
+                            userSnapshot,
+                            associateInvitation
+                    );
+                    inviteesAlreadyInClass.add(wrapper);
+                } else {
+                    wrapper = new InvitationWrapper(
+                            null,
+                            userSnapshot,
+                            associateInvitation
+                    );
+                    inviteesNotInClass.add(wrapper);
+                }
+            }
+        }
+
+        // TODO scan invitees in class and invitees not in class.
+        for (var invitation : inviteesAlreadyInClass) {
+            var user = MinifiedMember.toMinifiedMember(
+                    invitation.user,
+                    invitation.invitation.getRole(),
+                    invitation.member.getCreatedTimestamp());
+            newMembers.add(user);
+        }
+        return newMembers.stream();
+    }
+
+    private Member verifyMember(String classroomId, String localId) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        DocumentReference memberReference = repository.getMember(classroomId, localId);
+        DocumentSnapshot memberSnapshot = memberReference.get().get();
+
+        if (!memberSnapshot.exists()) {
+            throw new InvalidUserInformationException("User with ID " + localId + " does not exist, or not part of classroom with ID " + classroomId + ".");
+        }
+        var memberInstance = new Member(memberSnapshot);
+
+        if (memberInstance.getRole() == MemberRoles.STUDENT) {
+            throw new InvalidUserInformationException("User with ID " + localId + " does not have permission to invite.");
+        }
+        return memberInstance;
+    }
+
+    private MinifiedMember promoteOwner(Member currentOwner, String newOwnerId, String classroomId) throws ExecutionException, InterruptedException, InvalidClassroomInformationException, InvalidUserInformationException {
+        var newOwnerSnapshot = repository.getMember(classroomId, newOwnerId)
+                .get()
+                .get();
+
+        if (!newOwnerSnapshot.exists()) {
+            // or throw exception?
+            return null;
+        }
+        var newOwnerInstance = new Member(newOwnerSnapshot);
+        return repository.promoteOwner(currentOwner, newOwnerInstance, Timestamp.now());
+    }
+
+    private ApiFuture<WriteResult> updateLastEdit(DocumentReference classroomReference, Timestamp now) {
+        var map = new HashMap<String, Object>();
+        map.put("lastEdit", now);
+        return classroomReference.update(map);
+    }
+
+    private void wipeOutDuplicates(List<Invitation> invitations) {
+
     }
 
     private boolean isValidInvitation(Invitation invitation) {
-        return !(invitation.getLocalId() == null && invitation.getEmail() == null);
-    }
+        var localId = invitation.getLocalId();
+        var email = invitation.getEmail();
+        var role = invitation.getRole();
 
-    private boolean hasDuplicate(Invitation invitation, Stream<Invitation> invitationsStream) {
-        return invitationsStream
-                .noneMatch(i -> isInvitationEqual(i, invitation));
+        var checkRoleNotNull = role != null;
+        var checkValidNormalInvitation = localId != null && localId.trim().length() != 0 || email != null && email.trim().length() != 0;
+        var checkValidInfoForOwner = role != MemberRoles.OWNER || localId != null && localId.trim().length() != 0;
+
+        return checkRoleNotNull && checkValidNormalInvitation && checkValidInfoForOwner;
     }
 
     private boolean isInvitationEqual(Invitation first, Invitation second) {

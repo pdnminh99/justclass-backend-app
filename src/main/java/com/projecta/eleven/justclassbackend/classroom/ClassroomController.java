@@ -10,6 +10,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -84,12 +85,35 @@ public class ClassroomController {
 
     @PatchMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
     @ResponseStatus(HttpStatus.OK)
-    public void invite(
+    public List<HashMap<String, Object>> invite(
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId,
-            @RequestBody List<Invitation> invitations) {
-        service.invite(localId, classroomId, invitations.stream());
+            @RequestBody List<Invitation> invitations) throws InterruptedException, ExecutionException, InvalidUserInformationException, InvalidClassroomInformationException, IOException {
+        return service.invite(localId, classroomId, invitations)
+                .map(m -> m.toMap(true))
+                .collect(Collectors.toList());
     }
+
+//    @PatchMapping(value = "{localId}/{classroomId}/{newOwnerId}", produces = "application/json;charset=utf-8")
+//    @ResponseStatus(HttpStatus.OK)
+//    public List<MinifiedMember> invite(
+//            @PathVariable("localId") String localId,
+//            @PathVariable("classroomId") String classroomId,
+//            @PathVariable("newOwnerId") String newOwnerId,
+//            @Nullable
+//            @RequestBody List<Invitation> invitations) throws InterruptedException, ExecutionException, InvalidUserInformationException, InvalidClassroomInformationException, IOException {
+//        var members = new ArrayList<MinifiedMember>();
+//
+//        if (invitations != null) {
+//            members.addAll(service.invite(localId, classroomId, invitations.stream()).collect(Collectors.toList()));
+//        }
+//        try {
+//            members.add(service.promoteOwner(localId, newOwnerId, classroomId));
+//            return members;
+//        } catch (Exception e) {
+//            return members;
+//        }
+//    }
 
     @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> join(

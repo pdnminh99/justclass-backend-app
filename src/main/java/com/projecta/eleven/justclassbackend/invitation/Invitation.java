@@ -1,13 +1,22 @@
 package com.projecta.eleven.justclassbackend.invitation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
 import com.projecta.eleven.justclassbackend.classroom.MemberRoles;
 import org.springframework.lang.Nullable;
 
-import java.sql.Timestamp;
 
-@JsonIgnoreProperties({"invitationId", "invokeTime"})
+@JsonIgnoreProperties({
+        "invitationId",
+        "invokeTime",
+        "classroomId",
+        "classroomReference",
+        "invitorLocalId",
+        "invitorReference"
+})
 public class Invitation {
 
     private String invitationId;
@@ -24,6 +33,19 @@ public class Invitation {
     @JsonProperty("role")
     private MemberRoles role;
 
+    @JsonIgnore
+    private String classroomId;
+
+    @JsonIgnore
+    private DocumentReference classroomReference;
+
+    @JsonIgnore
+    private String invitorLocalId;
+
+    @JsonIgnore
+    private DocumentReference invitorReference;
+
+    @JsonIgnore
     private Timestamp invokeTime;
 
     public Invitation(@Nullable String localId,
@@ -84,5 +106,37 @@ public class Invitation {
 
     public void setInvokeTime(Timestamp invokeTime) {
         this.invokeTime = invokeTime;
+    }
+
+    public String getClassroomId() {
+        return classroomId;
+    }
+
+    public void setClassroomId(String classroomId) {
+        this.classroomId = classroomId;
+    }
+
+    public DocumentReference getClassroomReference() {
+        return classroomReference;
+    }
+
+    public void setClassroomReference(DocumentReference classroomReference) {
+        this.classroomReference = classroomReference;
+    }
+
+    public String getInvitorLocalId() {
+        return invitorLocalId;
+    }
+
+    public void setInvitorLocalId(String invitorLocalId) {
+        this.invitorLocalId = invitorLocalId;
+    }
+
+    public DocumentReference getInvitorReference() {
+        return invitorReference;
+    }
+
+    public void setInvitorReference(DocumentReference invitorReference) {
+        this.invitorReference = invitorReference;
     }
 }

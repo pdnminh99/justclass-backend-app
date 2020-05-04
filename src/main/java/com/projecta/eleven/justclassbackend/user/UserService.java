@@ -3,6 +3,7 @@ package com.projecta.eleven.justclassbackend.user;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,11 @@ public class UserService extends AbstractUserService {
     @Override
     public Stream<DocumentReference> getUsersReferences(List<String> localIds) {
         return null;
+    }
+
+    @Override
+    public Stream<QueryDocumentSnapshot> getUsersByEmail(List<String> emails) throws ExecutionException, InterruptedException {
+        return repository.getUsersByEmail(emails);
     }
 
     private Optional<User> compareAndApplyChanges(User existingUser, UserRequestBody newUser) {

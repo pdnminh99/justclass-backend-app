@@ -4,6 +4,7 @@ import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -19,7 +20,9 @@ public interface IClassroomOperationsService {
 
     Optional<Boolean> delete(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 
-    Stream<MinifiedMember> invite(String localId, String classroomId, Stream<Invitation> invitations);
+    Stream<MinifiedMember> invite(String localId, String classroomId, List<Invitation> invitations) throws ExecutionException, InterruptedException, InvalidClassroomInformationException, InvalidUserInformationException;
 
     Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException;
+
+//    MinifiedMember promoteOwner(String currentOwnerId, String newOwnerId, String classroomId) throws ExecutionException, InterruptedException, InvalidClassroomInformationException;
 }

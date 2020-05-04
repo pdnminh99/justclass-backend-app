@@ -33,7 +33,6 @@ public class FirebaseConfig {
                     .build();
         } else {
             String pathToCredential = Paths.get(".").toAbsolutePath().normalize().toString() + "//key.json";
-            System.out.println(pathToCredential);
             InputStream credentialFile = new FileInputStream(pathToCredential);
             GoogleCredentials credentials = GoogleCredentials.fromStream(credentialFile);
 
