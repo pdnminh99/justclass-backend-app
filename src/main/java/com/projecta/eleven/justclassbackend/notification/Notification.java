@@ -9,7 +9,7 @@ import java.util.HashMap;
 public class Notification implements MapSerializable {
     private String notificationId;
 
-    private Timestamp invokeTimestamp;
+    private Timestamp invokeTime;
 
     private String invokerId;
 
@@ -23,14 +23,14 @@ public class Notification implements MapSerializable {
 
     public Notification(
             String notificationId,
-            Timestamp invokeTimestamp,
+            Timestamp invokeTime,
             String invokerId,
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
             NotificationType notificationType) {
         this.notificationId = notificationId;
-        this.invokeTimestamp = invokeTimestamp;
+        this.invokeTime = invokeTime;
         this.invokerId = invokerId;
         this.invokerReference = invokerReference;
         this.ownerId = ownerId;
@@ -38,12 +38,12 @@ public class Notification implements MapSerializable {
         this.notificationType = notificationType;
     }
 
-    public Timestamp getInvokeTimestamp() {
-        return invokeTimestamp;
+    public Timestamp getInvokeTime() {
+        return invokeTime;
     }
 
-    public void setInvokeTimestamp(Timestamp invokeTimestamp) {
-        this.invokeTimestamp = invokeTimestamp;
+    public void setInvokeTime(Timestamp invokeTime) {
+        this.invokeTime = invokeTime;
     }
 
     public String getInvokerId() {
@@ -99,9 +99,9 @@ public class Notification implements MapSerializable {
         var map = new HashMap<String, Object>();
 
         ifFieldNotNullThenPutToMap("notificationId", getNotificationId(), map);
-        ifFieldNotNullThenPutToMap("invokeTimestamp", getInvokeTimestamp() != null && isTimestampInMilliseconds ?
-                getInvokeTimestamp().toDate().getTime() :
-                getInvokeTimestamp(), map);
+        ifFieldNotNullThenPutToMap("invokeTime", getInvokeTime() != null && isTimestampInMilliseconds ?
+                getInvokeTime().toDate().getTime() :
+                getInvokeTime(), map);
         ifFieldNotNullThenPutToMap("invokerId", getInvokerId(), map);
         ifFieldNotNullThenPutToMap("invokerReference", getInvokerReference(), map);
         ifFieldNotNullThenPutToMap("ownerId", getOwnerId(), map);

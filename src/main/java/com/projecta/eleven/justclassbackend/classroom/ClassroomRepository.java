@@ -170,16 +170,49 @@ class ClassroomRepository implements IClassroomRepository {
     }
 
     // NEW CODE HERE
+    public boolean isBatchActive() {
+        return writeBatch != null;
+    }
+
+    private boolean verifyMemberInput(Member member) {
+        if (member == null) {
+            return false;
+        }
+        if (!isBatchActive()) {
+            writeBatch = firestore.batch();
+        }
+        String memberId = member.getMemberId();
+        return memberId != null && memberId.trim().length() != 0;
+    }
 
     @Override
     public void createMemberAsync(Member member) {
+        verifyMemberInput(member);
+        String memberId = member.getMemberId();
+
         writeBatch.set(
-                membersCollection.document(member.getMemberId()),
+                membersCollection.document(memberId),
                 member.toMap());
     }
 
     @Override
+    public void updateMember(Member member) {
+        verifyMemberInput(member);
+        String memberId = member.getMemberId();
+        var memberMap = member.toMap();
+        memberMap.remove("memberId");
+
+        writeBatch.update(
+                membersCollection.document(memberId),
+                member.toMap()
+        );
+    }
+
+    @Override
     public void commit() {
-        writeBatch.commit();
+        if (isBatchActive()) {
+            writeBatch.commit();
+            writeBatch = null;
+        }
     }
 }

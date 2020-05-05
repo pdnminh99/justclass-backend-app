@@ -37,7 +37,7 @@ public class InvitationRepository {
             resetWriteBatch();
         }
         String invitationId = invitation.getInvitationId();
-        var map = invitation.toMap(true);
+        var map = invitation.toMap();
         map.remove("invitationId");
         writeBatch.set(invitationsCollection.document(invitationId), map);
     }

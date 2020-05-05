@@ -39,5 +39,7 @@ interface IClassroomRepository {
 
     void createMemberAsync(Member member);
 
+    void updateMember(Member member);
+
     void commit();
 }

@@ -18,7 +18,8 @@ import java.util.HashMap;
         "classroomId",
         "classroomReference",
         "invitorLocalId",
-        "invitorReference"
+        "invitorReference",
+        "ownerReference"
 })
 public class Invitation implements MapSerializable {
 
@@ -27,6 +28,9 @@ public class Invitation implements MapSerializable {
     @Nullable
     @JsonProperty("localId")
     private String localId;
+
+    @JsonIgnore
+    private DocumentReference ownerReference;
 
     @Nullable
     @JsonProperty("email")
@@ -134,19 +138,12 @@ public class Invitation implements MapSerializable {
         this.invitorReference = invitorReference;
     }
 
-    @Override
-    public String toString() {
-        return "Invitation{" +
-                "invitationId='" + invitationId + '\'' +
-                ", localId='" + localId + '\'' +
-                ", email='" + email + '\'' +
-                ", role=" + role +
-                ", classroomId='" + classroomId + '\'' +
-                ", classroomReference=" + classroomReference +
-                ", invitorLocalId='" + invitorLocalId + '\'' +
-                ", invitorReference=" + invitorReference +
-                ", invokeTime=" + invokeTime +
-                '}';
+    public DocumentReference getOwnerReference() {
+        return ownerReference;
+    }
+
+    public void setOwnerReference(DocumentReference ownerReference) {
+        this.ownerReference = ownerReference;
     }
 
     @Override
@@ -155,6 +152,7 @@ public class Invitation implements MapSerializable {
 
         ifFieldNotNullThenPutToMap("invitationId", getInvitationId(), map);
         ifFieldNotNullThenPutToMap("localId", getLocalId(), map);
+        ifFieldNotNullThenPutToMap("ownerReference", getOwnerReference(), map);
         if (getRole() != null) {
             ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
         }
@@ -166,5 +164,21 @@ public class Invitation implements MapSerializable {
                 invokeTime.toDate().getTime() :
                 invokeTime, map);
         return map;
+    }
+
+    @Override
+    public String toString() {
+        return "Invitation{" +
+                "invitationId='" + invitationId + '\'' +
+                ", localId='" + localId + '\'' +
+                ", ownerReference=" + ownerReference +
+                ", email='" + email + '\'' +
+                ", role=" + role +
+                ", classroomId='" + classroomId + '\'' +
+                ", classroomReference=" + classroomReference +
+                ", invitorLocalId='" + invitorLocalId + '\'' +
+                ", invitorReference=" + invitorReference +
+                ", invokeTime=" + invokeTime +
+                '}';
     }
 }
