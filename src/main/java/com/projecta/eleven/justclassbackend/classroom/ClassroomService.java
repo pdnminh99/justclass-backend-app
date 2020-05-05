@@ -684,9 +684,8 @@ public class ClassroomService implements IClassroomOperationsService {
                 member.setRole(finalInvitation.getRole());
                 repository.updateMember(member);
                 shouldUpdateLastEditField = true;
+                members.add(user);
             }
-
-            members.add(user);
         }
     }
 
