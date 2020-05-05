@@ -473,22 +473,20 @@ public class ClassroomService implements IClassroomOperationsService {
                     invitation.setInvokeTime(now);
                 })
                 .collect(Collectors.toList());
-        if (invitations.size() == 0) {
-            return members.stream();
+        if (invitations.size() > 0) {
+            categorizeInvitationsUsingId();
+            categorizeInvitationsUsingEmail(invokerId, classroomId);
+
+            if (invoker.getRole() == MemberRoles.OWNER) {
+                processInvitees(invoker, now, false);
+            }
+            processInvitees(invoker, now, true);
+
+            // TODO Update classroom lastEdit, User's lastAccess and Users'friends.
+            invitationService.send();
+            notificationService.send();
+            repository.commit();
         }
-
-        categorizeInvitationsUsingId();
-        categorizeInvitationsUsingEmail(invokerId, classroomId);
-
-        if (invoker.getRole() == MemberRoles.OWNER) {
-            processInvitees(invoker, now, false);
-        }
-        processInvitees(invoker, now, true);
-
-        // TODO Update classroom lastEdit, User's lastAccess and Users'friends.
-        invitationService.send();
-        notificationService.send();
-        repository.commit();
 
         // Perform update last edit field if necessary, then set flag to false.
         performUpdateLastEditField(classroomReference, now);
