@@ -3,6 +3,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -94,27 +95,6 @@ public class ClassroomController {
                 .collect(Collectors.toList());
     }
 
-//    @PatchMapping(value = "{localId}/{classroomId}/{newOwnerId}", produces = "application/json;charset=utf-8")
-//    @ResponseStatus(HttpStatus.OK)
-//    public List<MinifiedMember> invite(
-//            @PathVariable("localId") String localId,
-//            @PathVariable("classroomId") String classroomId,
-//            @PathVariable("newOwnerId") String newOwnerId,
-//            @Nullable
-//            @RequestBody List<Invitation> invitations) throws InterruptedException, ExecutionException, InvalidUserInformationException, InvalidClassroomInformationException, IOException {
-//        var members = new ArrayList<MinifiedMember>();
-//
-//        if (invitations != null) {
-//            members.addAll(service.invite(localId, classroomId, invitations.stream()).collect(Collectors.toList()));
-//        }
-//        try {
-//            members.add(service.promoteOwner(localId, newOwnerId, classroomId));
-//            return members;
-//        } catch (Exception e) {
-//            return members;
-//        }
-//    }
-
     @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> join(
             @PathVariable("localId") String localId,
@@ -133,6 +113,41 @@ public class ClassroomController {
         return service.delete(localId, classroomId)
                 .map(this::handleDeleteStateNotEmpty)
                 .orElseGet(this::handleDeleteStateEmpty);
+    }
+
+    @GetMapping("lookup/{localId}/{classroomId}/{keyword}")
+    public ResponseEntity<MinifiedUser> lookUp(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId,
+            @PathVariable("keyword") String keyword,
+            @Nullable
+            @RequestParam("role") MemberRoles role
+    ) {
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("members/{localId}/{classroomId}")
+    public ResponseEntity<List<MinifiedMember>> getMembers(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId
+    ) {
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("accept/{localId}/{classroomId}")
+    public ResponseEntity<HashMap<String, Object>> acceptInvitation(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId
+    ) {
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("deny/{localId}/{classroomId}")
+    public ResponseEntity<Void> denyInvitation(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId
+    ) {
+        return ResponseEntity.ok().build();
     }
 
     private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {

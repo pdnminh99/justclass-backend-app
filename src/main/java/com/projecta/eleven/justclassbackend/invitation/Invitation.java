@@ -19,7 +19,8 @@ import java.util.HashMap;
         "classroomReference",
         "invitorLocalId",
         "invitorReference",
-        "ownerReference"
+        "ownerReference",
+        "status"
 })
 public class Invitation implements MapSerializable {
 
@@ -54,6 +55,9 @@ public class Invitation implements MapSerializable {
 
     @JsonIgnore
     private Timestamp invokeTime;
+
+    @JsonIgnore
+    private InvitationStatus status;
 
     public Invitation(@Nullable String localId,
                       @Nullable String email,
@@ -163,6 +167,9 @@ public class Invitation implements MapSerializable {
         ifFieldNotNullThenPutToMap("invokeTime", invokeTime != null && isTimestampInMilliseconds ?
                 invokeTime.toDate().getTime() :
                 invokeTime, map);
+        if (getStatus() != null) {
+            ifFieldNotNullThenPutToMap("status", getStatus().name(), map);
+        }
         return map;
     }
 
@@ -180,5 +187,13 @@ public class Invitation implements MapSerializable {
                 ", invitorReference=" + invitorReference +
                 ", invokeTime=" + invokeTime +
                 '}';
+    }
+
+    public InvitationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(InvitationStatus status) {
+        this.status = status;
     }
 }

@@ -9,6 +9,7 @@ import com.google.cloud.firestore.QuerySnapshot;
 import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.invitation.InvitationService;
+import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import com.projecta.eleven.justclassbackend.notification.InviteNotification;
 import com.projecta.eleven.justclassbackend.notification.NotificationService;
 import com.projecta.eleven.justclassbackend.notification.NotificationType;
@@ -659,6 +660,9 @@ public class ClassroomService implements IClassroomOperationsService {
                     finalInvitation.setEmail(invitation.userSnapshot.getString("email"));
                 }
                 finalInvitation.setInvitationId(invoker.getClassroomId() + "_" + finalInvitation.getLocalId());
+                finalInvitation.setStatus(InvitationStatus.PENDING);
+                finalInvitation.setOwnerReference(invitation.userSnapshot.getReference());
+
                 invitationService.addInvitation(finalInvitation);
             }
 
