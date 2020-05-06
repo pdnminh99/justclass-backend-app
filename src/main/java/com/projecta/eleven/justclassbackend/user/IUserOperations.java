@@ -19,6 +19,6 @@ public interface IUserOperations {
 
     Stream<QueryDocumentSnapshot> getUsersByEmail(List<String> emails) throws ExecutionException, InterruptedException;
 
-    Stream<MinifiedUser> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
+    Stream<User> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
             throws ExecutionException, InterruptedException;
 }

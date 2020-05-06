@@ -143,7 +143,7 @@ public class UserService implements IUserOperations {
     }
 
     @Override
-    public Stream<MinifiedUser> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
+    public Stream<User> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
             throws ExecutionException, InterruptedException {
         if (!verifyValidStringField(localId)) {
             return Stream.empty();
@@ -152,11 +152,11 @@ public class UserService implements IUserOperations {
                 .getRelationshipReferences(localId, lastTimeRequest)
                 .map(ref -> ref.getGuestId().equals(localId) ?
                         ref.getHostReference().get() :
-                        ref.getGuestReference().get())
-                .collect(Collectors.toList());
-        return ApiFutures.allAsList(relationshipsReferences)
+                        ref.getGuestReference().get());
+        var collection = relationshipsReferences.collect(Collectors.toList());
+        return ApiFutures.allAsList(collection)
                 .get()
                 .stream()
-                .map(MinifiedUser::new);
+                .map(u -> new User(u, false));
     }
 }

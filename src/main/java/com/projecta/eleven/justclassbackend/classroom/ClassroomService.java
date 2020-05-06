@@ -892,7 +892,7 @@ public class ClassroomService implements IClassroomOperationsService {
 
     @Override
     public Stream<MinifiedUser> lookUp(String localId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException, InvalidUserInformationException {
-        if (localId == null || localId.trim().length() == 0 || keyword == null || keyword.trim().length() == 0) {
+        if (localId == null || localId.trim().length() == 0 || classroomId == null || classroomId.trim().length() == 0 || role == null) {
             throw new IllegalArgumentException("LocalId or classroomId is invalid.");
         }
         DocumentSnapshot memberSnapshot = repository.getMember(classroomId, localId)
@@ -903,10 +903,16 @@ public class ClassroomService implements IClassroomOperationsService {
             throw new InvalidUserInformationException("User does not exist, or not part of classroom with Id " + classroomId + ".");
         }
         Member invoker = new Member(memberSnapshot);
+        if (keyword != null && keyword.trim().length() > 0) {
+            keyword = keyword.toLowerCase();
+        }
         switch (invoker.getRole()) {
             case OWNER:
                 return lookUpAsOwner(localId, classroomId, keyword, role);
             case COLLABORATOR:
+                if (role != MemberRoles.STUDENT) {
+                    return Stream.empty();
+                }
                 return lookUpAsCollaborator(localId, classroomId, keyword);
             case STUDENT:
             default:
@@ -941,7 +947,7 @@ public class ClassroomService implements IClassroomOperationsService {
         if (role != MemberRoles.STUDENT) {
             resultMembers.addAll(
                     snapshots
-                            .get(1)
+                            .get(role == MemberRoles.OWNER ? 1 : 0)
                             .getDocuments()
                             .stream()
                             .map(Member::new)
@@ -958,25 +964,30 @@ public class ClassroomService implements IClassroomOperationsService {
                 .parallelStream()
                 .map(m -> new User(m, false))
                 .filter(u -> !u.getLocalId().equals(invokerId))
-                .filter(u -> u.getDisplayName() != null && u.getDisplayName().contains(keyword)
-                        || u.getFirstName() != null && u.getFirstName().contains(keyword)
-                        || u.getLastName() != null && u.getLastName().contains(keyword)
-                        || u.getEmail() != null && u.getEmail().contains(keyword)
+                .filter(u -> keyword == null || keyword.trim().length() == 0 ||
+                        (u.getDisplayName() != null && u.getDisplayName().toLowerCase().contains(keyword)
+                                || u.getFirstName() != null && u.getFirstName().toLowerCase().contains(keyword)
+                                || u.getLastName() != null && u.getLastName().toLowerCase().contains(keyword)
+                                || u.getEmail() != null && u.getEmail().toLowerCase().contains(keyword))
                 )
                 .collect(Collectors.toList());
 
-        users.addAll(lookUpAtFriendsList(invokerId, keyword)
-                .filter(f -> users
-                        .stream()
-                        .noneMatch(u -> u.getLocalId().equals(f.getLocalId())
-                        ))
-                .collect(Collectors.toList()));
+        if (role != MemberRoles.OWNER) {
+            users.addAll(lookUpAtFriendsList(invokerId, keyword)
+                    .filter(f -> users
+                            .stream()
+                            .noneMatch(u -> u.getLocalId().equals(f.getLocalId())
+                            ))
+                    .collect(Collectors.toList()));
+        }
 
         return users.parallelStream()
+                .sorted(Comparator.comparing(MinifiedUser::getDisplayName))
                 .map(u -> new MinifiedUser(u.getLocalId(), u.getDisplayName(), u.getPhotoUrl()));
     }
 
     private Stream<MinifiedUser> lookUpAsCollaborator(String invokerId, String classroomId, String keyword) throws ExecutionException, InterruptedException {
+        System.out.println("Look up as collaborator.");
         var members = repository.getMembers(classroomId, null)
                 .get()
                 .getDocuments()
@@ -988,7 +999,13 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     private Stream<User> lookUpAtFriendsList(String invokerId, String keyword) throws ExecutionException, InterruptedException {
-        return Stream.empty();
+        return userService.getFriendsOfUser(invokerId, null)
+                .filter(u -> keyword == null || keyword.trim().length() == 0 ||
+                        (u.getDisplayName() != null && u.getDisplayName().toLowerCase().contains(keyword)
+                                || u.getEmail() != null && u.getEmail().toLowerCase().contains(keyword)
+                                || u.getFirstName() != null && u.getFirstName().toLowerCase().contains(keyword)
+                                || u.getLastName() != null && u.getLastName().toLowerCase().contains(keyword))
+                );
     }
 
     @Override
