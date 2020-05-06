@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -16,8 +17,8 @@ import com.projecta.eleven.justclassbackend.notification.NotificationType;
 import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
+import com.projecta.eleven.justclassbackend.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
@@ -44,7 +45,7 @@ public class ClassroomService implements IClassroomOperationsService {
     public ClassroomService(IClassroomRepository repository,
                             NotificationService notificationService,
                             InvitationService invitationService,
-                            @Qualifier("defaultUserService") IUserOperations userService) {
+                            IUserOperations userService) {
         this.repository = repository;
         this.notificationService = notificationService;
         this.invitationService = invitationService;
@@ -842,6 +843,157 @@ public class ClassroomService implements IClassroomOperationsService {
         getMembersMetadataForClassroom(classroomInstance, member);
 
         return Optional.of(classroomInstance);
+    }
+
+    @Override
+    public Stream<MinifiedMember> getMembers(String invokerId, String classroomId) throws ExecutionException, InterruptedException, InvalidClassroomInformationException {
+        if (invokerId == null || invokerId.trim().length() == 0 || classroomId == null || classroomId.trim().length() == 0) {
+            throw new IllegalArgumentException("Invalid localId or classroomId");
+        }
+        DocumentSnapshot memberSnapshot = repository.getMember(classroomId, invokerId)
+                .get()
+                .get();
+        if (!memberSnapshot.exists()) {
+            throw new InvalidClassroomInformationException("User not found, or not part of classroom " + classroomId + ".");
+        }
+
+        QuerySnapshot querySnapshot = repository.getMembers(classroomId, null)
+                .get();
+
+        if (querySnapshot.size() == 0) {
+            return Stream.empty();
+        }
+
+        var members = querySnapshot.getDocuments()
+                .stream()
+                .map(Member::new)
+                .collect(Collectors.toList());
+
+        List<MinifiedMember> minifiedMembers = ApiFutures.allAsList(
+                members.stream()
+                        .map(Member::getUserReference)
+                        .map(DocumentReference::get)
+                        .collect(Collectors.toList())
+        )
+                .get()
+                .stream()
+                .map(MinifiedMember::new)
+                .collect(Collectors.toList());
+
+        for (var index = 0; index < members.size(); index++) {
+            var role = members.get(index).getRole();
+            var joinTimestamp = members.get(index).getCreatedTimestamp();
+
+            minifiedMembers.get(index).setRole(role);
+            minifiedMembers.get(index).setJoinDatetime(joinTimestamp);
+        }
+        return minifiedMembers.stream();
+    }
+
+    @Override
+    public Stream<MinifiedUser> lookUp(String localId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        if (localId == null || localId.trim().length() == 0 || keyword == null || keyword.trim().length() == 0) {
+            throw new IllegalArgumentException("LocalId or classroomId is invalid.");
+        }
+        DocumentSnapshot memberSnapshot = repository.getMember(classroomId, localId)
+                .get()
+                .get();
+
+        if (!memberSnapshot.exists()) {
+            throw new InvalidUserInformationException("User does not exist, or not part of classroom with Id " + classroomId + ".");
+        }
+        Member invoker = new Member(memberSnapshot);
+        switch (invoker.getRole()) {
+            case OWNER:
+                return lookUpAsOwner(localId, classroomId, keyword, role);
+            case COLLABORATOR:
+                return lookUpAsCollaborator(localId, classroomId, keyword);
+            case STUDENT:
+            default:
+                return Stream.empty();
+        }
+    }
+
+    // TODO Improve performance.
+    private Stream<MinifiedUser> lookUpAsOwner(String invokerId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException {
+        List<ApiFuture<QuerySnapshot>> queries = Lists.newArrayList();
+
+        if (role != MemberRoles.COLLABORATOR) {
+            queries.add(repository.getMembers(classroomId, MemberRoles.COLLABORATOR));
+        }
+        if (role != MemberRoles.STUDENT) {
+            queries.add(repository.getMembers(classroomId, MemberRoles.STUDENT));
+        }
+        List<QuerySnapshot> snapshots = ApiFutures.allAsList(queries)
+                .get();
+        List<Member> resultMembers = Lists.newArrayList();
+
+        if (role != MemberRoles.COLLABORATOR) {
+            resultMembers.addAll(
+                    snapshots
+                            .get(0)
+                            .getDocuments()
+                            .stream()
+                            .map(Member::new)
+                            .collect(Collectors.toList())
+            );
+        }
+        if (role != MemberRoles.STUDENT) {
+            resultMembers.addAll(
+                    snapshots
+                            .get(1)
+                            .getDocuments()
+                            .stream()
+                            .map(Member::new)
+                            .collect(Collectors.toList())
+            );
+        }
+        var users = ApiFutures.allAsList(
+                resultMembers.parallelStream()
+                        .map(Member::getUserReference)
+                        .map(DocumentReference::get)
+                        .collect(Collectors.toList())
+        )
+                .get()
+                .parallelStream()
+                .map(m -> new User(m, false))
+                .filter(u -> !u.getLocalId().equals(invokerId))
+                .filter(u -> u.getDisplayName() != null && u.getDisplayName().contains(keyword)
+                        || u.getFirstName() != null && u.getFirstName().contains(keyword)
+                        || u.getLastName() != null && u.getLastName().contains(keyword)
+                        || u.getEmail() != null && u.getEmail().contains(keyword)
+                )
+                .collect(Collectors.toList());
+
+        users.addAll(lookUpAtFriendsList(invokerId, keyword)
+                .filter(f -> users
+                        .stream()
+                        .noneMatch(u -> u.getLocalId().equals(f.getLocalId())
+                        ))
+                .collect(Collectors.toList()));
+
+        return users.parallelStream()
+                .map(u -> new MinifiedUser(u.getLocalId(), u.getDisplayName(), u.getPhotoUrl()));
+    }
+
+    private Stream<MinifiedUser> lookUpAsCollaborator(String invokerId, String classroomId, String keyword) throws ExecutionException, InterruptedException {
+        var members = repository.getMembers(classroomId, null)
+                .get()
+                .getDocuments()
+                .stream()
+                .map(Member::new);
+        return lookUpAtFriendsList(invokerId, keyword)
+                .map(f -> new MinifiedUser(f.getLocalId(), f.getDisplayName(), f.getPhotoUrl()))
+                .filter(f -> members.noneMatch(m -> m.getUserId().equals(f.getLocalId())));
+    }
+
+    private Stream<User> lookUpAtFriendsList(String invokerId, String keyword) throws ExecutionException, InterruptedException {
+        return Stream.empty();
+    }
+
+    @Override
+    public Optional<Classroom> acceptInvitation(String localId, String classroomId) {
+        return Optional.empty();
     }
 
     private void getMembersMetadataForClassroom(Classroom classroom, Member member) throws ExecutionException, InterruptedException {

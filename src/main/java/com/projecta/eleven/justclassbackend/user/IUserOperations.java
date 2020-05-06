@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.user;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 
@@ -17,4 +18,7 @@ public interface IUserOperations {
     Stream<DocumentReference> getUsersReferences(List<String> localIds);
 
     Stream<QueryDocumentSnapshot> getUsersByEmail(List<String> emails) throws ExecutionException, InterruptedException;
+
+    Stream<MinifiedUser> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
+            throws ExecutionException, InterruptedException;
 }

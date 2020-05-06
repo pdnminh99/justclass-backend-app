@@ -5,7 +5,6 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -16,9 +15,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Service("defaultUserService")
-@Primary
-public class UserService extends AbstractUserService {
+@Service
+public class UserService implements IUserOperations {
 
     private final IUserRepository repository;
 

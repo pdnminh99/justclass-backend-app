@@ -3,6 +3,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,5 +25,10 @@ public interface IClassroomOperationsService {
 
     Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException;
 
-//    MinifiedMember promoteOwner(String currentOwnerId, String newOwnerId, String classroomId) throws ExecutionException, InterruptedException, InvalidClassroomInformationException;
+    Stream<MinifiedMember> getMembers(String invokerId, String classroomId) throws ExecutionException, InterruptedException, InvalidClassroomInformationException;
+
+    Stream<MinifiedUser> lookUp(String localId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException, InvalidUserInformationException;
+
+    Optional<Classroom> acceptInvitation(String localId, String classroomId);
+
 }

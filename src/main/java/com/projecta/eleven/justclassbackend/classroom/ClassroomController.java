@@ -115,23 +115,26 @@ public class ClassroomController {
                 .orElseGet(this::handleDeleteStateEmpty);
     }
 
-    @GetMapping("lookup/{localId}/{classroomId}/{keyword}")
-    public ResponseEntity<MinifiedUser> lookUp(
+    @GetMapping("lookup/{localId}/{classroomId}/{role}")
+    public ResponseEntity<List<MinifiedUser>> lookUp(
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId,
-            @PathVariable("keyword") String keyword,
+            @PathVariable("role") MemberRoles role,
             @Nullable
-            @RequestParam("role") MemberRoles role
-    ) {
-        return ResponseEntity.ok().build();
+            @RequestParam("keyword") String keyword
+    ) throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        return ResponseEntity.ok(service.lookUp(localId, classroomId, keyword, role)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("members/{localId}/{classroomId}")
-    public ResponseEntity<List<MinifiedMember>> getMembers(
+    public ResponseEntity<List<HashMap<String, Object>>> getMembers(
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId
-    ) {
-        return ResponseEntity.ok().build();
+    ) throws InterruptedException, ExecutionException, InvalidClassroomInformationException {
+        return ResponseEntity.ok(service.getMembers(localId, classroomId)
+                .map(m -> m.toMap(true))
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("accept/{localId}/{classroomId}")
@@ -139,15 +142,10 @@ public class ClassroomController {
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId
     ) {
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("deny/{localId}/{classroomId}")
-    public ResponseEntity<Void> denyInvitation(
-            @PathVariable("localId") String localId,
-            @PathVariable("classroomId") String classroomId
-    ) {
-        return ResponseEntity.ok().build();
+        return service.acceptInvitation(localId, classroomId)
+                .map(classroom -> classroom.toMap(true))
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NO_CONTENT).build());
     }
 
     private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {
