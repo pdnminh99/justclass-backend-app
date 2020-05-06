@@ -987,7 +987,6 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     private Stream<MinifiedUser> lookUpAsCollaborator(String invokerId, String classroomId, String keyword) throws ExecutionException, InterruptedException {
-        System.out.println("Look up as collaborator.");
         var members = repository.getMembers(classroomId, null)
                 .get()
                 .getDocuments()
