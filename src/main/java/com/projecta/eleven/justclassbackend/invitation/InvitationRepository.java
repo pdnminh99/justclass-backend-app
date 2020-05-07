@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.invitation;
 
 import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteBatch;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,5 +48,9 @@ public class InvitationRepository {
             writeBatch.commit();
             writeBatch = null;
         }
+    }
+
+    public DocumentReference getInvitationReference(String classroomId, String localId) {
+        return invitationsCollection.document(classroomId + "_" + localId);
     }
 }

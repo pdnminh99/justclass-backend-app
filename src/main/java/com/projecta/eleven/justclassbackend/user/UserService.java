@@ -152,9 +152,9 @@ public class UserService implements IUserOperations {
                 .getRelationshipReferences(localId, lastTimeRequest)
                 .map(ref -> ref.getGuestId().equals(localId) ?
                         ref.getHostReference().get() :
-                        ref.getGuestReference().get());
-        var collection = relationshipsReferences.collect(Collectors.toList());
-        return ApiFutures.allAsList(collection)
+                        ref.getGuestReference().get())
+                .collect(Collectors.toList());
+        return ApiFutures.allAsList(relationshipsReferences)
                 .get()
                 .stream()
                 .map(u -> new User(u, false));

@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.notification;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
@@ -36,6 +37,16 @@ public class Notification implements MapSerializable {
         this.ownerId = ownerId;
         this.ownerReference = ownerReference;
         this.notificationType = notificationType;
+    }
+
+    public Notification(DocumentSnapshot snapshot) {
+        this.notificationId = snapshot.getId();
+        this.invokeTime = snapshot.getTimestamp("invokeTime");
+        this.invokerId = snapshot.getString("invokerId");
+        this.invokerReference = snapshot.get("invokerReference", DocumentReference.class);
+        this.ownerId = snapshot.getString("ownerId");
+        this.ownerReference = snapshot.get("ownerReference", DocumentReference.class);
+        this.notificationType = NotificationType.fromText(snapshot.getString("notificationType"));
     }
 
     public Timestamp getInvokeTime() {

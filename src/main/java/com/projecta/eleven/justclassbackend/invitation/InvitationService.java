@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.invitation;
 
+import com.google.cloud.firestore.DocumentReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,10 @@ public class InvitationService {
     public void send() {
         invitations.clear();
         repository.send();
+    }
+
+    public DocumentReference getInvitationReference(String classroomId, String localId) {
+        return repository.getInvitationReference(classroomId, localId);
     }
 
 }

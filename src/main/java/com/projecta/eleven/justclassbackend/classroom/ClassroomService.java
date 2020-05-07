@@ -676,7 +676,17 @@ public class ClassroomService implements IClassroomOperationsService {
                     finalInvitation.getClassroomId(),
                     finalInvitation.getClassroomReference(),
                     isInviteesNotInClass ? NotificationType.INVITATION : NotificationType.ROLE_CHANGE,
-                    finalInvitation.getRole()
+                    finalInvitation.getRole(),
+                    isInviteesNotInClass ?
+                            finalInvitation.getClassroomId() + "_" + invoker.getUserId() :
+                            null,
+                    isInviteesNotInClass ?
+                            invitationService.getInvitationReference(finalInvitation.getClassroomId(), invoker.getUserId()) :
+                            null,
+                    null,
+                    isInviteesNotInClass ?
+                            InvitationStatus.PENDING :
+                            null
             );
             notificationService.add(notification);
 
