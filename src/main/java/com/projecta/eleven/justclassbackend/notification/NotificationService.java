@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class NotificationService {
@@ -29,5 +30,17 @@ public class NotificationService {
             repository.commit();
             notifications.clear();
         }
+    }
+
+    public <T extends Notification> T get(String notificationId) throws ExecutionException, InterruptedException {
+        if (notificationId == null || notificationId.trim().length() == 0) {
+            return null;
+        }
+        return repository.get(notificationId);
+    }
+
+    public void update(Notification notification) {
+        repository.update(notification);
+        repository.commit();
     }
 }

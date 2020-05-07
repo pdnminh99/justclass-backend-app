@@ -93,7 +93,7 @@ public class Member implements MapSerializable {
 
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
-        ifFieldNotNullThenPutToMap("collaboratorId", getMemberId(), map);
+        ifFieldNotNullThenPutToMap("memberId", getMemberId(), map);
         ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
         ifFieldNotNullThenPutToMap("userId", getUserId(), map);

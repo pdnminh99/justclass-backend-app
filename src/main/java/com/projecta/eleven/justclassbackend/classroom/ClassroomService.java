@@ -486,7 +486,7 @@ public class ClassroomService implements IClassroomOperationsService {
             // TODO Update classroom lastEdit, User's lastAccess and Users'friends.
             invitationService.send();
             notificationService.send();
-            repository.commit();
+            repository.commitAsync();
         }
 
         // Perform update last edit field if necessary, then set flag to false.
@@ -678,10 +678,10 @@ public class ClassroomService implements IClassroomOperationsService {
                     isInviteesNotInClass ? NotificationType.INVITATION : NotificationType.ROLE_CHANGE,
                     finalInvitation.getRole(),
                     isInviteesNotInClass ?
-                            finalInvitation.getClassroomId() + "_" + invoker.getUserId() :
+                            finalInvitation.getClassroomId() + "_" + finalInvitation.getLocalId() :
                             null,
                     isInviteesNotInClass ?
-                            invitationService.getInvitationReference(finalInvitation.getClassroomId(), invoker.getUserId()) :
+                            invitationService.getInvitationReference(finalInvitation.getClassroomId(), finalInvitation.getLocalId()) :
                             null,
                     null,
                     isInviteesNotInClass ?
@@ -1018,8 +1018,77 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Classroom> acceptInvitation(String localId, String classroomId) {
-        return Optional.empty();
+    public Optional<Classroom> acceptInvitation(String localId, String notificationId) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        if (localId == null || localId.trim().length() == 0 || notificationId == null || notificationId.trim().length() == 0) {
+            throw new IllegalArgumentException("Invalid localId or notificationId.");
+        }
+        InviteNotification inviteNotification = notificationService.get(notificationId);
+
+        if (inviteNotification == null) {
+            throw new IllegalArgumentException("Notification with Id [" + notificationId + "] does not exist.");
+        }
+        if (!inviteNotification.getOwnerId().equals(localId)) {
+            throw new InvalidUserInformationException("Notification with Id [" + notificationId + "] does not belong to user with Id [" + localId + "].");
+        }
+        if (inviteNotification.getNotificationType() != NotificationType.INVITATION) {
+            throw new IllegalArgumentException("This notification is not an invitation.");
+        }
+        if (inviteNotification.getInvitationStatus() != InvitationStatus.PENDING) {
+            throw new IllegalArgumentException("Invitation is not PENDING.");
+        }
+        DocumentReference invitationReference = inviteNotification.getInvitationReference();
+        DocumentSnapshot invitationSnapshot = invitationReference
+                .get()
+                .get();
+        Invitation invitation = new Invitation(invitationSnapshot);
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new IllegalArgumentException("Invitation is not PENDING");
+        }
+        String classroomId = invitation.getClassroomId();
+        String memberId = classroomId + "_" + localId;
+
+        // In case classroom does not exists.
+        DocumentSnapshot classroomSnapshot = invitation.getClassroomReference()
+                .get().get();
+        if (!classroomSnapshot.exists()) {
+            throw new IllegalArgumentException("Classroom with Id [" + classroomId + "] does not exist.");
+        }
+        Classroom classroom = new Classroom(classroomSnapshot);
+        var now = Timestamp.now();
+
+        var member = new Member(
+                memberId,
+                invitation.getClassroomReference(),
+                invitation.getOwnerReference(),
+                now,
+                now,
+                invitation.getRole()
+        );
+        repository.createMemberAsync(member);
+        repository.commitSync();
+
+        classroom.setLastAccess(now);
+        classroom.setRole(invitation.getRole());
+        getMembersMetadataForClassroom(classroom, member);
+
+        inviteNotification.setInvitationStatus(InvitationStatus.ACCEPTED);
+        notificationService.update(inviteNotification);
+
+        var updateMap = new HashMap<String, Object>();
+        updateMap.put("status", InvitationStatus.ACCEPTED.toString());
+        invitationReference.update(updateMap);
+
+        updateMap.clear();
+        updateMap.put("lastEdit", now);
+        invitation.getClassroomReference()
+                .update(updateMap);
+
+        return Optional.of(classroom);
+    }
+
+    @Override
+    public void denyInvitation(String localId, String notificationId) {
+
     }
 
     private void getMembersMetadataForClassroom(Classroom classroom, Member member) throws ExecutionException, InterruptedException {

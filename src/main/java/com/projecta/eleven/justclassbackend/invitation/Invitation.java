@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.classroom.MemberRoles;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 import org.springframework.lang.Nullable;
@@ -65,6 +66,20 @@ public class Invitation implements MapSerializable {
         this.localId = localId;
         this.email = email;
         this.role = role;
+    }
+
+    public Invitation(DocumentSnapshot snapshot) {
+        this.invitationId = snapshot.getId();
+        this.localId = snapshot.getString("localId");
+        this.ownerReference = snapshot.get("ownerReference", DocumentReference.class);
+        this.email = snapshot.getString("email");
+        this.role = MemberRoles.fromText(snapshot.getString("role"));
+        this.classroomId = snapshot.getString("classroomId");
+        this.classroomReference = snapshot.get("classroomReference", DocumentReference.class);
+        this.invitorLocalId = snapshot.getString("invitorLocalId");
+        this.invitorReference = snapshot.get("invitorReference", DocumentReference.class);
+        this.invokeTime = snapshot.getTimestamp("invokeTime");
+        this.status = InvitationStatus.fromText(snapshot.getString("status"));
     }
 
     @Nullable

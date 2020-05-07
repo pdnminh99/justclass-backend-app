@@ -115,7 +115,7 @@ public class ClassroomController {
                 .orElseGet(this::handleDeleteStateEmpty);
     }
 
-    @GetMapping("lookup/{localId}/{classroomId}/{role}")
+    @GetMapping(value = "lookup/{localId}/{classroomId}/{role}", produces = "application/json;charset=utf-8")
     public ResponseEntity<List<MinifiedUser>> lookUp(
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId,
@@ -127,7 +127,7 @@ public class ClassroomController {
                 .collect(Collectors.toList()));
     }
 
-    @GetMapping("members/{localId}/{classroomId}")
+    @GetMapping(value = "members/{localId}/{classroomId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<List<HashMap<String, Object>>> getMembers(
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId
@@ -137,15 +137,24 @@ public class ClassroomController {
                 .collect(Collectors.toList()));
     }
 
-    @GetMapping("accept/{localId}/{classroomId}")
+    @GetMapping(value = "accept/{localId}/{notificationId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> acceptInvitation(
             @PathVariable("localId") String localId,
-            @PathVariable("classroomId") String classroomId
-    ) {
-        return service.acceptInvitation(localId, classroomId)
+            @PathVariable("notificationId") String notificationId
+    ) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        return service.acceptInvitation(localId, notificationId)
                 .map(classroom -> classroom.toMap(true))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NO_CONTENT).build());
+    }
+
+    @GetMapping("deny/{localId}/{notificationId}")
+    @ResponseStatus(HttpStatus.OK)
+    public void denyInvitation(
+            @PathVariable("localId") String localId,
+            @PathVariable("notificationId") String notificationId
+    ) {
+        service.denyInvitation(localId, notificationId);
     }
 
     private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {

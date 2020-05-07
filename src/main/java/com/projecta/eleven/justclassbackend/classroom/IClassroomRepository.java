@@ -41,5 +41,7 @@ interface IClassroomRepository {
 
     void updateMember(Member member);
 
-    void commit();
+    void commitAsync();
+
+    void commitSync() throws ExecutionException, InterruptedException;
 }

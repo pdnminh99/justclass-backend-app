@@ -58,7 +58,7 @@ public class InviteNotification extends Notification {
         this.invitationId = snapshot.getString("invitationId");
         this.invitationReference = snapshot.get("invitationReference", DocumentReference.class);
         this.seen = snapshot.getTimestamp("seen");
-        this.invitationStatus = InvitationStatus.valueOf(snapshot.getString("invitationStatus"));
+        this.invitationStatus = InvitationStatus.fromText(snapshot.getString("invitationStatus"));
     }
 
     public String getClassroomId() {
@@ -140,4 +140,16 @@ public class InviteNotification extends Notification {
         return map;
     }
 
+    @Override
+    public String toString() {
+        return "InviteNotification{" +
+                "classroomId='" + classroomId + '\'' +
+                ", classroomReference=" + classroomReference +
+                ", role=" + role +
+                ", invitationId='" + invitationId + '\'' +
+                ", invitationReference=" + invitationReference +
+                ", seen=" + seen +
+                ", invitationStatus=" + invitationStatus +
+                '}';
+    }
 }

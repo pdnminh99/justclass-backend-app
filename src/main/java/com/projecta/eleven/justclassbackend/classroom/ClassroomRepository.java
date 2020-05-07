@@ -189,10 +189,12 @@ class ClassroomRepository implements IClassroomRepository {
     public void createMemberAsync(Member member) {
         verifyMemberInput(member);
         String memberId = member.getMemberId();
+        HashMap<String, Object> map = member.toMap();
+        map.remove("memberId");
 
         writeBatch.set(
                 membersCollection.document(memberId),
-                member.toMap());
+                map);
     }
 
     @Override
@@ -209,9 +211,18 @@ class ClassroomRepository implements IClassroomRepository {
     }
 
     @Override
-    public void commit() {
+    public void commitAsync() {
         if (isBatchActive()) {
             writeBatch.commit();
+            writeBatch = null;
+        }
+    }
+
+    @Override
+    public void commitSync() throws ExecutionException, InterruptedException {
+        if (isBatchActive()) {
+            writeBatch.commit()
+                    .get();
             writeBatch = null;
         }
     }
