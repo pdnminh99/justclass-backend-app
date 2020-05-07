@@ -1,14 +1,13 @@
 package com.projecta.eleven.justclassbackend.notification;
 
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteBatch;
+import com.google.cloud.firestore.*;
+import com.google.common.collect.Lists;
 import com.google.firebase.messaging.FirebaseMessaging;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Repository
@@ -57,7 +56,7 @@ class NotificationRepository {
         }
     }
 
-    public <T extends Notification> T get(String notificationId) throws ExecutionException, InterruptedException {
+    public <T extends Notification> T find(String notificationId) throws ExecutionException, InterruptedException {
         DocumentSnapshot notificationSnapshot = notificationsCollection.document(notificationId)
                 .get()
                 .get();
@@ -75,6 +74,33 @@ class NotificationRepository {
             default:
                 return null;
         }
+    }
+
+    public <T extends Notification> List<T> get(String ownerId, int count) throws ExecutionException, InterruptedException {
+        if (ownerId == null || ownerId.trim().length() == 0) {
+            return Lists.newArrayList();
+        }
+        var query = notificationsCollection.whereEqualTo("ownerId", ownerId)
+                .orderBy("invokeTime", Query.Direction.DESCENDING)
+                .limit(count)
+                .get()
+                .get()
+                .getDocuments();
+
+        List<T> results = Lists.newArrayList();
+
+        for (var snap : query) {
+            String notificationRepresentation = snap.getString("notificationType");
+            assert notificationRepresentation != null;
+            NotificationType notificationType = NotificationType.fromText(notificationRepresentation);
+
+            if (notificationType == NotificationType.INVITATION || notificationType == NotificationType.ROLE_CHANGE) {
+                var notification = new InviteNotification(snap);
+
+                results.add((T) notification);
+            }
+        }
+        return results;
     }
 
     public void update(Notification notification) {

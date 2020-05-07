@@ -1022,7 +1022,7 @@ public class ClassroomService implements IClassroomOperationsService {
         if (localId == null || localId.trim().length() == 0 || notificationId == null || notificationId.trim().length() == 0) {
             throw new IllegalArgumentException("Invalid localId or notificationId.");
         }
-        InviteNotification inviteNotification = notificationService.get(notificationId);
+        InviteNotification inviteNotification = notificationService.find(notificationId);
 
         if (inviteNotification == null) {
             throw new IllegalArgumentException("Notification with Id [" + notificationId + "] does not exist.");

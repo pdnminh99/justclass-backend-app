@@ -148,14 +148,14 @@ public class ClassroomController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NO_CONTENT).build());
     }
 
-    @GetMapping("deny/{localId}/{notificationId}")
-    @ResponseStatus(HttpStatus.OK)
-    public void denyInvitation(
-            @PathVariable("localId") String localId,
-            @PathVariable("notificationId") String notificationId
-    ) {
-        service.denyInvitation(localId, notificationId);
-    }
+//    @GetMapping("deny/{localId}/{notificationId}")
+//    @ResponseStatus(HttpStatus.OK)
+//    public void denyInvitation(
+//            @PathVariable("localId") String localId,
+//            @PathVariable("notificationId") String notificationId
+//    ) {
+//        service.denyInvitation(localId, notificationId);
+//    }
 
     private ResponseEntity<HashMap<String, Object>> handleRetrieveNotEmpty(Classroom classroom) {
         return ResponseEntity.ok(classroom.toMap(true));

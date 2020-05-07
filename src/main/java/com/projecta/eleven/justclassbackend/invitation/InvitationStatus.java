@@ -12,6 +12,9 @@ public enum InvitationStatus {
     }
 
     public static InvitationStatus fromText(String status) {
+        if (status == null) {
+            return null;
+        }
         switch (status) {
             case "PENDING":
                 return InvitationStatus.PENDING;

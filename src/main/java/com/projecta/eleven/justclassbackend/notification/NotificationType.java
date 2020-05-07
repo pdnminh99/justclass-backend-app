@@ -13,10 +13,13 @@ public enum NotificationType {
     }
 
     public static NotificationType fromText(String text) {
+        if (text == null) {
+            return null;
+        }
         switch (text) {
             case "INVITATION":
                 return NotificationType.INVITATION;
-            case "PROMOTION":
+            case "ROLE_CHANGE":
                 return NotificationType.ROLE_CHANGE;
             case "CLASSROOM_DELETED":
                 return NotificationType.CLASSROOM_DELETED;
