@@ -932,6 +932,7 @@ public class ClassroomService implements IClassroomOperationsService {
 
     // TODO Improve performance.
     private Stream<MinifiedUser> lookUpAsOwner(String invokerId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException {
+        // TODO need to exclude all members of classrooms when searching in friends list.
         List<ApiFuture<QuerySnapshot>> queries = Lists.newArrayList();
 
         if (role != MemberRoles.COLLABORATOR) {
