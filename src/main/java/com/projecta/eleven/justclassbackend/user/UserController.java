@@ -3,7 +3,6 @@ package com.projecta.eleven.justclassbackend.user;
 import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.classroom.InvalidClassroomInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
@@ -20,10 +19,10 @@ import java.util.stream.Collectors;
 @RequestMapping("api/v1/user")
 public class UserController {
 
-    private final AbstractUserService userService;
+    private final IUserOperations userService;
 
     @Autowired
-    public UserController(@Qualifier("defaultUserService") AbstractUserService userService) {
+    public UserController(IUserOperations userService) {
         this.userService = userService;
     }
 
@@ -45,6 +44,7 @@ public class UserController {
             lastRequestTimestamp = Timestamp.ofTimeMicroseconds(epochTime);
         }
         return userService.getFriendsOfUser(localId, lastRequestTimestamp)
+                .map(u -> new MinifiedUser(u.getLocalId(), u.getDisplayName(), u.getPhotoUrl()))
                 .collect(Collectors.toList());
     }
 

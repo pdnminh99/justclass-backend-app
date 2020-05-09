@@ -2,11 +2,15 @@ package com.projecta.eleven.justclassbackend.notification;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
-public class Notification {
+import java.util.HashMap;
+
+public class Notification implements MapSerializable {
     private String notificationId;
 
-    private Timestamp invokeTimestamp;
+    private Timestamp invokeTime;
 
     private String invokerId;
 
@@ -16,31 +20,41 @@ public class Notification {
 
     private DocumentReference ownerReference;
 
-    private Timestamp seen;
+    private NotificationType notificationType;
 
     public Notification(
             String notificationId,
-            Timestamp invokeTimestamp,
+            Timestamp invokeTime,
             String invokerId,
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
-            Timestamp seen) {
+            NotificationType notificationType) {
         this.notificationId = notificationId;
-        this.invokeTimestamp = invokeTimestamp;
+        this.invokeTime = invokeTime;
         this.invokerId = invokerId;
         this.invokerReference = invokerReference;
         this.ownerId = ownerId;
         this.ownerReference = ownerReference;
-        this.seen = seen;
+        this.notificationType = notificationType;
     }
 
-    public Timestamp getInvokeTimestamp() {
-        return invokeTimestamp;
+    public Notification(DocumentSnapshot snapshot) {
+        this.notificationId = snapshot.getId();
+        this.invokeTime = snapshot.getTimestamp("invokeTime");
+        this.invokerId = snapshot.getString("invokerId");
+        this.invokerReference = snapshot.get("invokerReference", DocumentReference.class);
+        this.ownerId = snapshot.getString("ownerId");
+        this.ownerReference = snapshot.get("ownerReference", DocumentReference.class);
+        this.notificationType = NotificationType.fromText(snapshot.getString("notificationType"));
     }
 
-    public void setInvokeTimestamp(Timestamp invokeTimestamp) {
-        this.invokeTimestamp = invokeTimestamp;
+    public Timestamp getInvokeTime() {
+        return invokeTime;
+    }
+
+    public void setInvokeTime(Timestamp invokeTime) {
+        this.invokeTime = invokeTime;
     }
 
     public String getInvokerId() {
@@ -75,19 +89,38 @@ public class Notification {
         this.ownerReference = ownerReference;
     }
 
-    public Timestamp getSeen() {
-        return seen;
-    }
-
-    public void setSeen(Timestamp seen) {
-        this.seen = seen;
-    }
-
     public String getNotificationId() {
         return notificationId;
     }
 
     public void setNotificationId(String notificationId) {
         this.notificationId = notificationId;
+    }
+
+    public NotificationType getNotificationType() {
+        return notificationType;
+    }
+
+    public void setNotificationType(NotificationType notificationType) {
+        this.notificationType = notificationType;
+    }
+
+    @Override
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = new HashMap<String, Object>();
+
+        ifFieldNotNullThenPutToMap("notificationId", getNotificationId(), map);
+        ifFieldNotNullThenPutToMap("invokeTime", getInvokeTime() != null && isTimestampInMilliseconds ?
+                getInvokeTime().toDate().getTime() :
+                getInvokeTime(), map);
+        ifFieldNotNullThenPutToMap("invokerId", getInvokerId(), map);
+        ifFieldNotNullThenPutToMap("invokerReference", getInvokerReference(), map);
+        ifFieldNotNullThenPutToMap("ownerId", getOwnerId(), map);
+        ifFieldNotNullThenPutToMap("ownerReference", getOwnerReference(), map);
+        if (getNotificationType() != null) {
+            ifFieldNotNullThenPutToMap("notificationType", getNotificationType().toString(), map);
+        }
+
+        return map;
     }
 }

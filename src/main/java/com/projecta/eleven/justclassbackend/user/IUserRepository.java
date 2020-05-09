@@ -2,8 +2,10 @@ package com.projecta.eleven.justclassbackend.user;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
@@ -29,4 +31,6 @@ interface IUserRepository {
     void edit(String localId, HashMap<String, Object> changesMap);
 
     DocumentReference getUserReference(String localId);
+
+    Stream<QueryDocumentSnapshot> getUsersByEmail(List<String> emails) throws ExecutionException, InterruptedException;
 }

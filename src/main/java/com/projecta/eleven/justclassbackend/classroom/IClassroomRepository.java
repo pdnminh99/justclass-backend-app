@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
@@ -32,9 +33,15 @@ interface IClassroomRepository {
 
     boolean isPublicCodeAlreadyExist(String publicCode) throws ExecutionException, InterruptedException;
 
+    MinifiedMember promoteOwner(Member originalOwner, Member newOwner, Timestamp now) throws ExecutionException, InterruptedException;
+
     // New code goes here.
 
     void createMemberAsync(Member member);
 
-    void commit();
+    void updateMember(Member member);
+
+    void commitAsync();
+
+    void commitSync() throws ExecutionException, InterruptedException;
 }

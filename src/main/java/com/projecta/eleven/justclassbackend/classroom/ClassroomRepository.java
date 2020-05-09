@@ -1,11 +1,13 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,6 +18,7 @@ import java.util.stream.Stream;
 class ClassroomRepository implements IClassroomRepository {
 
     private final Firestore firestore;
+
     private WriteBatch writeBatch;
 
     private final CollectionReference classroomsCollection;
@@ -143,15 +146,84 @@ class ClassroomRepository implements IClassroomRepository {
         return true;
     }
 
-    @Override
-    public void createMemberAsync(Member member) {
-        writeBatch.set(
-                membersCollection.document(member.getMemberId()),
-                member.toMap());
+    public MinifiedMember promoteOwner(Member originalOwner, Member newOwner, Timestamp now) throws ExecutionException, InterruptedException {
+        return firestore.runTransaction(transaction -> {
+            var originalOwnerRef = getMember(originalOwner.getClassroomId(), originalOwner.getUserId());
+            var newOwnerRef = getMember(newOwner.getClassroomId(), newOwner.getUserId());
+            var updateMap = new HashMap<String, Object>();
+
+            updateMap.put("lastAccess", now);
+            updateMap.put("role", MemberRoles.COLLABORATOR.toString());
+            transaction.update(originalOwnerRef, updateMap);
+
+            updateMap.put("role", MemberRoles.OWNER.toString());
+            transaction.update(newOwnerRef, updateMap);
+
+            var newOwnerMember = new MinifiedMember(
+                    newOwner.getUserReference().get().get()
+            );
+            newOwnerMember.setJoinDatetime(newOwner.getCreatedTimestamp());
+            newOwnerMember.setRole(MemberRoles.OWNER);
+            return newOwnerMember;
+        })
+                .get();
+    }
+
+    // NEW CODE HERE
+    public boolean isBatchActive() {
+        return writeBatch != null;
+    }
+
+    private boolean verifyMemberInput(Member member) {
+        if (member == null) {
+            return false;
+        }
+        if (!isBatchActive()) {
+            writeBatch = firestore.batch();
+        }
+        String memberId = member.getMemberId();
+        return memberId != null && memberId.trim().length() != 0;
     }
 
     @Override
-    public void commit() {
-        writeBatch.commit();
+    public void createMemberAsync(Member member) {
+        verifyMemberInput(member);
+        String memberId = member.getMemberId();
+        HashMap<String, Object> map = member.toMap();
+        map.remove("memberId");
+
+        writeBatch.set(
+                membersCollection.document(memberId),
+                map);
+    }
+
+    @Override
+    public void updateMember(Member member) {
+        verifyMemberInput(member);
+        String memberId = member.getMemberId();
+        var memberMap = member.toMap();
+        memberMap.remove("memberId");
+
+        writeBatch.update(
+                membersCollection.document(memberId),
+                member.toMap()
+        );
+    }
+
+    @Override
+    public void commitAsync() {
+        if (isBatchActive()) {
+            writeBatch.commit();
+            writeBatch = null;
+        }
+    }
+
+    @Override
+    public void commitSync() throws ExecutionException, InterruptedException {
+        if (isBatchActive()) {
+            writeBatch.commit()
+                    .get();
+            writeBatch = null;
+        }
     }
 }

@@ -56,6 +56,9 @@ public enum NotePermissions {
 
     @JsonCreator
     public static NotePermissions fromText(String text) {
+        if (text == null) {
+            return null;
+        }
         final String lowerCaseText = text.toLowerCase();
 
         return Arrays.stream(NotePermissions.values())

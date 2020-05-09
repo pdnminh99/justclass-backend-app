@@ -3,8 +3,8 @@ package com.projecta.eleven.justclassbackend.user;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -15,9 +15,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Service("defaultUserService")
-@Primary
-public class UserService extends AbstractUserService {
+@Service
+public class UserService implements IUserOperations {
 
     private final IUserRepository repository;
 
@@ -57,6 +56,11 @@ public class UserService extends AbstractUserService {
     @Override
     public Stream<DocumentReference> getUsersReferences(List<String> localIds) {
         return null;
+    }
+
+    @Override
+    public Stream<QueryDocumentSnapshot> getUsersByEmail(List<String> emails) throws ExecutionException, InterruptedException {
+        return repository.getUsersByEmail(emails);
     }
 
     private Optional<User> compareAndApplyChanges(User existingUser, UserRequestBody newUser) {
@@ -139,7 +143,7 @@ public class UserService extends AbstractUserService {
     }
 
     @Override
-    public Stream<MinifiedUser> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
+    public Stream<User> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
             throws ExecutionException, InterruptedException {
         if (!verifyValidStringField(localId)) {
             return Stream.empty();
@@ -153,6 +157,6 @@ public class UserService extends AbstractUserService {
         return ApiFutures.allAsList(relationshipsReferences)
                 .get()
                 .stream()
-                .map(MinifiedUser::new);
+                .map(u -> new User(u, false));
     }
 }

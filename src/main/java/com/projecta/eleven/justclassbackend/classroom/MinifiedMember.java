@@ -3,8 +3,11 @@ package com.projecta.eleven.justclassbackend.classroom;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
+import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
-class MinifiedMember extends MinifiedUser {
+import java.util.HashMap;
+
+class MinifiedMember extends MinifiedUser implements MapSerializable {
 
     private MemberRoles role;
 
@@ -34,5 +37,29 @@ class MinifiedMember extends MinifiedUser {
 
     public void setJoinDatetime(Timestamp joinDatetime) {
         this.joinDatetime = joinDatetime;
+    }
+
+    public static MinifiedMember toMinifiedMember(MinifiedUser user, MemberRoles role, Timestamp join) {
+        return new MinifiedMember(
+                user.getLocalId(),
+                user.getDisplayName(),
+                user.getPhotoUrl(),
+                role,
+                join
+        );
+    }
+
+    @Override
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        var map = super.toMap();
+        if (role != null) {
+            ifFieldNotNullThenPutToMap("role", role.toString(), map);
+        }
+        if (joinDatetime != null) {
+            ifFieldNotNullThenPutToMap("joinDatetime", isTimestampInMilliseconds ?
+                    joinDatetime.toDate().getTime() :
+                    joinDatetime, map);
+        }
+        return map;
     }
 }

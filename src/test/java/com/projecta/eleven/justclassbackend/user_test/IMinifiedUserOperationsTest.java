@@ -10,7 +10,7 @@ import com.google.cloud.firestore.WriteResult;
 import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.configuration.DatabaseFailedToInitializeException;
 import com.projecta.eleven.justclassbackend.junit_config.CustomReplaceUnderscore;
-import com.projecta.eleven.justclassbackend.user.IMinifiedUserOperations;
+import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.user.User;
 import org.junit.jupiter.api.*;
@@ -38,12 +38,12 @@ public class IMinifiedUserOperationsTest {
     private final CollectionReference usersCollection;
     private final CollectionReference friendsCollection;
 
-    private final IMinifiedUserOperations service;
+    private final IUserOperations service;
     private Collection<String> sampleLocalIds = new ArrayList<>();
     private Collection<String> sampleRelationshipIds = new ArrayList<>();
 
     @Autowired
-    IMinifiedUserOperationsTest(IMinifiedUserOperations service,
+    IMinifiedUserOperationsTest(IUserOperations service,
                                 @Qualifier("usersCollection") CollectionReference usersCollection,
                                 @Qualifier("friendsCollection") CollectionReference friendsCollection) {
         this.service = service;
