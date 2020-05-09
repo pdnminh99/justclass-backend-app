@@ -45,7 +45,7 @@ public class Classroom extends ClassroomRequestBody {
     public Classroom(DocumentSnapshot snapshot) {
         super(snapshot);
         this.createdTimestamp = snapshot.getTimestamp("createdTimestamp");
-        this.studentsNotePermission = NotePermissions.fromText(Objects.requireNonNull(snapshot.getString("studentsNotePermission")));
+        this.studentsNotePermission = NotePermissions.fromText(snapshot.getString("studentsNotePermission"));
         this.publicCode = snapshot.getString("publicCode");
     }
 

@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 public interface IClassroomOperationsService {
-    Stream<MinifiedClassroom> get(String hostId, MemberRoles role, Timestamp lastRequest) throws InvalidUserInformationException, ExecutionException, InterruptedException;
+    Stream<Classroom> get(String hostId, MemberRoles role, Timestamp lastRequest) throws InvalidUserInformationException, ExecutionException, InterruptedException;
 
     Optional<Classroom> get(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 

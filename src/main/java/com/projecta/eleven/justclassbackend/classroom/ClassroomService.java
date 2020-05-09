@@ -53,7 +53,7 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Stream<MinifiedClassroom> get(String hostId, MemberRoles role, Timestamp lastRequest)
+    public Stream<Classroom> get(String hostId, MemberRoles role, Timestamp lastRequest)
             throws InvalidUserInformationException, ExecutionException, InterruptedException {
         if (Objects.isNull(hostId) || hostId.trim().length() == 0) {
             throw new InvalidUserInformationException(
@@ -77,7 +77,7 @@ public class ClassroomService implements IClassroomOperationsService {
                         .collect(Collectors.toList()))
                 .get()
                 .parallelStream()
-                .map(MinifiedClassroom::new)
+                .map(Classroom::new)
                 .collect(Collectors.toList());
 
         if (lastRequest != null) {
