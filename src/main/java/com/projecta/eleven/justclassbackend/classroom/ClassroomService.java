@@ -10,6 +10,7 @@ import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.invitation.InvitationService;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
+import com.projecta.eleven.justclassbackend.notification.ClassroomDeletedNotification;
 import com.projecta.eleven.justclassbackend.notification.InviteNotification;
 import com.projecta.eleven.justclassbackend.notification.NotificationService;
 import com.projecta.eleven.justclassbackend.notification.NotificationType;
@@ -345,16 +346,48 @@ public class ClassroomService implements IClassroomOperationsService {
         if (member.getRole() != MemberRoles.OWNER) {
             throw new InvalidUserInformationException("User with Id [" + localId + "] does not have permission to delete classroom [" + classroomId + "].");
         }
+
+        DocumentReference classroomReference = member.getClassroomReference();
+        var classroom = new MinifiedClassroom(classroomReference.get().get());
+        var invoker = new MinifiedUser(member.getUserReference().get().get());
+
         // No need to check classroomReference for
-        var collaboratorsByClassroom = repository.getMembersByClassroom(classroomId)
-                .map(DocumentReference::delete)
+        List<DocumentReference> collaboratorsByClassroom = repository.getMembersByClassroom(classroomId)
                 .collect(Collectors.toList());
 
-        collaboratorsByClassroom.add(
-                Objects.requireNonNull(memberSnapshot
-                        .get("classroomReference", DocumentReference.class))
-                        .delete());
-        ApiFutures.allAsList(collaboratorsByClassroom);
+        List<Member> members = ApiFutures.allAsList(
+                collaboratorsByClassroom
+                        .stream()
+                        .map(DocumentReference::get)
+                        .collect(Collectors.toList())
+        )
+                .get()
+                .stream()
+                .map(Member::new)
+                .collect(Collectors.toList());
+
+        var now = Timestamp.now();
+        members.stream().map(m -> new ClassroomDeletedNotification(
+                null,
+                now,
+                classroom,
+                member.getClassroomReference(),
+                invoker,
+                member.getUserReference(),
+                m.getUserId(),
+                m.getUserReference()
+        )).forEach(notificationService::add);
+
+        // Perform DELETE task.
+        collaboratorsByClassroom.add(classroomReference);
+        ApiFutures.allAsList(
+                collaboratorsByClassroom
+                        .stream()
+                        .map(DocumentReference::delete)
+                        .collect(Collectors.toList())
+        );
+        notificationService.send();
+
         return Optional.of(true);
     }
 
@@ -465,11 +498,13 @@ public class ClassroomService implements IClassroomOperationsService {
             return Stream.empty();
         }
         DocumentReference classroomReference = repository.getClassroom(classroomId);
-        if (!classroomReference.get().get().exists()) {
+        DocumentSnapshot classroomSnapshot = classroomReference.get().get();
+        if (!classroomSnapshot.exists()) {
             throw new InvalidClassroomInformationException("Classroom with ID " + classroomId + " does not exist.");
         }
-        Member invoker = verifyMember(classroomId, invokerId);
-        DocumentSnapshot invokerSnapshot = invoker.getUserReference().get().get();
+        Member invokerMember = verifyMember(classroomId, invokerId);
+        var classroom = new MinifiedClassroom(classroomSnapshot);
+        var invoker = new User(invokerMember.getUserReference().get().get(), false);
 
         var now = Timestamp.now();
 
@@ -481,11 +516,11 @@ public class ClassroomService implements IClassroomOperationsService {
         // Owner can change collaborators to students.
         invitations = newInvitations
                 .stream()
-                .filter(invitation -> isValidInvitation(invoker, invokerSnapshot.getString("email"), invitation))
+                .filter(invitation -> isValidInvitation(invokerMember, invoker.getEmail(), invitation))
                 .collect(Collectors.toList());
 
         // PROMOTE OWNER
-        processOwnerInvitations(invoker);
+        processOwnerInvitations(invokerMember);
 
         // SENT OTHERS INVITATIONS
         invitations = invitations
@@ -495,7 +530,7 @@ public class ClassroomService implements IClassroomOperationsService {
                     invitation.setClassroomId(classroomId);
                     invitation.setClassroomReference(classroomReference);
                     invitation.setInvitorLocalId(invokerId);
-                    invitation.setInvitorReference(invoker.getUserReference());
+                    invitation.setInvitorReference(invokerMember.getUserReference());
                     invitation.setInvokeTime(now);
                 })
                 .collect(Collectors.toList());
@@ -507,7 +542,8 @@ public class ClassroomService implements IClassroomOperationsService {
 //            if (invoker.getRole() == MemberRoles.OWNER) {
 //                processInvitees(invoker, now, false);
 //            }
-            processInvitees(invoker, now, true);
+            processInvitees(new MinifiedUser(invoker.getLocalId(), invoker.getDisplayName(), invoker.getPhotoUrl()),
+                    invokerMember, classroom, now, true);
 
             // TODO Update classroom lastEdit, User's lastAccess and Users'friends.
             invitationService.send();
@@ -666,11 +702,17 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     private void processInvitees(
-            Member invoker,
+            MinifiedUser invoker,
+            Member invokerMember,
+            MinifiedClassroom classroom,
             Timestamp now,
             boolean isInviteesNotInClass
     ) {
         var invitees = isInviteesNotInClass ? inviteesNotInClass : inviteesAlreadyInClass;
+
+        classroom.setTheme(null);
+        classroom.setLastAccess(null);
+        classroom.setLastEdit(null);
 
         for (var invitation : invitees) {
             Invitation finalInvitation = invitation.invitation;
@@ -684,7 +726,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 if (finalInvitation.getEmail() == null) {
                     finalInvitation.setEmail(invitation.userSnapshot.getString("email"));
                 }
-                finalInvitation.setInvitationId(invoker.getClassroomId() + "_" + finalInvitation.getLocalId());
+                finalInvitation.setInvitationId(classroom.getClassroomId() + "_" + finalInvitation.getLocalId());
                 finalInvitation.setStatus(InvitationStatus.PENDING);
                 finalInvitation.setOwnerReference(invitation.userSnapshot.getReference());
 
@@ -695,11 +737,11 @@ public class ClassroomService implements IClassroomOperationsService {
             var notification = new InviteNotification(
                     null,
                     now,
-                    invoker.getUserId(),
-                    invoker.getUserReference(),
+                    invoker,
+                    invokerMember.getUserReference(),
                     finalInvitation.getLocalId(),
                     invitation.userSnapshot.getReference(),
-                    finalInvitation.getClassroomId(),
+                    classroom,
                     finalInvitation.getClassroomReference(),
                     isInviteesNotInClass ? NotificationType.INVITATION : NotificationType.ROLE_CHANGE,
                     finalInvitation.getRole(),

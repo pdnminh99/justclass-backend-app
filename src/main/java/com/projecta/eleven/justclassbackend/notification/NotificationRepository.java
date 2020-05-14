@@ -7,8 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Repository
 class NotificationRepository {
@@ -80,8 +83,8 @@ class NotificationRepository {
         if (ownerId == null || ownerId.trim().length() == 0) {
             return Lists.newArrayList();
         }
-        var startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber);
-        var query = startIndexDoc == null ?
+        QueryDocumentSnapshot startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber);
+        List<QueryDocumentSnapshot> query = startIndexDoc == null ?
                 notificationsCollection.whereEqualTo("ownerId", ownerId)
                         .orderBy("invokeTime", Query.Direction.DESCENDING)
                         .limit(pageSize)
@@ -97,19 +100,22 @@ class NotificationRepository {
                         .getDocuments();
 
         List<T> results = Lists.newArrayList();
+        List<InviteNotification> inviteNotifications = Lists.newArrayList();
 
-        for (var snap : query) {
+        for (QueryDocumentSnapshot snap : query) {
             String notificationRepresentation = snap.getString("notificationType");
             assert notificationRepresentation != null;
             NotificationType notificationType = NotificationType.fromText(notificationRepresentation);
 
             if (notificationType == NotificationType.INVITATION || notificationType == NotificationType.ROLE_CHANGE) {
                 var notification = new InviteNotification(snap);
-
-                results.add((T) notification);
+                inviteNotifications.add(notification);
             }
         }
-        return results;
+        results.addAll((Collection<? extends T>) inviteNotifications);
+        return results.stream()
+                .sorted(Comparator.comparing(Notification::getInvokeTime))
+                .collect(Collectors.toList());
     }
 
     private QueryDocumentSnapshot getLastDocumentSnapshot(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {

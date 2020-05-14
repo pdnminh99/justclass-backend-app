@@ -60,7 +60,6 @@ public class ClassroomController {
                 .orElseGet(this::handleResponseEmpty);
     }
 
-    // TODO why not allow null, new public code param.
     @PatchMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> update(
             @PathVariable("localId") String localId,

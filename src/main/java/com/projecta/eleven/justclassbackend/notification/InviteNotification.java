@@ -6,12 +6,11 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.classroom.MemberRoles;
 import com.projecta.eleven.justclassbackend.classroom.MinifiedClassroom;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 
 import java.util.HashMap;
 
 public class InviteNotification extends Notification {
-
-    private String classroomId;
 
     private DocumentReference classroomReference;
 
@@ -30,11 +29,11 @@ public class InviteNotification extends Notification {
     public InviteNotification(
             String notificationId,
             Timestamp invokeTimestamp,
-            String invokerId,
+            MinifiedUser invoker,
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
-            String classroomId,
+            MinifiedClassroom classroom,
             DocumentReference classroomReference,
             NotificationType notificationType,
             MemberRoles role,
@@ -43,9 +42,9 @@ public class InviteNotification extends Notification {
             Timestamp seen,
             InvitationStatus invitationStatus
     ) {
-        super(notificationId, invokeTimestamp, invokerId, invokerReference, ownerId, ownerReference, notificationType);
-        this.classroomId = classroomId;
+        super(notificationId, invokeTimestamp, invoker, invokerReference, ownerId, ownerReference, notificationType);
         this.role = role;
+        this.classroom = classroom;
         this.classroomReference = classroomReference;
         this.invitationId = invitationId;
         this.invitationReference = invitationReference;
@@ -55,21 +54,22 @@ public class InviteNotification extends Notification {
 
     public InviteNotification(DocumentSnapshot snapshot) {
         super(snapshot);
-        this.classroomId = snapshot.getString("classroomId");
+
+        HashMap<String, Object> classroom = (HashMap<String, Object>) snapshot.getData().get("classroom");
+
+        if (classroom != null) {
+            String classroomId = (String) classroom.get("classroomId");
+            String subject = (String) classroom.get("subject");
+            String title = (String) classroom.get("title");
+            this.classroom = new MinifiedClassroom(classroomId, title, subject, null, null, null, null);
+        }
+
         this.role = MemberRoles.fromText(snapshot.getString("role"));
         this.classroomReference = snapshot.get("classroomReference", DocumentReference.class);
         this.invitationId = snapshot.getString("invitationId");
         this.invitationReference = snapshot.get("invitationReference", DocumentReference.class);
         this.seen = snapshot.getTimestamp("seen");
         this.invitationStatus = InvitationStatus.fromText(snapshot.getString("invitationStatus"));
-    }
-
-    public String getClassroomId() {
-        return classroomId;
-    }
-
-    public void setClassroomId(String classroomId) {
-        this.classroomId = classroomId;
     }
 
     public DocumentReference getClassroomReference() {
@@ -132,7 +132,9 @@ public class InviteNotification extends Notification {
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = super.toMap(isTimestampInMilliseconds);
 
-        ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
+        if (getClassroom() != null) {
+            ifFieldNotNullThenPutToMap("classroom", getClassroom().toMap(isTimestampInMilliseconds), map);
+        }
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
         if (getRole() != null) {
             ifFieldNotNullThenPutToMap("role", getRole().toString(), map);
@@ -149,18 +151,5 @@ public class InviteNotification extends Notification {
         }
 
         return map;
-    }
-
-    @Override
-    public String toString() {
-        return "InviteNotification{" +
-                "classroomId='" + classroomId + '\'' +
-                ", classroomReference=" + classroomReference +
-                ", role=" + role +
-                ", invitationId='" + invitationId + '\'' +
-                ", invitationReference=" + invitationReference +
-                ", seen=" + seen +
-                ", invitationStatus=" + invitationStatus +
-                '}';
     }
 }

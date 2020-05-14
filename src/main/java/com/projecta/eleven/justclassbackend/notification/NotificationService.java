@@ -41,7 +41,6 @@ public class NotificationService {
         if (pageSize < 1 || pageNumber < 0) {
             return Stream.empty();
         }
-        // TODO transform field `invoker` and `classroom` to actual objects.
         var notifications = repository.get(ownerId, pageSize, pageNumber);
 
         return notifications
@@ -50,6 +49,7 @@ public class NotificationService {
                 .peek(m -> {
                     m.remove("invokerReference");
                     m.remove("ownerId");
+                    m.remove("invitationId");
                     m.remove("ownerReference");
                     m.remove("classroomReference");
                     m.remove("invitationReference");
