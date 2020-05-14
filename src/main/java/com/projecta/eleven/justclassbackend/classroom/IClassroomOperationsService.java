@@ -21,6 +21,8 @@ public interface IClassroomOperationsService {
 
     Optional<Boolean> delete(String localId, String classroomId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
 
+    void leave(String localId, String classroomId, String newOwnerId) throws InvalidUserInformationException, InvalidClassroomInformationException, ExecutionException, InterruptedException;
+
     Stream<MinifiedMember> invite(String localId, String classroomId, List<Invitation> invitations) throws ExecutionException, InterruptedException, InvalidClassroomInformationException, InvalidUserInformationException;
 
     Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException;

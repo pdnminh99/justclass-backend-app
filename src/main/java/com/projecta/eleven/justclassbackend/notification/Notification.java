@@ -3,6 +3,7 @@ package com.projecta.eleven.justclassbackend.notification;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
@@ -13,6 +14,8 @@ public class Notification implements MapSerializable {
     private Timestamp invokeTime;
 
     private String invokerId;
+
+    private MinifiedUser invoker;
 
     private DocumentReference invokerReference;
 
@@ -122,5 +125,13 @@ public class Notification implements MapSerializable {
         }
 
         return map;
+    }
+
+    public MinifiedUser getInvoker() {
+        return invoker;
+    }
+
+    public void setInvoker(MinifiedUser invoker) {
+        this.invoker = invoker;
     }
 }

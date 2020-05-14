@@ -115,6 +115,17 @@ public class ClassroomController {
                 .orElseGet(this::handleDeleteStateEmpty);
     }
 
+    @DeleteMapping("leave/{localId}/{classroomId}")
+    @ResponseStatus(HttpStatus.OK)
+    public void leave(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId,
+            @Nullable
+            @RequestParam("newOwnerId") String newOwnerId
+    ) throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
+        service.leave(localId, classroomId, newOwnerId);
+    }
+
     @GetMapping(value = "lookup/{localId}/{classroomId}/{role}", produces = "application/json;charset=utf-8")
     public ResponseEntity<List<MinifiedUser>> lookUp(
             @PathVariable("localId") String localId,

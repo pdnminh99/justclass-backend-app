@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 public class NotificationService {
     private final NotificationRepository repository;
 
-    private List<Notification> notifications = new ArrayList<>();
+    private final List<Notification> notifications = new ArrayList<>();
 
     @Autowired
     public NotificationService(NotificationRepository repository) {
@@ -34,22 +34,22 @@ public class NotificationService {
         }
     }
 
-    public Stream<HashMap<String, Object>> get(String ownerId, Integer count) throws ExecutionException, InterruptedException {
+    public Stream<HashMap<String, Object>> get(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             throw new IllegalArgumentException("LocalId is null or empty.");
         }
-        if (count == null) {
-            count = 50;
-        }
-        if (count < 1) {
+        if (pageSize < 1 || pageNumber < 0) {
             return Stream.empty();
         }
         // TODO transform field `invoker` and `classroom` to actual objects.
-        return repository.get(ownerId, count)
+        var notifications = repository.get(ownerId, pageSize, pageNumber);
+
+        return notifications
                 .stream()
                 .map(m -> m.toMap(true))
                 .peek(m -> {
                     m.remove("invokerReference");
+                    m.remove("ownerId");
                     m.remove("ownerReference");
                     m.remove("classroomReference");
                     m.remove("invitationReference");

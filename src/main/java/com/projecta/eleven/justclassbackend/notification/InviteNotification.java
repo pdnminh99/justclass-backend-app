@@ -4,6 +4,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.classroom.MemberRoles;
+import com.projecta.eleven.justclassbackend.classroom.MinifiedClassroom;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 
 import java.util.HashMap;
@@ -13,6 +14,8 @@ public class InviteNotification extends Notification {
     private String classroomId;
 
     private DocumentReference classroomReference;
+
+    private MinifiedClassroom classroom;
 
     private MemberRoles role;
 
@@ -115,6 +118,14 @@ public class InviteNotification extends Notification {
 
     public void setInvitationStatus(InvitationStatus invitationStatus) {
         this.invitationStatus = invitationStatus;
+    }
+
+    public MinifiedClassroom getClassroom() {
+        return classroom;
+    }
+
+    public void setClassroom(MinifiedClassroom classroom) {
+        this.classroom = classroom;
     }
 
     @Override

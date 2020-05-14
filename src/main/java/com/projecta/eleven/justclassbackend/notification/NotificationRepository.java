@@ -76,16 +76,25 @@ class NotificationRepository {
         }
     }
 
-    public <T extends Notification> List<T> get(String ownerId, int count) throws ExecutionException, InterruptedException {
+    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             return Lists.newArrayList();
         }
-        var query = notificationsCollection.whereEqualTo("ownerId", ownerId)
-                .orderBy("invokeTime", Query.Direction.DESCENDING)
-                .limit(count)
-                .get()
-                .get()
-                .getDocuments();
+        var startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber);
+        var query = startIndexDoc == null ?
+                notificationsCollection.whereEqualTo("ownerId", ownerId)
+                        .orderBy("invokeTime", Query.Direction.DESCENDING)
+                        .limit(pageSize)
+                        .get()
+                        .get()
+                        .getDocuments() :
+                notificationsCollection.whereEqualTo("ownerId", ownerId)
+                        .orderBy("invokeTime", Query.Direction.DESCENDING)
+                        .startAfter(startIndexDoc)
+                        .limit(pageSize)
+                        .get()
+                        .get()
+                        .getDocuments();
 
         List<T> results = Lists.newArrayList();
 
@@ -101,6 +110,20 @@ class NotificationRepository {
             }
         }
         return results;
+    }
+
+    private QueryDocumentSnapshot getLastDocumentSnapshot(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
+        if (pageNumber < 1) {
+            return null;
+        }
+        QuerySnapshot querySnapshot = notificationsCollection
+                .whereEqualTo("ownerId", ownerId)
+                .orderBy("invokeTime", Query.Direction.DESCENDING)
+                .limit(pageNumber * pageSize)
+                .get()
+                .get();
+        return querySnapshot.getDocuments()
+                .get(querySnapshot.size() - 1);
     }
 
     public void update(Notification notification) {
