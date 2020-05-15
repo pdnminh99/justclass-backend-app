@@ -33,9 +33,11 @@ public class FileController {
     @PostMapping
     public List<Map<String, Object>> upload(
             @RequestBody List<MultipartFile> files,
+            @RequestParam("content") String content,
             @Nullable
             @RequestParam("attachToPost") String attachToPost
     ) {
+        System.out.println(content);
         return files.stream().map(file -> {
             Map<String, Object> attachment = new HashMap<>();
 

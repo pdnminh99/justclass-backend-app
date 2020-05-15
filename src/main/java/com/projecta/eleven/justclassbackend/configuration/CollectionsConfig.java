@@ -77,6 +77,15 @@ public class CollectionsConfig {
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
 
+    @Bean("filesCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getFilesCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection(isDeploymentEnvironment ? "files" : "files_dev"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
+
     @Bean("notesCollection")
     @DependsOn("firestore")
     @Scope("singleton")

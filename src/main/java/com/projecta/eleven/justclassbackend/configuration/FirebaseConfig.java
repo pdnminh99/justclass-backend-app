@@ -55,4 +55,9 @@ public class FirebaseConfig {
         return FirebaseMessaging.getInstance();
     }
 
+//    @Bean("bucket")
+//    @DependsOn("firebase")
+//    public Bucket getDefaultBucket() {
+//        return StorageClient.getInstance().bucket("gs://justclass-da0b0.appspot.com/");
+//    }
 }
