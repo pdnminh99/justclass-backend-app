@@ -14,10 +14,7 @@ import com.projecta.eleven.justclassbackend.notification.ClassroomDeletedNotific
 import com.projecta.eleven.justclassbackend.notification.InviteNotification;
 import com.projecta.eleven.justclassbackend.notification.NotificationService;
 import com.projecta.eleven.justclassbackend.notification.NotificationType;
-import com.projecta.eleven.justclassbackend.user.IUserOperations;
-import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
-import com.projecta.eleven.justclassbackend.user.MinifiedUser;
-import com.projecta.eleven.justclassbackend.user.User;
+import com.projecta.eleven.justclassbackend.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -1201,6 +1198,17 @@ public class ClassroomService implements IClassroomOperationsService {
         repository.createMemberAsync(member);
         repository.commitSync();
 
+        // Add friends.
+        var friend = new FriendReference(
+                null,
+                invitation.getInvitorLocalId(),
+                invitation.getInvitorReference(),
+                invitation.getOwnerReference().getId(),
+                invitation.getOwnerReference(),
+                now, now);
+        userService.createFriendIfNotExist(friend);
+
+        // Prepare classrooms data.
         classroom.setLastAccess(now);
         classroom.setRole(invitation.getRole());
         getMembersMetadataForClassroom(classroom, member);
