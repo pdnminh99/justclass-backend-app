@@ -1,5 +1,8 @@
 package com.projecta.eleven.justclassbackend.notification;
 
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +27,12 @@ public class NotificationService {
         if (notification != null) {
             notifications.add(notification);
             repository.insert(notification);
+        }
+    }
+
+    public void remove(DocumentReference owner, DocumentReference classroom, Timestamp before, InvitationStatus status) throws ExecutionException, InterruptedException {
+        if (owner != null && classroom != null && before != null && status != null) {
+            repository.remove(owner, classroom, before, status);
         }
     }
 

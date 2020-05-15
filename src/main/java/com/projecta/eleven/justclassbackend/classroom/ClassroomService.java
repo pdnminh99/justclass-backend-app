@@ -758,6 +758,13 @@ public class ClassroomService implements IClassroomOperationsService {
             );
             notificationService.add(notification);
 
+            /* TODO Remove old invitations that invite this user to the same classrooms. */
+//            notificationService.remove(
+//                    invitation.userSnapshot.getReference(),
+//                    finalInvitation.getClassroomReference(),
+//                    now,
+//                    InvitationStatus.PENDING);
+
             if (!isInviteesNotInClass) {
                 var member = invitation.member;
 

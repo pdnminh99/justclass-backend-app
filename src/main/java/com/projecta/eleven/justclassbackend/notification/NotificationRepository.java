@@ -1,8 +1,10 @@
 package com.projecta.eleven.justclassbackend.notification;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.common.collect.Lists;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
@@ -151,6 +153,18 @@ class NotificationRepository {
         String notificationId = notification.getNotificationId();
 
         writeBatch.update(notificationsCollection.document(notificationId), map);
+    }
+
+    public void remove(DocumentReference owner, DocumentReference classroom, Timestamp before, InvitationStatus status) throws ExecutionException, InterruptedException {
+        notificationsCollection.whereEqualTo("classroomReference", classroom)
+                .whereEqualTo("ownerReference", owner)
+                .whereEqualTo("invitationStatus", status.toString())
+                .whereLessThan("invokeTime", before).get().get()
+                .getDocuments()
+                .stream()
+                .peek(doc -> System.out.println(doc.get("Found old notifications to delete.")))
+                .map(DocumentSnapshot::getReference)
+                .forEach(ref -> writeBatch.delete(ref));
     }
 }
 
