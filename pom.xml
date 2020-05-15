@@ -10,8 +10,7 @@
     </parent>
     <groupId>com.projecta.eleven</groupId>
     <artifactId>justclass-backend</artifactId>
-    <version>0.05.09</version>
-    <name>justclass-backend</name>
+    <version>0.05.15</version>
     <description>Back-end for JustClass Flutter Application</description>
 
     <properties>
@@ -83,7 +82,7 @@
                 <artifactId>appengine-maven-plugin</artifactId>
                 <version>2.2.0</version>
                 <configuration>
-                    <version>v200509a</version>
+                    <version>v200515a</version>
                     <projectId>justclass-da0b0</projectId>
                 </configuration>
             </plugin>

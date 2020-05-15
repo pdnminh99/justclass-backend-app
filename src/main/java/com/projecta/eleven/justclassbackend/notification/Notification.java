@@ -49,7 +49,8 @@ public class Notification implements MapSerializable {
             String localId = (String) invoker.get("localId");
             String displayName = (String) invoker.get("displayName");
             String photoUrl = (String) invoker.get("photoUrl");
-            this.invoker = new MinifiedUser(localId, displayName, photoUrl);
+            String email = (String) invoker.get("email");
+            this.invoker = new MinifiedUser(localId, displayName, photoUrl, email);
         }
 
         this.invokerReference = snapshot.get("invokerReference", DocumentReference.class);

@@ -11,5 +11,5 @@ handlers:
 
 env_variables:
   envi: "true"
-  GOOGLE_CLOUD_PROJECT: "justclass-da0b0"
+  GOOGLE_CLOUD_PROJECT: ""
   JAVA_TOOL_OPTIONS: "-XX:MaxRAM=256m -XX:ActiveProcessorCount=2 -Xmx32m"

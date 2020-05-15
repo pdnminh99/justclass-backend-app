@@ -9,9 +9,6 @@ import java.util.Objects;
 
 class UserRequestBody extends MinifiedUser {
 
-    @JsonProperty("email")
-    private String email;
-
     @JsonProperty("firstName")
     private String firstName;
 
@@ -24,25 +21,15 @@ class UserRequestBody extends MinifiedUser {
                            String displayName,
                            String photoUrl,
                            String email) {
-        super(localId, displayName, photoUrl);
-        this.email = email;
+        super(localId, displayName, photoUrl, email);
         this.firstName = firstName;
         this.lastName = lastName;
     }
 
     public UserRequestBody(DocumentSnapshot snapshot) {
         super(snapshot);
-        this.email = snapshot.getString("email");
         this.firstName = snapshot.getString("firstName");
         this.lastName = snapshot.getString("lastName");
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getFirstName() {
@@ -100,9 +87,6 @@ class UserRequestBody extends MinifiedUser {
         }
         if (Objects.nonNull(getLastName())) {
             map.put("lastName", getLastName());
-        }
-        if (Objects.nonNull(getEmail())) {
-            map.put("email", getEmail());
         }
         return map;
     }

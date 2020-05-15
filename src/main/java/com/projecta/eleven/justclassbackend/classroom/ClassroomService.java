@@ -542,7 +542,7 @@ public class ClassroomService implements IClassroomOperationsService {
 //            if (invoker.getRole() == MemberRoles.OWNER) {
 //                processInvitees(invoker, now, false);
 //            }
-            processInvitees(new MinifiedUser(invoker.getLocalId(), invoker.getDisplayName(), invoker.getPhotoUrl()),
+            processInvitees(new MinifiedUser(invoker.getLocalId(), invoker.getDisplayName(), invoker.getPhotoUrl(), invoker.getEmail()),
                     invokerMember, classroom, now, true);
 
             // TODO Update classroom lastEdit, User's lastAccess and Users'friends.
@@ -1101,7 +1101,7 @@ public class ClassroomService implements IClassroomOperationsService {
                     .stream()
                     .map(ref -> new User(ref, false))
                     .filter(m -> searchValidUser(m, keyword))
-                    .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getDisplayName()));
+                    .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getDisplayName(), m.getEmail()));
         }
         List<User> users = ApiFutures.allAsList(
                 members.stream()
@@ -1118,7 +1118,7 @@ public class ClassroomService implements IClassroomOperationsService {
                         .stream()
                         .noneMatch(u -> u.getLocalId().equals(f.getLocalId())))
                 .sorted(Comparator.comparing(MinifiedUser::getDisplayName))
-                .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getDisplayName()));
+                .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getDisplayName(), m.getEmail()));
     }
 
     private boolean searchValidUser(User user, String keyword) {
@@ -1137,7 +1137,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 .map(Member::new)
                 .collect(Collectors.toList());
         return lookUpAtFriendsList(invokerId, keyword)
-                .map(f -> new MinifiedUser(f.getLocalId(), f.getDisplayName(), f.getPhotoUrl()))
+                .map(f -> new MinifiedUser(f.getLocalId(), f.getDisplayName(), f.getPhotoUrl(), f.getEmail()))
                 .filter(f -> members.stream().noneMatch(m -> m.getUserId().equals(f.getLocalId())));
     }
 

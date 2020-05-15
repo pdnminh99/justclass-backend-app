@@ -17,16 +17,21 @@ public class MinifiedUser {
     @JsonProperty("photoUrl")
     private String photoUrl;
 
-    public MinifiedUser(String localId, String displayName, String photoUrl) {
+    @JsonProperty("email")
+    private String email;
+
+    public MinifiedUser(String localId, String displayName, String photoUrl, String email) {
         this.localId = localId;
         this.displayName = displayName;
         this.photoUrl = photoUrl;
+        this.email = email;
     }
 
     public MinifiedUser(DocumentSnapshot snapshot) {
         this.localId = snapshot.getId();
         this.displayName = snapshot.getString("displayName");
         this.photoUrl = snapshot.getString("photoUrl");
+        this.email = snapshot.getString("email");
     }
 
     public String getLocalId() {
@@ -49,6 +54,14 @@ public class MinifiedUser {
         this.photoUrl = photoUrl;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public HashMap<String, Object> toMap() {
         var map = new HashMap<String, Object>();
 
@@ -60,6 +73,9 @@ public class MinifiedUser {
         }
         if (Objects.nonNull(getPhotoUrl())) {
             map.put("photoUrl", getPhotoUrl());
+        }
+        if (Objects.nonNull(getEmail())) {
+            map.put("email", getEmail());
         }
         return map;
     }
