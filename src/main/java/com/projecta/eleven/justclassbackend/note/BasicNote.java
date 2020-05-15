@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.note;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
@@ -13,6 +14,7 @@ public class BasicNote implements MapSerializable {
 
     private MinifiedUser author;
 
+    @JsonIgnore
     private DocumentReference authorMembershipReference;
 
     private String content;
@@ -25,6 +27,7 @@ public class BasicNote implements MapSerializable {
 
     private String classroomId;
 
+    @JsonIgnore
     private DocumentReference classroomReference;
 
     public BasicNote(

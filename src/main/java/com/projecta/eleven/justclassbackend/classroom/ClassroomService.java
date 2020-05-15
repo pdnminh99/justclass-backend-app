@@ -969,6 +969,22 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
+    public Optional<MinifiedMember> getMember(String localId, String classroomId) throws ExecutionException, InterruptedException {
+        DocumentSnapshot querySnapshot = repository.getMember(classroomId, localId).get().get();
+
+        if (!querySnapshot.exists()) {
+            return Optional.empty();
+        }
+        var member = new Member(querySnapshot);
+        var minifiedMember = new MinifiedMember(member.getUserReference().get().get());
+
+        minifiedMember.setRole(member.getRole());
+        minifiedMember.setJoinDatetime(member.getCreatedTimestamp());
+
+        return Optional.of(minifiedMember);
+    }
+
+    @Override
     public Stream<MinifiedUser> lookUp(String localId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException, InvalidUserInformationException {
         if (localId == null || localId.trim().length() == 0 || classroomId == null || classroomId.trim().length() == 0 || role == null) {
             throw new IllegalArgumentException("LocalId or classroomId is invalid.");
@@ -1205,7 +1221,7 @@ public class ClassroomService implements IClassroomOperationsService {
 
     @Override
     public void denyInvitation(String localId, String notificationId) {
-
+        // TODO implement this.
     }
 
     private void getMembersMetadataForClassroom(Classroom classroom, Member member) throws ExecutionException, InterruptedException {

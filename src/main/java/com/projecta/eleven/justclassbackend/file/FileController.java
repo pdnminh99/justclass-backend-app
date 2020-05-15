@@ -7,6 +7,11 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @RestController()
 @RequestMapping("api/v1/file")
 public class FileController {
@@ -22,23 +27,25 @@ public class FileController {
     public void download(
             @PathVariable("fileId") String fileId
     ) {
-
+        // TODO implement this.
     }
 
     @PostMapping
-    public void upload(
-            @RequestBody MultipartFile[] files,
+    public List<Map<String, Object>> upload(
+            @RequestBody List<MultipartFile> files,
             @Nullable
             @RequestParam("attachToPost") String attachToPost
     ) {
-        for (MultipartFile file : files) {
-            var name = file.getOriginalFilename();
-            var type = file.getContentType();
-            var size = file.getSize();
+        return files.stream().map(file -> {
+            Map<String, Object> attachment = new HashMap<>();
 
-            System.out.println("Name: " + name + " | Type: " + type + " | Size: " + size + ".\n------");
-        }
-        System.err.println("--------------");
+            attachment.put("originalName", file.getOriginalFilename());
+            attachment.put("name", file.getName());
+            attachment.put("type", file.getContentType());
+            attachment.put("size", file.getSize());
+
+            return attachment;
+        }).collect(Collectors.toList());
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)

@@ -29,6 +29,8 @@ public interface IClassroomOperationsService {
 
     Stream<MinifiedMember> getMembers(String invokerId, String classroomId) throws ExecutionException, InterruptedException, InvalidClassroomInformationException;
 
+    Optional<MinifiedMember> getMember(String localId, String classroomId) throws ExecutionException, InterruptedException;
+
     Stream<MinifiedUser> lookUp(String localId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException, InvalidUserInformationException;
 
     Optional<Classroom> acceptInvitation(String localId, String notificationId) throws ExecutionException, InterruptedException, InvalidUserInformationException;

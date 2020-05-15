@@ -7,7 +7,7 @@ import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
 
-class MinifiedMember extends MinifiedUser implements MapSerializable {
+public class MinifiedMember extends MinifiedUser implements MapSerializable {
 
     private MemberRoles role;
 
