@@ -1,21 +1,23 @@
 package com.projecta.eleven.justclassbackend.note;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BasicNote implements MapSerializable {
 
     private String Id;
 
-    private MinifiedUser author;
+    public NoteType type;
 
-    @JsonIgnore
-    private DocumentReference authorMembershipReference;
+    private MinifiedUser author;
 
     private String content;
 
@@ -23,33 +25,34 @@ public class BasicNote implements MapSerializable {
 
     private Integer commentsCount;
 
-    private Integer likesCount;
-
     private String classroomId;
+    private DocumentReference authorReference;
+    private List<String> links;
 
-    @JsonIgnore
     private DocumentReference classroomReference;
 
     public BasicNote(
             String Id,
             MinifiedUser author,
-            DocumentReference authorMembershipReference,
+            DocumentReference authorReference,
             String content,
             Timestamp createAt,
             Integer commentsCount,
-            Integer likesCount,
             String classroomId,
-            DocumentReference classroomReference
+            DocumentReference classroomReference,
+            List<String> links,
+            NoteType type
     ) {
         this.Id = Id;
         this.author = author;
-        this.authorMembershipReference = authorMembershipReference;
-        this.content = content;
+        this.authorReference = authorReference;
+        setContent(content);
         this.createAt = createAt;
         this.commentsCount = commentsCount;
-        this.likesCount = likesCount;
         this.classroomId = classroomId;
         this.classroomReference = classroomReference;
+        this.type = type;
+        setLinks(links);
     }
 
     public String getId() {
@@ -68,19 +71,14 @@ public class BasicNote implements MapSerializable {
         this.author = author;
     }
 
-    public DocumentReference getAuthorMembershipReference() {
-        return authorMembershipReference;
-    }
-
-    public void setAuthorMembershipReference(DocumentReference authorMembershipReference) {
-        this.authorMembershipReference = authorMembershipReference;
-    }
-
     public String getContent() {
         return content;
     }
 
     public void setContent(String content) {
+        if (content != null) {
+            links.addAll(extractUrls(content));
+        }
         this.content = content;
     }
 
@@ -100,14 +98,6 @@ public class BasicNote implements MapSerializable {
         this.commentsCount = commentsCount;
     }
 
-    public Integer getLikesCount() {
-        return likesCount;
-    }
-
-    public void setLikesCount(Integer likesCount) {
-        this.likesCount = likesCount;
-    }
-
     public String getClassroomId() {
         return classroomId;
     }
@@ -124,6 +114,57 @@ public class BasicNote implements MapSerializable {
         this.classroomReference = classroomReference;
     }
 
+    public DocumentReference getAuthorReference() {
+        return authorReference;
+    }
+
+    public void setAuthorReference(DocumentReference authorReference) {
+        this.authorReference = authorReference;
+    }
+
+    public List<String> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<String> links) {
+        if (links == null) {
+            this.links = null;
+            return;
+        }
+        this.links.clear();
+        for (String link : links) {
+            links.addAll(extractUrls(link));
+        }
+    }
+
+    public void addLink(String URL) {
+        if (URL != null) {
+            this.links.addAll(extractUrls(URL));
+        }
+    }
+
+    public NoteType getType() {
+        return type;
+    }
+
+    public void setType(NoteType type) {
+        this.type = type;
+    }
+
+    private List<String> extractUrls(String text) {
+        List<String> containedUrls = Lists.newArrayList();
+        String urlRegex = "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)";
+        Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
+        Matcher urlMatcher = pattern.matcher(text);
+
+        while (urlMatcher.find()) {
+            containedUrls.add(text.substring(urlMatcher.start(0),
+                    urlMatcher.end(0)));
+        }
+
+        return containedUrls;
+    }
+
     @Override
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
@@ -131,7 +172,7 @@ public class BasicNote implements MapSerializable {
         if (getAuthor() != null) {
             ifFieldNotNullThenPutToMap("author", getAuthor().toMap(), map);
         }
-        ifFieldNotNullThenPutToMap("authorMembershipReference", getAuthorMembershipReference(), map);
+        ifFieldNotNullThenPutToMap("authorReference", getAuthorReference(), map);
         ifFieldNotNullThenPutToMap("content", getContent(), map);
         if (getCreateAt() != null) {
             ifFieldNotNullThenPutToMap("createAt", isTimestampInMilliseconds ?
@@ -139,10 +180,12 @@ public class BasicNote implements MapSerializable {
                     getCreateAt(), map);
         }
         ifFieldNotNullThenPutToMap("commentsCount", getCommentsCount(), map);
-        ifFieldNotNullThenPutToMap("likesCount", getLikesCount(), map);
         ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
-
+        ifFieldNotNullThenPutToMap("links", getLinks(), map);
+        if (getType() != null) {
+            ifFieldNotNullThenPutToMap("type", getType().toString(), map);
+        }
         return map;
     }
 }

@@ -44,9 +44,11 @@ public class NoteController {
             @Nullable
             @RequestParam("content") String content,
             @Nullable
-            @RequestBody List<MultipartFile> attachments
+            @RequestBody List<MultipartFile> attachments,
+            @Nullable
+            @RequestBody List<String> links
     ) throws ExecutionException, InterruptedException, InvalidUserInformationException {
-        return service.create(localId, classroomId, content, attachments)
+        return service.create(localId, classroomId, content, attachments, links)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.badRequest().build());
     }

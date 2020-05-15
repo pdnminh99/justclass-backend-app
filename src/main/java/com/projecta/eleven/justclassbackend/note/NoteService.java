@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.note;
 
+import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.classroom.*;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,16 +29,21 @@ public class NoteService {
         return Stream.empty();
     }
 
-    public Optional<BasicNote> create(String localId, String classroomId, String content, List<MultipartFile> attachments) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+    public Optional<BasicNote> create(
+            String localId,
+            String classroomId,
+            String content,
+            List<MultipartFile> attachments,
+            List<String> links) throws ExecutionException, InterruptedException, InvalidUserInformationException {
         if (localId == null || localId.trim().length() == 0 || classroomId == null || classroomId.trim().length() == 0) {
             throw new IllegalArgumentException("LocalId and ClassroomId must not null or empty.");
+        }
+        if ((content == null || content.trim().length() == 0) && (attachments == null || attachments.size() == 0) && (links == null || links.size() == 0)) {
+            throw new IllegalArgumentException("Invalid note.");
         }
         Member member = classroomService
                 .getMember(localId, classroomId)
                 .orElseThrow(InvalidUserInformationException::new);
-        // TODO If user is STUDENT. Check for whether studentsPermission is VCP
-        // If user is COLLABORATOR. Let them create the note.
-
         if (member.getRole() == MemberRoles.STUDENT) {
             var classroom = new Classroom(member.getClassroomReference().get().get());
 
@@ -45,6 +51,19 @@ public class NoteService {
                 throw new IllegalArgumentException("Student with Id [" + localId + "] does not have permission to create a note.");
             }
         }
+
+        var now = Timestamp.now();
+        var note = new BasicNote(
+                null,
+                null,
+                member.getUserReference(),
+                content,
+                now,
+                0,
+                classroomId,
+                member.getClassroomReference(),
+                links,
+                NoteType.STANDARD);
 
         return Optional.empty();
     }

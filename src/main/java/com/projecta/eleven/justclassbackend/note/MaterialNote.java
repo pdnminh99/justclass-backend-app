@@ -14,14 +14,15 @@ public class MaterialNote extends BasicNote {
     public MaterialNote(
             String Id,
             MinifiedUser author,
-            DocumentReference authorMembershipReference,
+            DocumentReference authorReference,
             String content,
             Timestamp createAt,
             Integer commentsCount,
-            Integer likesCount,
             String classroomId,
-            DocumentReference classroomReference) {
-        super(Id, author, authorMembershipReference, content, createAt, commentsCount, likesCount, classroomId, classroomReference);
+            DocumentReference classroomReference,
+            List<String> links,
+            NoteType type) {
+        super(Id, author, authorReference, content, createAt, commentsCount, classroomId, classroomReference, links, type);
     }
 
     public List<BasicFile> getAttachments() {
