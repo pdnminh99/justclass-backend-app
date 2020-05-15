@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.note;
 
 import com.google.common.collect.Lists;
+import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +45,7 @@ public class NoteController {
             @RequestParam("content") String content,
             @Nullable
             @RequestBody List<MultipartFile> attachments
-    ) throws ExecutionException, InterruptedException {
+    ) throws ExecutionException, InterruptedException, InvalidUserInformationException {
         return service.create(localId, classroomId, content, attachments)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.badRequest().build());
