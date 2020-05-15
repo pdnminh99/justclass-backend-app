@@ -55,4 +55,15 @@ public class ClassroomDeletedNotification extends Notification {
     public void setClassroom(MinifiedClassroom classroom) {
         this.classroom = classroom;
     }
+
+    @Override
+    public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
+        HashMap<String, Object> map = super.toMap(isTimestampInMilliseconds);
+
+        ifFieldNotNullThenPutToMap("classroomReference", classroomReference, map);
+        if (getClassroom() != null) {
+            ifFieldNotNullThenPutToMap("classroom", getClassroom().toMap(isTimestampInMilliseconds), map);
+        }
+        return map;
+    }
 }

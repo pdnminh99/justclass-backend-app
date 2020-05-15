@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -100,19 +99,27 @@ class NotificationRepository {
                         .getDocuments();
 
         List<T> results = Lists.newArrayList();
-        List<InviteNotification> inviteNotifications = Lists.newArrayList();
+        T notification;
 
         for (QueryDocumentSnapshot snap : query) {
             String notificationRepresentation = snap.getString("notificationType");
             assert notificationRepresentation != null;
             NotificationType notificationType = NotificationType.fromText(notificationRepresentation);
 
-            if (notificationType == NotificationType.INVITATION || notificationType == NotificationType.ROLE_CHANGE) {
-                var notification = new InviteNotification(snap);
-                inviteNotifications.add(notification);
+            switch (notificationType) {
+                case INVITATION:
+                case ROLE_CHANGE:
+                    notification = (T) new InviteNotification(snap);
+                    results.add(notification);
+                    break;
+                case CLASSROOM_DELETED:
+                    notification = (T) new ClassroomDeletedNotification(snap);
+                    results.add(notification);
+                    break;
+                default:
+                    break;
             }
         }
-        results.addAll((Collection<? extends T>) inviteNotifications);
         return results.stream()
                 .sorted(Comparator.comparing(Notification::getInvokeTime))
                 .collect(Collectors.toList());
