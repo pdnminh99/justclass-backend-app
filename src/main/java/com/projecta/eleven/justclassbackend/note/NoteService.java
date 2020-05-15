@@ -37,6 +37,7 @@ public class NoteService {
                 .orElseThrow(InvalidUserInformationException::new);
         // TODO If user is STUDENT. Check for whether studentsPermission is VCP
         // If user is COLLABORATOR. Let them create the note.
+
         if (member.getRole() == MemberRoles.STUDENT) {
             var classroom = new Classroom(member.getClassroomReference().get().get());
 
