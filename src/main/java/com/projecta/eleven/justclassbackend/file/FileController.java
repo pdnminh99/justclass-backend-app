@@ -2,7 +2,6 @@ package com.projecta.eleven.justclassbackend.file;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,9 +32,7 @@ public class FileController {
     @PostMapping
     public List<Map<String, Object>> upload(
             @RequestBody List<MultipartFile> files,
-            @RequestParam("content") String content,
-            @Nullable
-            @RequestParam("attachToPost") String attachToPost
+            @RequestParam("content") String content
     ) {
         System.out.println(content);
         return files.stream().map(file -> {

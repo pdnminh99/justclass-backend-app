@@ -976,19 +976,13 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<MinifiedMember> getMember(String localId, String classroomId) throws ExecutionException, InterruptedException {
+    public Optional<Member> getMember(String localId, String classroomId) throws ExecutionException, InterruptedException {
         DocumentSnapshot querySnapshot = repository.getMember(classroomId, localId).get().get();
 
         if (!querySnapshot.exists()) {
             return Optional.empty();
         }
-        var member = new Member(querySnapshot);
-        var minifiedMember = new MinifiedMember(member.getUserReference().get().get());
-
-        minifiedMember.setRole(member.getRole());
-        minifiedMember.setJoinDatetime(member.getCreatedTimestamp());
-
-        return Optional.of(minifiedMember);
+        return Optional.of(new Member(querySnapshot));
     }
 
     @Override
