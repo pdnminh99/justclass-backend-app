@@ -21,8 +21,10 @@ public class MaterialNote extends BasicNote {
             String classroomId,
             DocumentReference classroomReference,
             List<String> links,
-            NoteType type) {
+            NoteType type,
+            List<BasicFile> attachments) {
         super(Id, author, authorReference, content, createAt, commentsCount, classroomId, classroomReference, links, type);
+        this.attachments = attachments;
     }
 
     public List<BasicFile> getAttachments() {

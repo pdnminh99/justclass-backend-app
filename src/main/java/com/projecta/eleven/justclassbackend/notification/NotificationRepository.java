@@ -162,7 +162,6 @@ class NotificationRepository {
                 .whereLessThan("invokeTime", before).get().get()
                 .getDocuments()
                 .stream()
-                .peek(doc -> System.out.println(doc.get("Found old notifications to delete.")))
                 .map(DocumentSnapshot::getReference)
                 .forEach(ref -> writeBatch.delete(ref));
     }

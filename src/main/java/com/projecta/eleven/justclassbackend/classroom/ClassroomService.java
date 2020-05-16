@@ -704,7 +704,7 @@ public class ClassroomService implements IClassroomOperationsService {
             MinifiedClassroom classroom,
             Timestamp now,
             boolean isInviteesNotInClass
-    ) {
+    ) throws ExecutionException, InterruptedException {
         var invitees = isInviteesNotInClass ? inviteesNotInClass : inviteesAlreadyInClass;
 
         classroom.setTheme(null);
@@ -756,11 +756,11 @@ public class ClassroomService implements IClassroomOperationsService {
             notificationService.add(notification);
 
             /* TODO Remove old invitations that invite this user to the same classrooms. */
-//            notificationService.remove(
-//                    invitation.userSnapshot.getReference(),
-//                    finalInvitation.getClassroomReference(),
-//                    now,
-//                    InvitationStatus.PENDING);
+            notificationService.remove(
+                    invitation.userSnapshot.getReference(),
+                    finalInvitation.getClassroomReference(),
+                    now,
+                    InvitationStatus.PENDING);
 
             if (!isInviteesNotInClass) {
                 var member = invitation.member;
@@ -1098,7 +1098,7 @@ public class ClassroomService implements IClassroomOperationsService {
                     .stream()
                     .map(ref -> new User(ref, false))
                     .filter(m -> searchValidUser(m, keyword))
-                    .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getDisplayName(), m.getEmail()));
+                    .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getPhotoUrl(), m.getEmail()));
         }
         List<User> users = ApiFutures.allAsList(
                 members.stream()
@@ -1115,7 +1115,7 @@ public class ClassroomService implements IClassroomOperationsService {
                         .stream()
                         .noneMatch(u -> u.getLocalId().equals(f.getLocalId())))
                 .sorted(Comparator.comparing(MinifiedUser::getDisplayName))
-                .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getDisplayName(), m.getEmail()));
+                .map(m -> new MinifiedUser(m.getLocalId(), m.getDisplayName(), m.getPhotoUrl(), m.getEmail()));
     }
 
     private boolean searchValidUser(User user, String keyword) {
