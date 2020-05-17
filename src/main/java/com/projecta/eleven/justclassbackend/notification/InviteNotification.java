@@ -29,6 +29,7 @@ public class InviteNotification extends Notification {
     public InviteNotification(
             String notificationId,
             Timestamp invokeTimestamp,
+            String invokerId,
             MinifiedUser invoker,
             DocumentReference invokerReference,
             String ownerId,
@@ -42,7 +43,7 @@ public class InviteNotification extends Notification {
             Timestamp seen,
             InvitationStatus invitationStatus
     ) {
-        super(notificationId, invokeTimestamp, invoker, invokerReference, ownerId, ownerReference, notificationType);
+        super(notificationId, invokeTimestamp, invokerId, invoker, invokerReference, ownerId, ownerReference, notificationType);
         this.role = role;
         this.classroom = classroom;
         this.classroomReference = classroomReference;
@@ -133,7 +134,14 @@ public class InviteNotification extends Notification {
         var map = super.toMap(isTimestampInMilliseconds);
 
         if (getClassroom() != null) {
-            ifFieldNotNullThenPutToMap("classroom", getClassroom().toMap(isTimestampInMilliseconds), map);
+            MinifiedClassroom currentClassroom = getClassroom();
+            var classroomInfoMap = new HashMap<String, Object>();
+
+            ifFieldNotNullThenPutToMap("classroomId", currentClassroom.getClassroomId(), classroomInfoMap);
+            ifFieldNotNullThenPutToMap("subject", currentClassroom.getSubject(), classroomInfoMap);
+            ifFieldNotNullThenPutToMap("title", currentClassroom.getTitle(), classroomInfoMap);
+
+            map.put("classroom", classroomInfoMap);
         }
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
         if (getRole() != null) {

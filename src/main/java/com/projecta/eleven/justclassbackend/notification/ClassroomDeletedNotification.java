@@ -19,11 +19,12 @@ public class ClassroomDeletedNotification extends Notification {
             Timestamp invokeTime,
             MinifiedClassroom classroom,
             DocumentReference classroomReference,
+            String invokerId,
             MinifiedUser invoker,
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference) {
-        super(notificationId, invokeTime, invoker, invokerReference, ownerId, ownerReference, NotificationType.CLASSROOM_DELETED);
+        super(notificationId, invokeTime, invokerId, invoker, invokerReference, ownerId, ownerReference, NotificationType.CLASSROOM_DELETED);
         this.classroom = classroom;
         this.classroomReference = classroomReference;
     }
@@ -62,7 +63,14 @@ public class ClassroomDeletedNotification extends Notification {
 
         ifFieldNotNullThenPutToMap("classroomReference", classroomReference, map);
         if (getClassroom() != null) {
-            ifFieldNotNullThenPutToMap("classroom", getClassroom().toMap(isTimestampInMilliseconds), map);
+            MinifiedClassroom currentClassroom = getClassroom();
+            var classroomInfoMap = new HashMap<String, Object>();
+
+            ifFieldNotNullThenPutToMap("classroomId", currentClassroom.getClassroomId(), classroomInfoMap);
+            ifFieldNotNullThenPutToMap("subject", currentClassroom.getSubject(), classroomInfoMap);
+            ifFieldNotNullThenPutToMap("title", currentClassroom.getTitle(), classroomInfoMap);
+
+            map.put("classroom", classroomInfoMap);
         }
         return map;
     }

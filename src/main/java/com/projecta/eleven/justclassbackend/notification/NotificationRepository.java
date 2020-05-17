@@ -50,6 +50,8 @@ class NotificationRepository {
         }
         var map = notification.toMap();
         map.remove("notificationId");
+        map.remove("invoker");
+
         writeBatch.create(notificationsCollection.document(), map);
     }
 

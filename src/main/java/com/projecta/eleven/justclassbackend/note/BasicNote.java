@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.common.collect.Maps;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
@@ -128,7 +129,7 @@ public class BasicNote implements MapSerializable {
 
     @Override
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
-        var map = new HashMap<String, Object>();
+        HashMap<String, Object> map = Maps.newHashMap();
 
         if (getAuthor() != null) {
             ifFieldNotNullThenPutToMap("author", getAuthor().toMap(), map);

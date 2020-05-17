@@ -1,15 +1,21 @@
 package com.projecta.eleven.justclassbackend.notification;
 
+import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -50,10 +56,37 @@ public class NotificationService {
         if (pageSize < 1 || pageNumber < 0) {
             return Stream.empty();
         }
-        var notifications = repository.get(ownerId, pageSize, pageNumber);
+
+        // Query for invokerInfo.
+        Map<String, MinifiedUser> invokersMap = Maps.newHashMap();
+        List<DocumentReference> invokersReferences = Lists.newArrayList();
+        List<Notification> notifications = repository.get(ownerId, pageSize, pageNumber);
+
+        for (Notification notification : notifications) {
+            boolean isExist = invokersReferences
+                    .stream()
+                    .anyMatch(m -> m.getId().equals(notification.getInvokerId()));
+
+            if (!isExist) {
+                invokersReferences.add(notification.getInvokerReference());
+            }
+        }
+        ApiFutures.allAsList(
+                invokersReferences
+                        .stream()
+                        .map(DocumentReference::get)
+                        .collect(Collectors.toList())
+        ).get().stream().map(MinifiedUser::new).forEach(m -> invokersMap.put(m.getLocalId(), m));
 
         return notifications
                 .stream()
+                .peek(m -> {
+                    m.setInvoker(invokersMap.get(m.getInvokerId()));
+                    m.setInvokerReference(null);
+                    m.setOwnerReference(null);
+                    m.setInvokerReference(null);
+                    m.setInvokerId(null);
+                })
                 .map(m -> m.toMap(true))
                 .peek(m -> {
                     m.remove("invokerReference");

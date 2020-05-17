@@ -13,6 +13,8 @@ public class Notification implements MapSerializable {
 
     private Timestamp invokeTime;
 
+    private String invokerId;
+
     private MinifiedUser invoker;
 
     private DocumentReference invokerReference;
@@ -26,6 +28,7 @@ public class Notification implements MapSerializable {
     public Notification(
             String notificationId,
             Timestamp invokeTime,
+            String invokerId,
             MinifiedUser invoker,
             DocumentReference invokerReference,
             String ownerId,
@@ -33,6 +36,7 @@ public class Notification implements MapSerializable {
             NotificationType notificationType) {
         this.notificationId = notificationId;
         this.invokeTime = invokeTime;
+        this.invokerId = invokerId;
         this.invoker = invoker;
         this.invokerReference = invokerReference;
         this.ownerId = ownerId;
@@ -43,16 +47,16 @@ public class Notification implements MapSerializable {
     public Notification(DocumentSnapshot snapshot) {
         this.notificationId = snapshot.getId();
         this.invokeTime = snapshot.getTimestamp("invokeTime");
-        HashMap<String, Object> invoker = (HashMap<String, Object>) snapshot.getData().get("invoker");
-
-        if (invoker != null) {
-            String localId = (String) invoker.get("localId");
-            String displayName = (String) invoker.get("displayName");
-            String photoUrl = (String) invoker.get("photoUrl");
-            String email = (String) invoker.get("email");
-            this.invoker = new MinifiedUser(localId, displayName, photoUrl, email);
-        }
-
+        this.invokerId = snapshot.getString("invokerId");
+//        HashMap<String, Object> invoker = (HashMap<String, Object>) snapshot.getData().get("invoker");
+//
+//        if (invoker != null) {
+//            String localId = (String) invoker.get("localId");
+//            String displayName = (String) invoker.get("displayName");
+//            String photoUrl = (String) invoker.get("photoUrl");
+//            String email = (String) invoker.get("email");
+//            this.invoker = new MinifiedUser(localId, displayName, photoUrl, email);
+//        }
         this.invokerReference = snapshot.get("invokerReference", DocumentReference.class);
         this.ownerId = snapshot.getString("ownerId");
         this.ownerReference = snapshot.get("ownerReference", DocumentReference.class);
@@ -115,6 +119,14 @@ public class Notification implements MapSerializable {
         this.invoker = invoker;
     }
 
+    public String getInvokerId() {
+        return invokerId;
+    }
+
+    public void setInvokerId(String invokerId) {
+        this.invokerId = invokerId;
+    }
+
     @Override
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
@@ -123,6 +135,7 @@ public class Notification implements MapSerializable {
         ifFieldNotNullThenPutToMap("invokeTime", getInvokeTime() != null && isTimestampInMilliseconds ?
                 getInvokeTime().toDate().getTime() :
                 getInvokeTime(), map);
+        ifFieldNotNullThenPutToMap("invokerId", getInvokerId(), map);
         if (getInvoker() != null) {
             ifFieldNotNullThenPutToMap("invoker", getInvoker().toMap(), map);
         }

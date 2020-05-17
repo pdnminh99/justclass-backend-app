@@ -369,6 +369,7 @@ public class ClassroomService implements IClassroomOperationsService {
                 now,
                 classroom,
                 member.getClassroomReference(),
+                invoker.getLocalId(),
                 invoker,
                 member.getUserReference(),
                 m.getUserId(),
@@ -734,6 +735,7 @@ public class ClassroomService implements IClassroomOperationsService {
             var notification = new InviteNotification(
                     null,
                     now,
+                    invoker.getLocalId(),
                     invoker,
                     invokerMember.getUserReference(),
                     finalInvitation.getLocalId(),
