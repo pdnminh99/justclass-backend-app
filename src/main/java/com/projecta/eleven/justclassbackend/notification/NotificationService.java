@@ -10,7 +10,6 @@ import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ import java.util.stream.Stream;
 public class NotificationService {
     private final NotificationRepository repository;
 
-    private final List<Notification> notifications = new ArrayList<>();
+    private List<Notification> notifications = Lists.newArrayList();
 
     @Autowired
     public NotificationService(NotificationRepository repository) {
@@ -58,9 +57,33 @@ public class NotificationService {
         }
 
         // Query for invokerInfo.
+        notifications = repository.get(ownerId, pageSize, pageNumber);
+        getInvokers();
+
+        List<HashMap<String, Object>> maps = notifications
+                .stream()
+                .peek(m -> {
+                    m.setInvokerReference(null);
+                    m.setOwnerReference(null);
+                    m.setInvokerReference(null);
+                    m.setInvokerId(null);
+                })
+                .map(m -> m.toMap(true))
+                .peek(m -> {
+                    m.remove("invokerReference");
+                    m.remove("ownerId");
+                    m.remove("invitationId");
+                    m.remove("ownerReference");
+                    m.remove("classroomReference");
+                    m.remove("invitationReference");
+                }).collect(Collectors.toList());
+        notifications.clear();
+        return maps.stream();
+    }
+
+    private void getInvokers() throws ExecutionException, InterruptedException {
         Map<String, MinifiedUser> invokersMap = Maps.newHashMap();
         List<DocumentReference> invokersReferences = Lists.newArrayList();
-        List<Notification> notifications = repository.get(ownerId, pageSize, pageNumber);
 
         for (Notification notification : notifications) {
             boolean isExist = invokersReferences
@@ -78,24 +101,9 @@ public class NotificationService {
                         .collect(Collectors.toList())
         ).get().stream().map(MinifiedUser::new).forEach(m -> invokersMap.put(m.getLocalId(), m));
 
-        return notifications
-                .stream()
-                .peek(m -> {
-                    m.setInvoker(invokersMap.get(m.getInvokerId()));
-                    m.setInvokerReference(null);
-                    m.setOwnerReference(null);
-                    m.setInvokerReference(null);
-                    m.setInvokerId(null);
-                })
-                .map(m -> m.toMap(true))
-                .peek(m -> {
-                    m.remove("invokerReference");
-                    m.remove("ownerId");
-                    m.remove("invitationId");
-                    m.remove("ownerReference");
-                    m.remove("classroomReference");
-                    m.remove("invitationReference");
-                });
+        for (var notification : notifications) {
+            notification.setInvoker(invokersMap.get(notification.getInvokerId()));
+        }
     }
 
     public <T extends Notification> T find(String notificationId) throws ExecutionException, InterruptedException {
