@@ -2,9 +2,11 @@ package com.projecta.eleven.justclassbackend.configuration;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.storage.Storage;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.firebase.cloud.StorageClient;
 import com.google.firebase.messaging.FirebaseMessaging;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,9 +57,9 @@ public class FirebaseConfig {
         return FirebaseMessaging.getInstance();
     }
 
-//    @Bean("bucket")
-//    @DependsOn("firebase")
-//    public Bucket getDefaultBucket() {
-//        return StorageClient.getInstance().bucket("gs://justclass-da0b0.appspot.com/");
-//    }
+    @Bean("bucket")
+    @DependsOn("firebase")
+    public Storage getDefaultBucket() {
+        return StorageClient.getInstance().bucket("justclass-da0b0.appspot.com").getStorage();
+    }
 }

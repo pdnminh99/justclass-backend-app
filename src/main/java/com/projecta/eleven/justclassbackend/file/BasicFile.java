@@ -7,27 +7,30 @@ import java.util.HashMap;
 
 public class BasicFile implements MapSerializable {
 
-    private String Id;
+    private String fileId;
 
     private String name;
 
     private String type;
 
+    private Long size;
+
     private Timestamp createAt;
 
-    public BasicFile(String Id, String name, String type, Timestamp createAt) {
-        this.Id = Id;
+    public BasicFile(String fileId, String name, String type, Long size, Timestamp createAt) {
+        this.fileId = fileId;
         this.name = name;
         this.type = type;
+        this.size = size;
         this.createAt = createAt;
     }
 
-    public String getId() {
-        return Id;
+    public String getFileId() {
+        return fileId;
     }
 
-    public void setId(String id) {
-        Id = id;
+    public void setFileId(String fileId) {
+        this.fileId = fileId;
     }
 
     public String getName() {
@@ -58,13 +61,23 @@ public class BasicFile implements MapSerializable {
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
 
-        ifFieldNotNullThenPutToMap("fileId", getId(), map);
+        ifFieldNotNullThenPutToMap("fileId", getFileId(), map);
+        ifFieldNotNullThenPutToMap("name", getName(), map);
         ifFieldNotNullThenPutToMap("type", getType(), map);
+        ifFieldNotNullThenPutToMap("size", getSize(), map);
         if (getCreateAt() != null) {
             ifFieldNotNullThenPutToMap("createAt", isTimestampInMilliseconds ?
                     getCreateAt().toDate().getTime() :
                     getCreateAt(), map);
         }
         return map;
+    }
+
+    public Long getSize() {
+        return size;
+    }
+
+    public void setSize(Long size) {
+        this.size = size;
     }
 }

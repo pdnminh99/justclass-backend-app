@@ -15,9 +15,11 @@ public class BasicNote implements MapSerializable {
 
     private String Id;
 
-    public NoteType type;
-
     private MinifiedUser author;
+
+    private String authorId;
+
+    private DocumentReference authorReference;
 
     private String content;
 
@@ -25,33 +27,33 @@ public class BasicNote implements MapSerializable {
 
     private Integer commentsCount;
 
-    private String classroomId;
-    private DocumentReference authorReference;
     private List<String> links;
+
+    private String classroomId;
 
     private DocumentReference classroomReference;
 
     public BasicNote(
             String Id,
             MinifiedUser author,
+            String authorId,
             DocumentReference authorReference,
             String content,
             Timestamp createAt,
             Integer commentsCount,
             String classroomId,
             DocumentReference classroomReference,
-            List<String> links,
-            NoteType type
+            List<String> links
     ) {
         this.Id = Id;
         this.author = author;
+        this.authorId = authorId;
         this.authorReference = authorReference;
         setContent(content);
         this.createAt = createAt;
         this.commentsCount = commentsCount;
         this.classroomId = classroomId;
         this.classroomReference = classroomReference;
-        this.type = type;
         setLinks(links);
     }
 
@@ -77,6 +79,9 @@ public class BasicNote implements MapSerializable {
 
     public void setContent(String content) {
         if (content != null) {
+            if (links == null) {
+                links = Lists.newArrayList();
+            }
             links.addAll(extractUrls(content));
         }
         this.content = content;
@@ -143,14 +148,6 @@ public class BasicNote implements MapSerializable {
         }
     }
 
-    public NoteType getType() {
-        return type;
-    }
-
-    public void setType(NoteType type) {
-        this.type = type;
-    }
-
     private List<String> extractUrls(String text) {
         List<String> containedUrls = Lists.newArrayList();
         String urlRegex = "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)";
@@ -172,6 +169,7 @@ public class BasicNote implements MapSerializable {
         if (getAuthor() != null) {
             ifFieldNotNullThenPutToMap("author", getAuthor().toMap(), map);
         }
+        ifFieldNotNullThenPutToMap("authorId", getAuthorId(), map);
         ifFieldNotNullThenPutToMap("authorReference", getAuthorReference(), map);
         ifFieldNotNullThenPutToMap("content", getContent(), map);
         if (getCreateAt() != null) {
@@ -183,9 +181,14 @@ public class BasicNote implements MapSerializable {
         ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         ifFieldNotNullThenPutToMap("classroomReference", getClassroomReference(), map);
         ifFieldNotNullThenPutToMap("links", getLinks(), map);
-        if (getType() != null) {
-            ifFieldNotNullThenPutToMap("type", getType().toString(), map);
-        }
         return map;
+    }
+
+    public String getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(String authorId) {
+        this.authorId = authorId;
     }
 }

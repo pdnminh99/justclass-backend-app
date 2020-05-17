@@ -9,6 +9,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -38,17 +40,16 @@ public class NoteController {
     }
 
     @PostMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
-    public ResponseEntity<BasicNote> create(
+    public ResponseEntity<HashMap<String, Object>> create(
             @PathVariable("localId") String localId,
             @PathVariable("classroomId") String classroomId,
             @Nullable
             @RequestParam("content") String content,
             @Nullable
-            @RequestBody List<MultipartFile> attachments,
-            @Nullable
-            @RequestBody List<String> links
-    ) throws ExecutionException, InterruptedException, InvalidUserInformationException {
-        return service.create(localId, classroomId, content, attachments, links)
+            @RequestBody List<MultipartFile> attachments
+    ) throws ExecutionException, InterruptedException, InvalidUserInformationException, IOException {
+        return service.create(localId, classroomId, content, attachments)
+                .map(m -> m.toMap(true))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.badRequest().build());
     }
