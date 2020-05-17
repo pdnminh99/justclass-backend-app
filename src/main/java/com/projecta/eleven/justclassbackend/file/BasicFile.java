@@ -17,11 +17,14 @@ public class BasicFile implements MapSerializable {
 
     private Timestamp createAt;
 
-    public BasicFile(String fileId, String name, String type, Long size, Timestamp createAt) {
+    private String ownerId;
+
+    public BasicFile(String fileId, String name, String type, Long size, String ownerId, Timestamp createAt) {
         this.fileId = fileId;
         this.name = name;
         this.type = type;
         this.size = size;
+        this.ownerId = ownerId;
         this.createAt = createAt;
     }
 
@@ -70,6 +73,7 @@ public class BasicFile implements MapSerializable {
                     getCreateAt().toDate().getTime() :
                     getCreateAt(), map);
         }
+        ifFieldNotNullThenPutToMap("ownerId", getOwnerId(), map);
         return map;
     }
 
@@ -79,5 +83,13 @@ public class BasicFile implements MapSerializable {
 
     public void setSize(Long size) {
         this.size = size;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 }

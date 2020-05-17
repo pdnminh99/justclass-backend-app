@@ -75,7 +75,7 @@ public class NoteService {
                 null,
                 null);
         if (attachments != null && attachments.size() > 0) {
-            fileService.storeAll(attachments, note.getId());
+            fileService.storeAll(attachments, author.getLocalId());
 
             note.setAttachments(fileService.getFiles());
             note.setAttachmentReferences(fileService.getFilesReferences());

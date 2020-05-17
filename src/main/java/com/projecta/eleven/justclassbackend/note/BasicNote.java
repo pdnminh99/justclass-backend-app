@@ -2,14 +2,11 @@ package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
-import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BasicNote implements MapSerializable {
 
@@ -49,12 +46,12 @@ public class BasicNote implements MapSerializable {
         this.author = author;
         this.authorId = authorId;
         this.authorReference = authorReference;
-        setContent(content);
+        this.content = content;
         this.createAt = createAt;
         this.commentsCount = commentsCount;
         this.classroomId = classroomId;
         this.classroomReference = classroomReference;
-        setLinks(links);
+        this.links = links;
     }
 
     public String getId() {
@@ -78,12 +75,6 @@ public class BasicNote implements MapSerializable {
     }
 
     public void setContent(String content) {
-        if (content != null) {
-            if (links == null) {
-                links = Lists.newArrayList();
-            }
-            links.addAll(extractUrls(content));
-        }
         this.content = content;
     }
 
@@ -132,34 +123,7 @@ public class BasicNote implements MapSerializable {
     }
 
     public void setLinks(List<String> links) {
-        if (links == null) {
-            this.links = null;
-            return;
-        }
-        this.links.clear();
-        for (String link : links) {
-            links.addAll(extractUrls(link));
-        }
-    }
-
-    public void addLink(String URL) {
-        if (URL != null) {
-            this.links.addAll(extractUrls(URL));
-        }
-    }
-
-    private List<String> extractUrls(String text) {
-        List<String> containedUrls = Lists.newArrayList();
-        String urlRegex = "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)";
-        Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
-        Matcher urlMatcher = pattern.matcher(text);
-
-        while (urlMatcher.find()) {
-            containedUrls.add(text.substring(urlMatcher.start(0),
-                    urlMatcher.end(0)));
-        }
-
-        return containedUrls;
+        this.links = links;
     }
 
     @Override

@@ -9,7 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,11 +40,11 @@ public class FileService {
         files = Lists.newArrayList();
     }
 
-    public void storeAll(List<MultipartFile> attachments, String noteId) throws ExecutionException, InterruptedException, IOException {
+    public void storeAll(List<MultipartFile> attachments, String authorId) throws IOException {
         Timestamp now = Timestamp.now();
 
         files = attachments.stream()
-                .map(attachment -> new BasicFile(null, attachment.getOriginalFilename(), attachment.getContentType(), attachment.getSize(), now))
+                .map(attachment -> new BasicFile(null, attachment.getOriginalFilename(), attachment.getContentType(), attachment.getSize(), authorId, now))
                 .collect(Collectors.toList());
 
         filesReferences = files.stream()
