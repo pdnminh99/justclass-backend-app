@@ -33,4 +33,6 @@ interface IUserRepository {
     DocumentReference getUserReference(String localId);
 
     Stream<QueryDocumentSnapshot> getUsersByEmail(List<String> emails) throws ExecutionException, InterruptedException;
+
+    void createFriend(FriendReference friend);
 }

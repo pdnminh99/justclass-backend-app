@@ -1,3 +1,7 @@
 spring:
   main:
     banner-mode: off
+  servlet:
+    multipart:
+      max-request-size: -1
+      max-file-size: -1

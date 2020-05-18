@@ -1,14 +1,18 @@
 package com.projecta.eleven.justclassbackend.notification;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.common.collect.Lists;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Repository
 class NotificationRepository {
@@ -46,6 +50,8 @@ class NotificationRepository {
         }
         var map = notification.toMap();
         map.remove("notificationId");
+        map.remove("invoker");
+
         writeBatch.create(notificationsCollection.document(), map);
     }
 
@@ -76,31 +82,65 @@ class NotificationRepository {
         }
     }
 
-    public <T extends Notification> List<T> get(String ownerId, int count) throws ExecutionException, InterruptedException {
+    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             return Lists.newArrayList();
         }
-        var query = notificationsCollection.whereEqualTo("ownerId", ownerId)
-                .orderBy("invokeTime", Query.Direction.DESCENDING)
-                .limit(count)
-                .get()
-                .get()
-                .getDocuments();
+        QueryDocumentSnapshot startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber);
+        List<QueryDocumentSnapshot> query = startIndexDoc == null ?
+                notificationsCollection.whereEqualTo("ownerId", ownerId)
+                        .orderBy("invokeTime", Query.Direction.DESCENDING)
+                        .limit(pageSize)
+                        .get()
+                        .get()
+                        .getDocuments() :
+                notificationsCollection.whereEqualTo("ownerId", ownerId)
+                        .orderBy("invokeTime", Query.Direction.DESCENDING)
+                        .startAfter(startIndexDoc)
+                        .limit(pageSize)
+                        .get()
+                        .get()
+                        .getDocuments();
 
         List<T> results = Lists.newArrayList();
+        T notification;
 
-        for (var snap : query) {
+        for (QueryDocumentSnapshot snap : query) {
             String notificationRepresentation = snap.getString("notificationType");
             assert notificationRepresentation != null;
             NotificationType notificationType = NotificationType.fromText(notificationRepresentation);
 
-            if (notificationType == NotificationType.INVITATION || notificationType == NotificationType.ROLE_CHANGE) {
-                var notification = new InviteNotification(snap);
-
-                results.add((T) notification);
+            switch (notificationType) {
+                case INVITATION:
+                case ROLE_CHANGE:
+                    notification = (T) new InviteNotification(snap);
+                    results.add(notification);
+                    break;
+                case CLASSROOM_DELETED:
+                    notification = (T) new ClassroomDeletedNotification(snap);
+                    results.add(notification);
+                    break;
+                default:
+                    break;
             }
         }
-        return results;
+        return results.stream()
+                .sorted(Comparator.comparing(Notification::getInvokeTime))
+                .collect(Collectors.toList());
+    }
+
+    private QueryDocumentSnapshot getLastDocumentSnapshot(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
+        if (pageNumber < 1) {
+            return null;
+        }
+        QuerySnapshot querySnapshot = notificationsCollection
+                .whereEqualTo("ownerId", ownerId)
+                .orderBy("invokeTime", Query.Direction.DESCENDING)
+                .limit(pageNumber * pageSize)
+                .get()
+                .get();
+        return querySnapshot.getDocuments()
+                .get(querySnapshot.size() - 1);
     }
 
     public void update(Notification notification) {
@@ -115,6 +155,17 @@ class NotificationRepository {
         String notificationId = notification.getNotificationId();
 
         writeBatch.update(notificationsCollection.document(notificationId), map);
+    }
+
+    public void remove(DocumentReference owner, DocumentReference classroom, Timestamp before, InvitationStatus status) throws ExecutionException, InterruptedException {
+        notificationsCollection.whereEqualTo("classroomReference", classroom)
+                .whereEqualTo("ownerReference", owner)
+                .whereEqualTo("invitationStatus", status.toString())
+                .whereLessThan("invokeTime", before).get().get()
+                .getDocuments()
+                .stream()
+                .map(DocumentSnapshot::getReference)
+                .forEach(ref -> writeBatch.delete(ref));
     }
 }
 

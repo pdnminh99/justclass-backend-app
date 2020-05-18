@@ -4,7 +4,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 
-class FriendReference {
+public class FriendReference {
     private final String connectionId;
     private final DocumentReference hostReference;
     private final String hostId;

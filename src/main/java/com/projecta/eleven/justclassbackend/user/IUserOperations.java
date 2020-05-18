@@ -21,4 +21,6 @@ public interface IUserOperations {
 
     Stream<User> getFriendsOfUser(String localId, Timestamp lastTimeRequest)
             throws ExecutionException, InterruptedException;
+
+    void createFriendIfNotExist(FriendReference friend) throws ExecutionException, InterruptedException;
 }

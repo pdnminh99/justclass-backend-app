@@ -2,7 +2,6 @@ package com.projecta.eleven.justclassbackend.notification;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -24,10 +23,10 @@ public class NotificationController {
     @GetMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<List<HashMap<String, Object>>> get(
             @PathVariable String localId,
-            @Nullable
-            @RequestParam("count") Integer count) throws ExecutionException, InterruptedException {
+            @RequestParam(value = "pageSize", defaultValue = "20") int pageSize,
+            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber) throws ExecutionException, InterruptedException {
         return ResponseEntity.ok(
-                service.get(localId, count)
+                service.get(localId, pageSize, pageNumber)
                         .collect(Collectors.toList())
         );
     }

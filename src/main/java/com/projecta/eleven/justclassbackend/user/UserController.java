@@ -44,7 +44,7 @@ public class UserController {
             lastRequestTimestamp = Timestamp.ofTimeMicroseconds(epochTime);
         }
         return userService.getFriendsOfUser(localId, lastRequestTimestamp)
-                .map(u -> new MinifiedUser(u.getLocalId(), u.getDisplayName(), u.getPhotoUrl()))
+                .map(u -> new MinifiedUser(u.getLocalId(), u.getDisplayName(), u.getPhotoUrl(), u.getEmail()))
                 .collect(Collectors.toList());
     }
 

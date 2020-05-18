@@ -65,6 +65,11 @@ class UserRepository implements IUserRepository {
     }
 
     @Override
+    public void createFriend(FriendReference friend) {
+        friendsCollection.add(friend);
+    }
+
+    @Override
     public Optional<User> getUser(String localId) throws ExecutionException, InterruptedException {
         DocumentSnapshot document = usersCollection
                 .document(localId)

@@ -3,6 +3,7 @@ package com.projecta.eleven.justclassbackend.notification;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
@@ -13,6 +14,8 @@ public class Notification implements MapSerializable {
     private Timestamp invokeTime;
 
     private String invokerId;
+
+    private MinifiedUser invoker;
 
     private DocumentReference invokerReference;
 
@@ -26,6 +29,7 @@ public class Notification implements MapSerializable {
             String notificationId,
             Timestamp invokeTime,
             String invokerId,
+            MinifiedUser invoker,
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
@@ -33,6 +37,7 @@ public class Notification implements MapSerializable {
         this.notificationId = notificationId;
         this.invokeTime = invokeTime;
         this.invokerId = invokerId;
+        this.invoker = invoker;
         this.invokerReference = invokerReference;
         this.ownerId = ownerId;
         this.ownerReference = ownerReference;
@@ -43,6 +48,15 @@ public class Notification implements MapSerializable {
         this.notificationId = snapshot.getId();
         this.invokeTime = snapshot.getTimestamp("invokeTime");
         this.invokerId = snapshot.getString("invokerId");
+//        HashMap<String, Object> invoker = (HashMap<String, Object>) snapshot.getData().get("invoker");
+//
+//        if (invoker != null) {
+//            String localId = (String) invoker.get("localId");
+//            String displayName = (String) invoker.get("displayName");
+//            String photoUrl = (String) invoker.get("photoUrl");
+//            String email = (String) invoker.get("email");
+//            this.invoker = new MinifiedUser(localId, displayName, photoUrl, email);
+//        }
         this.invokerReference = snapshot.get("invokerReference", DocumentReference.class);
         this.ownerId = snapshot.getString("ownerId");
         this.ownerReference = snapshot.get("ownerReference", DocumentReference.class);
@@ -55,14 +69,6 @@ public class Notification implements MapSerializable {
 
     public void setInvokeTime(Timestamp invokeTime) {
         this.invokeTime = invokeTime;
-    }
-
-    public String getInvokerId() {
-        return invokerId;
-    }
-
-    public void setInvokerId(String invokerId) {
-        this.invokerId = invokerId;
     }
 
     public DocumentReference getInvokerReference() {
@@ -105,6 +111,22 @@ public class Notification implements MapSerializable {
         this.notificationType = notificationType;
     }
 
+    public MinifiedUser getInvoker() {
+        return invoker;
+    }
+
+    public void setInvoker(MinifiedUser invoker) {
+        this.invoker = invoker;
+    }
+
+    public String getInvokerId() {
+        return invokerId;
+    }
+
+    public void setInvokerId(String invokerId) {
+        this.invokerId = invokerId;
+    }
+
     @Override
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
@@ -114,13 +136,15 @@ public class Notification implements MapSerializable {
                 getInvokeTime().toDate().getTime() :
                 getInvokeTime(), map);
         ifFieldNotNullThenPutToMap("invokerId", getInvokerId(), map);
+        if (getInvoker() != null) {
+            ifFieldNotNullThenPutToMap("invoker", getInvoker().toMap(), map);
+        }
         ifFieldNotNullThenPutToMap("invokerReference", getInvokerReference(), map);
         ifFieldNotNullThenPutToMap("ownerId", getOwnerId(), map);
         ifFieldNotNullThenPutToMap("ownerReference", getOwnerReference(), map);
         if (getNotificationType() != null) {
             ifFieldNotNullThenPutToMap("notificationType", getNotificationType().toString(), map);
         }
-
         return map;
     }
 }

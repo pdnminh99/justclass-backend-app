@@ -159,4 +159,18 @@ public class UserService implements IUserOperations {
                 .stream()
                 .map(u -> new User(u, false));
     }
+
+    @Override
+    public void createFriendIfNotExist(FriendReference friend) throws ExecutionException, InterruptedException {
+        List<User> friends = getFriendsOfUser(friend.getGuestId(), null)
+                .collect(Collectors.toList());
+
+        for (var person : friends) {
+            if (person.getLocalId().equals(friend.getHostId())) {
+                return;
+            }
+        }
+
+        repository.createFriend(friend);
+    }
 }

@@ -76,4 +76,40 @@ public class CollectionsConfig {
                 .map(db -> db.collection(isDeploymentEnvironment ? "invitations" : "invitations_dev"))
                 .orElseThrow(DatabaseFailedToInitializeException::new);
     }
+
+    @Bean("filesCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getFilesCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection(isDeploymentEnvironment ? "files" : "files_dev"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
+
+    @Bean("fileReferencesCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getFileReferencesCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection(isDeploymentEnvironment ? "file_refs" : "file_refs_dev"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
+
+    @Bean("notesCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getNotesCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection(isDeploymentEnvironment ? "notes" : "notes_dev"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
+
+    @Bean("commentsCollection")
+    @DependsOn("firestore")
+    @Scope("singleton")
+    public CollectionReference getCommentsCollection() throws DatabaseFailedToInitializeException {
+        return Optional.ofNullable(firestore)
+                .map(db -> db.collection(isDeploymentEnvironment ? "comments" : "comments_dev"))
+                .orElseThrow(DatabaseFailedToInitializeException::new);
+    }
 }

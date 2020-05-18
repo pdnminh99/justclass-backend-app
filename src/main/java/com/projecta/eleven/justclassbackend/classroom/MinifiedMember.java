@@ -7,14 +7,14 @@ import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
 
-class MinifiedMember extends MinifiedUser implements MapSerializable {
+public class MinifiedMember extends MinifiedUser implements MapSerializable {
 
     private MemberRoles role;
 
     private Timestamp joinDatetime;
 
-    public MinifiedMember(String localId, String displayName, String photoUrl, MemberRoles role, Timestamp joinDatetime) {
-        super(localId, displayName, photoUrl);
+    public MinifiedMember(String localId, String displayName, String photoUrl, String email, MemberRoles role, Timestamp joinDatetime) {
+        super(localId, displayName, photoUrl, email);
         this.role = role;
         this.joinDatetime = joinDatetime;
     }
@@ -44,6 +44,7 @@ class MinifiedMember extends MinifiedUser implements MapSerializable {
                 user.getLocalId(),
                 user.getDisplayName(),
                 user.getPhotoUrl(),
+                user.getEmail(),
                 role,
                 join
         );

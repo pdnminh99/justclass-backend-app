@@ -60,7 +60,6 @@ public class ClassroomController {
                 .orElseGet(this::handleResponseEmpty);
     }
 
-    // TODO why not allow null, new public code param.
     @PatchMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> update(
             @PathVariable("localId") String localId,
@@ -113,6 +112,17 @@ public class ClassroomController {
         return service.delete(localId, classroomId)
                 .map(this::handleDeleteStateNotEmpty)
                 .orElseGet(this::handleDeleteStateEmpty);
+    }
+
+    @DeleteMapping("leave/{localId}/{classroomId}")
+    @ResponseStatus(HttpStatus.OK)
+    public void leave(
+            @PathVariable("localId") String localId,
+            @PathVariable("classroomId") String classroomId,
+            @Nullable
+            @RequestParam("newOwnerId") String newOwnerId
+    ) throws InvalidUserInformationException, ExecutionException, InvalidClassroomInformationException, InterruptedException {
+        service.leave(localId, classroomId, newOwnerId);
     }
 
     @GetMapping(value = "lookup/{localId}/{classroomId}/{role}", produces = "application/json;charset=utf-8")
