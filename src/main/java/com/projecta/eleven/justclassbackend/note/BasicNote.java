@@ -3,7 +3,7 @@ package com.projecta.eleven.justclassbackend.note;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.common.collect.Maps;
-import com.projecta.eleven.justclassbackend.user.MinifiedUser;
+import com.projecta.eleven.justclassbackend.classroom.MinifiedMember;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
@@ -13,7 +13,7 @@ public class BasicNote implements MapSerializable {
 
     private String Id;
 
-    private MinifiedUser author;
+    private MinifiedMember author;
 
     private String authorId;
 
@@ -33,7 +33,7 @@ public class BasicNote implements MapSerializable {
 
     public BasicNote(
             String Id,
-            MinifiedUser author,
+            MinifiedMember author,
             String authorId,
             DocumentReference authorReference,
             String content,
@@ -63,11 +63,11 @@ public class BasicNote implements MapSerializable {
         Id = id;
     }
 
-    public MinifiedUser getAuthor() {
+    public MinifiedMember getAuthor() {
         return author;
     }
 
-    public void setAuthor(MinifiedUser author) {
+    public void setAuthor(MinifiedMember author) {
         this.author = author;
     }
 
@@ -132,7 +132,7 @@ public class BasicNote implements MapSerializable {
         HashMap<String, Object> map = Maps.newHashMap();
 
         if (getAuthor() != null) {
-            ifFieldNotNullThenPutToMap("author", getAuthor().toMap(), map);
+            ifFieldNotNullThenPutToMap("author", getAuthor().toMap(isTimestampInMilliseconds), map);
         }
         ifFieldNotNullThenPutToMap("authorId", getAuthorId(), map);
         ifFieldNotNullThenPutToMap("authorReference", getAuthorReference(), map);

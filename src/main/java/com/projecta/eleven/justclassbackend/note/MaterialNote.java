@@ -2,8 +2,8 @@ package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.projecta.eleven.justclassbackend.classroom.MinifiedMember;
 import com.projecta.eleven.justclassbackend.file.BasicFile;
-import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +17,7 @@ public class MaterialNote extends BasicNote {
 
     public MaterialNote(
             String Id,
-            MinifiedUser author,
+            MinifiedMember author,
             String authorId,
             DocumentReference authorReference,
             String content,
