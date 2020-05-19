@@ -73,7 +73,7 @@ public class NoteService {
                     .collect(Collectors.toList());
         }
 
-        MinifiedMember author = MinifiedMember.newBuilder()
+        MinifiedMember author = MinifiedMemberBuilder.newBuilder()
                 .fromSnapshot(authorSnapshot)
                 .setJoinDatetime(member.getCreatedTimestamp())
                 .setRole(member.getRole())

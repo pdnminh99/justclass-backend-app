@@ -343,7 +343,9 @@ public class ClassroomService implements IClassroomOperationsService {
 
         DocumentReference classroomReference = member.getClassroomReference();
         var classroom = new MinifiedClassroom(classroomReference.get().get());
-        var invoker = new MinifiedUser(member.getUserReference().get().get());
+        var invoker = MinifiedUserBuilder.newBuilder()
+                .fromSnapshot(classroomReference.get().get())
+                .build();
 
         // No need to check classroomReference for
         List<DocumentReference> collaboratorsByClassroom = repository.getMembersByClassroom(classroomId)

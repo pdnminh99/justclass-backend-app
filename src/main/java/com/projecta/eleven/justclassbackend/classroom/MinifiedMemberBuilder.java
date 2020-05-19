@@ -21,6 +21,10 @@ abstract class GenericMinifiedMemberBuilder<B extends GenericMinifiedMemberBuild
 
 public final class MinifiedMemberBuilder extends GenericMinifiedMemberBuilder<MinifiedMemberBuilder> {
 
+    public static MinifiedMemberBuilder newBuilder() {
+        return new MinifiedMemberBuilder();
+    }
+
     public MinifiedMember build() {
         return new MinifiedMember(localId, displayName, photoUrl, email, role, joinDatetime);
     }
