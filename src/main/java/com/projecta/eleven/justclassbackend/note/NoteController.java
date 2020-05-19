@@ -1,12 +1,14 @@
 package com.projecta.eleven.justclassbackend.note;
 
 import com.google.common.collect.Lists;
+import com.projecta.eleven.justclassbackend.classroom.InvalidClassroomInformationException;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -80,6 +82,27 @@ public class NoteController {
             @RequestBody String content) {
         // TODO implement this.
         return Lists.newArrayList();
+    }
+
+    @ExceptionHandler({InvalidClassroomInformationException.class})
+    public ResponseEntity<String> handleInvalidClassroomInfo(InvalidClassroomInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleArgumentTypeMismatchException() {
+        return "Request parameter is not valid.";
     }
 
 }

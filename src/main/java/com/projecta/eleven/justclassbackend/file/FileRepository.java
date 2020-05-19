@@ -1,6 +1,9 @@
 package com.projecta.eleven.justclassbackend.file;
 
-import com.google.cloud.firestore.*;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.WriteBatch;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
@@ -10,14 +13,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 @Repository
 class FileRepository {
 
     private final CollectionReference filesCollection;
 
-    private final CollectionReference fileReferencesCollection;
+    private final boolean isDeploymentEnvironment = Boolean.parseBoolean(System.getenv("envi"));
 
     private final Storage storage;
 
@@ -25,18 +27,22 @@ class FileRepository {
 
     private WriteBatch batch;
 
-    private List<WriteResult> writeResults;
+//    private List<WriteResult> writeResults;
 
     @Autowired
     public FileRepository(
             @Qualifier("filesCollection") CollectionReference filesCollection,
-            @Qualifier("fileReferencesCollection") CollectionReference fileReferencesCollection,
             Firestore firestore,
             Storage storage) {
         this.firestore = firestore;
         this.filesCollection = filesCollection;
-        this.fileReferencesCollection = fileReferencesCollection;
         this.storage = storage;
+    }
+
+    private String getStorageDirectory(String blobId) {
+        return isDeploymentEnvironment ?
+                "v1/" + blobId :
+                "dev/" + blobId;
     }
 
     public boolean isBatchActive() {
@@ -68,7 +74,7 @@ class FileRepository {
     }
 
     public void store(String directory, MultipartFile file) throws IOException {
-        BlobId blobId = BlobId.of("justclass-da0b0.appspot.com", directory);
+        BlobId blobId = BlobId.of("justclass-da0b0.appspot.com", getStorageDirectory(directory));
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
                 .setContentType(file.getContentType())
                 .build();

@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.classroom.*;
+import com.projecta.eleven.justclassbackend.file.BasicFile;
 import com.projecta.eleven.justclassbackend.file.FileService;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -77,7 +79,12 @@ public class NoteService {
         if (attachments != null && attachments.size() > 0) {
             fileService.storeAll(attachments, author.getLocalId());
 
-            note.setAttachments(fileService.getFiles());
+            List<BasicFile> files = fileService.getFiles()
+                    .stream()
+                    .peek(f -> f.setOwnerId(null))
+                    .collect(Collectors.toList());
+
+            note.setAttachments(files);
             note.setAttachmentReferences(fileService.getFilesReferences());
 
             fileService.flush();
