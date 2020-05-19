@@ -10,10 +10,7 @@ import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.invitation.InvitationService;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
-import com.projecta.eleven.justclassbackend.notification.ClassroomDeletedNotification;
-import com.projecta.eleven.justclassbackend.notification.InviteNotification;
-import com.projecta.eleven.justclassbackend.notification.NotificationService;
-import com.projecta.eleven.justclassbackend.notification.NotificationType;
+import com.projecta.eleven.justclassbackend.notification.*;
 import com.projecta.eleven.justclassbackend.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -373,7 +370,9 @@ public class ClassroomService implements IClassroomOperationsService {
                 invoker,
                 member.getUserReference(),
                 m.getUserId(),
-                m.getUserReference()
+                m.getUserReference(),
+                null,
+                null
         )).forEach(notificationService::add);
 
         // Perform DELETE task.
@@ -742,7 +741,10 @@ public class ClassroomService implements IClassroomOperationsService {
                     invitation.userSnapshot.getReference(),
                     classroom,
                     finalInvitation.getClassroomReference(),
-                    isInviteesNotInClass ? NotificationType.INVITATION : NotificationType.ROLE_CHANGE,
+                    isInviteesNotInClass ?
+                            NotificationType.INVITATION :
+                            NotificationType.ROLE_CHANGE,
+                    null,
                     finalInvitation.getRole(),
                     isInviteesNotInClass ?
                             finalInvitation.getClassroomId() + "_" + finalInvitation.getLocalId() :
@@ -1151,7 +1153,7 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Classroom> acceptInvitation(String localId, String notificationId) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+    public Optional<Classroom> acceptInvitation(String localId, String notificationId) throws ExecutionException, InterruptedException, InvalidUserInformationException, NotificationNotExistException {
         if (localId == null || localId.trim().length() == 0 || notificationId == null || notificationId.trim().length() == 0) {
             throw new IllegalArgumentException("Invalid localId or notificationId.");
         }
@@ -1168,6 +1170,9 @@ public class ClassroomService implements IClassroomOperationsService {
         }
         if (inviteNotification.getInvitationStatus() != InvitationStatus.PENDING) {
             throw new IllegalArgumentException("Invitation is not PENDING.");
+        }
+        if (inviteNotification.getDeletedAt() != null) {
+            throw new NotificationNotExistException("Notification with Id [" + notificationId + "] is deleted at " + inviteNotification.getDeletedAt().toDate().toString() + ".");
         }
         DocumentReference invitationReference = inviteNotification.getInvitationReference();
         DocumentSnapshot invitationSnapshot = invitationReference

@@ -22,8 +22,6 @@ public class InviteNotification extends Notification {
 
     private DocumentReference invitationReference;
 
-    private Timestamp seen;
-
     private InvitationStatus invitationStatus;
 
     public InviteNotification(
@@ -37,19 +35,19 @@ public class InviteNotification extends Notification {
             MinifiedClassroom classroom,
             DocumentReference classroomReference,
             NotificationType notificationType,
+            Timestamp deletedAt,
             MemberRoles role,
             String invitationId,
             DocumentReference invitationReference,
-            Timestamp seen,
+            Timestamp seenAt,
             InvitationStatus invitationStatus
     ) {
-        super(notificationId, invokeTimestamp, invokerId, invoker, invokerReference, ownerId, ownerReference, notificationType);
+        super(notificationId, invokeTimestamp, invokerId, invoker, invokerReference, ownerId, ownerReference, notificationType, deletedAt, seenAt);
         this.role = role;
         this.classroom = classroom;
         this.classroomReference = classroomReference;
         this.invitationId = invitationId;
         this.invitationReference = invitationReference;
-        this.seen = seen;
         this.invitationStatus = invitationStatus;
     }
 
@@ -69,7 +67,6 @@ public class InviteNotification extends Notification {
         this.classroomReference = snapshot.get("classroomReference", DocumentReference.class);
         this.invitationId = snapshot.getString("invitationId");
         this.invitationReference = snapshot.get("invitationReference", DocumentReference.class);
-        this.seen = snapshot.getTimestamp("seen");
         this.invitationStatus = InvitationStatus.fromText(snapshot.getString("invitationStatus"));
     }
 
@@ -103,14 +100,6 @@ public class InviteNotification extends Notification {
 
     public void setInvitationReference(DocumentReference invitationReference) {
         this.invitationReference = invitationReference;
-    }
-
-    public Timestamp getSeen() {
-        return seen;
-    }
-
-    public void setSeen(Timestamp seen) {
-        this.seen = seen;
     }
 
     public InvitationStatus getInvitationStatus() {
@@ -149,11 +138,6 @@ public class InviteNotification extends Notification {
         }
         ifFieldNotNullThenPutToMap("invitationId", getInvitationId(), map);
         ifFieldNotNullThenPutToMap("invitationReference", getInvitationReference(), map);
-        ifFieldNotNullThenPutToMap("seen",
-                getSeen() != null && isTimestampInMilliseconds ?
-                        getSeen().toDate().getTime() :
-                        getSeen(),
-                map);
         if (getInvitationStatus() != null) {
             ifFieldNotNullThenPutToMap("invitationStatus", getInvitationStatus().toString(), map);
         }

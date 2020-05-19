@@ -48,7 +48,7 @@ public class NotificationService {
         }
     }
 
-    public Stream<HashMap<String, Object>> get(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
+    public Stream<HashMap<String, Object>> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             throw new IllegalArgumentException("LocalId is null or empty.");
         }
@@ -57,7 +57,7 @@ public class NotificationService {
         }
 
         // Query for invokerInfo.
-        notifications = repository.get(ownerId, pageSize, pageNumber);
+        notifications = repository.get(ownerId, pageSize, pageNumber, lastRefresh);
         getInvokers();
 
         List<HashMap<String, Object>> maps = notifications

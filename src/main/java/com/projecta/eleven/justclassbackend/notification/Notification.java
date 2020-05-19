@@ -25,6 +25,10 @@ public class Notification implements MapSerializable {
 
     private NotificationType notificationType;
 
+    private Timestamp deletedAt;
+
+    private Timestamp seenAt;
+
     public Notification(
             String notificationId,
             Timestamp invokeTime,
@@ -33,7 +37,9 @@ public class Notification implements MapSerializable {
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
-            NotificationType notificationType) {
+            NotificationType notificationType,
+            Timestamp deletedAt,
+            Timestamp seenAt) {
         this.notificationId = notificationId;
         this.invokeTime = invokeTime;
         this.invokerId = invokerId;
@@ -42,21 +48,16 @@ public class Notification implements MapSerializable {
         this.ownerId = ownerId;
         this.ownerReference = ownerReference;
         this.notificationType = notificationType;
+        this.deletedAt = deletedAt;
+        this.seenAt = seenAt;
     }
 
     public Notification(DocumentSnapshot snapshot) {
         this.notificationId = snapshot.getId();
         this.invokeTime = snapshot.getTimestamp("invokeTime");
         this.invokerId = snapshot.getString("invokerId");
-//        HashMap<String, Object> invoker = (HashMap<String, Object>) snapshot.getData().get("invoker");
-//
-//        if (invoker != null) {
-//            String localId = (String) invoker.get("localId");
-//            String displayName = (String) invoker.get("displayName");
-//            String photoUrl = (String) invoker.get("photoUrl");
-//            String email = (String) invoker.get("email");
-//            this.invoker = new MinifiedUser(localId, displayName, photoUrl, email);
-//        }
+        this.deletedAt = snapshot.getTimestamp("deletedAt");
+        this.seenAt = snapshot.getTimestamp("seenAt");
         this.invokerReference = snapshot.get("invokerReference", DocumentReference.class);
         this.ownerId = snapshot.getString("ownerId");
         this.ownerReference = snapshot.get("ownerReference", DocumentReference.class);
@@ -127,6 +128,14 @@ public class Notification implements MapSerializable {
         this.invokerId = invokerId;
     }
 
+    public Timestamp getSeenAt() {
+        return seenAt;
+    }
+
+    public void setSeenAt(Timestamp seenAt) {
+        this.seenAt = seenAt;
+    }
+
     @Override
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         var map = new HashMap<String, Object>();
@@ -145,6 +154,24 @@ public class Notification implements MapSerializable {
         if (getNotificationType() != null) {
             ifFieldNotNullThenPutToMap("notificationType", getNotificationType().toString(), map);
         }
+        map.put("deletedAt", getDeletedAt() != null && isTimestampInMilliseconds ?
+                getDeletedAt().toDate().getTime() :
+                getDeletedAt());
+
+//        ifFieldNotNullThenPutToMap("deletedAt", getDeletedAt(), map);
+        ifFieldNotNullThenPutToMap("seenAt",
+                getSeenAt() != null && isTimestampInMilliseconds ?
+                        getSeenAt().toDate().getTime() :
+                        getSeenAt(),
+                map);
         return map;
+    }
+
+    public Timestamp getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Timestamp deleted) {
+        deletedAt = deleted;
     }
 }

@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
+import com.projecta.eleven.justclassbackend.notification.NotificationNotExistException;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 
@@ -33,7 +34,7 @@ public interface IClassroomOperationsService {
 
     Stream<MinifiedUser> lookUp(String localId, String classroomId, String keyword, MemberRoles role) throws ExecutionException, InterruptedException, InvalidUserInformationException;
 
-    Optional<Classroom> acceptInvitation(String localId, String notificationId) throws ExecutionException, InterruptedException, InvalidUserInformationException;
+    Optional<Classroom> acceptInvitation(String localId, String notificationId) throws ExecutionException, InterruptedException, InvalidUserInformationException, NotificationNotExistException;
 
     void denyInvitation(String localId, String notificationId);
 
