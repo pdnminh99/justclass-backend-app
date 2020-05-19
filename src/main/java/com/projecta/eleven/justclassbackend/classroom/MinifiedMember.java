@@ -19,6 +19,10 @@ public class MinifiedMember extends MinifiedUser implements MapSerializable {
         this.joinDatetime = joinDatetime;
     }
 
+    public static MinifiedMemberBuilder newBuilder() {
+        return new MinifiedMemberBuilder();
+    }
+
     public MinifiedMember(DocumentSnapshot snapshot) {
         super(snapshot);
     }

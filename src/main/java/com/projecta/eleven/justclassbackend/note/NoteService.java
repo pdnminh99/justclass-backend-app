@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.classroom.*;
 import com.projecta.eleven.justclassbackend.file.BasicFile;
 import com.projecta.eleven.justclassbackend.file.FileService;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -32,11 +34,13 @@ public class NoteService {
         this.fileService = fileService;
     }
 
-    public Stream<BasicNote> get(String localId, String classroomId, int pageSize, int pageNumber) {
-        return Stream.empty();
+    public Stream<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+        lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
+        List<Note> notes = repository.get(classroomId, pageSize, pageNumber, lastRefresh);
+        return notes.stream();
     }
 
-    public Optional<BasicNote> create(
+    public Optional<Note> create(
             String localId,
             String classroomId,
             String content,
@@ -58,39 +62,38 @@ public class NoteService {
             }
         }
 
-        var author = new MinifiedMember(member.getUserReference().get().get());
-        author.setJoinDatetime(member.getCreatedTimestamp());
-        author.setRole(member.getRole());
+        DocumentSnapshot authorSnapshot = member.getUserReference().get().get();
+        List<BasicFile> files = null;
 
-        var now = Timestamp.now();
-        var note = new MaterialNote(
-                repository.getNextId(),
-                author,
-                member.getUserId(),
-                member.getUserReference(),
-                content,
-                now,
-                0,
-                classroomId,
-                member.getClassroomReference(),
-                null,
-                null,
-                null);
         if (attachments != null && attachments.size() > 0) {
-            fileService.storeAll(attachments, author.getLocalId());
-
-            List<BasicFile> files = fileService.getFiles()
+            fileService.storeAll(attachments, authorSnapshot.getId());
+            files = fileService.getFiles()
                     .stream()
                     .peek(f -> f.setOwnerId(null))
                     .collect(Collectors.toList());
-
-            note.setAttachments(files);
-            note.setAttachmentReferences(fileService.getFilesReferences());
-
-            fileService.flush();
         }
+
+        MinifiedMember author = MinifiedMember.newBuilder()
+                .fromSnapshot(authorSnapshot)
+                .setJoinDatetime(member.getCreatedTimestamp())
+                .setRole(member.getRole())
+                .build();
+
+        Note note = Note.newBuilder()
+                .setNoteId(repository.getNextId())
+                .setAuthor(author)
+                .setAuthorReference(member.getUserReference())
+                .setContent(content)
+                .setCreatedAt(Timestamp.now())
+                .setCommentsCount(0)
+                .setClassroomReference(member.getClassroomReference())
+                .setAttachments(files)
+                .setAttachmentReferences(fileService.getFilesReferences())
+                .build();
+
         repository.createNote(note);
         repository.commit();
+        fileService.flush();
 
         // Set DocumentReference fields to nulls. Or else exception will throw.
         note.setAttachmentReferences(null);
