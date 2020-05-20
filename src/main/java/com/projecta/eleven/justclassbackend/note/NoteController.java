@@ -31,6 +31,7 @@ public class NoteController {
         this.service = service;
     }
 
+    // TODO: check if {localId} param valid.
     @GetMapping(value = "{classroomId}", produces = "application/json;charset=utf-8")
     @ResponseStatus(HttpStatus.OK)
     public List<HashMap<String, Object>> get(

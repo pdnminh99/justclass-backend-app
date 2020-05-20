@@ -1,5 +1,7 @@
 package com.projecta.eleven.justclassbackend.note;
 
+import com.google.api.client.util.Maps;
+import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -13,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -40,70 +43,67 @@ public class NoteService {
     public Stream<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
         lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
         notes = repository.get(classroomId, pageSize, pageNumber, lastRefresh);
+        if (notes.isEmpty()) {
+            return Stream.empty();
+        }
 
         // Get attachments.
         for (var note : notes) {
-            note.getAttachmentReferences()
-                    .stream()
-                    .map(DocumentReference::getId)
-                    .forEach(fileService::addFileQuery);
+            if (note.getAttachmentReferences() != null) {
+                note.getAttachmentReferences()
+                        .stream()
+                        .map(DocumentReference::getId)
+                        .forEach(fileService::addFileQuery);
+            }
         }
         fileService.commit();
-        notes = notes.stream().peek(note -> note.setAttachments(
-                fileService.getFiles()
-                        .stream()
-                        .filter(f -> note
-                                .getAttachmentReferences()
+        notes = notes.stream().peek(note -> {
+            if (note.getAttachmentReferences() != null) {
+                note.setAttachments(
+                        fileService.getFiles()
                                 .stream()
-                                .map(DocumentReference::getId)
-                                .anyMatch(m -> f.getFileId().equals(m)))
-                        .collect(Collectors.toList())))
-                .collect(Collectors.toList());
+                                .peek(f -> {
+                                    f.setClassroomId(null);
+                                    f.setOwnerId(null);
+                                })
+                                .filter(f -> note.getAttachmentReferences()
+                                        .stream()
+                                        .map(DocumentReference::getId)
+                                        .anyMatch(m -> f.getFileId().equals(m)))
+                                .collect(Collectors.toList()));
+            }
+        }).collect(Collectors.toList());
         fileService.flush();
 
         // Get authors.
-        // TODO what if user is removed from class?
-//        Map<String, DocumentReference> memberReferencesMap = Maps.newHashMap();
-//        for (var note : notes) {
-//            memberReferencesMap.put(note.getAuthorId(), note.getAuthorReference());
-//        }
-//
-//        Map<String, Member> memberMap = Maps.newHashMap();
-//        ApiFutures.allAsList(
-//                memberReferencesMap
-//                        .values()
-//                        .stream()
-//                        .map(DocumentReference::get)
-//                        .collect(Collectors.toList()))
-//                .get()
-//                .stream()
-//                .map(Member::new)
-//                .forEach(m -> memberMap.put(m.getMemberId(), m));
-//
-//        Map<String, MinifiedMember> minifiedMemberMap = Maps.newHashMap();
-//        var userRefs = memberMap.values()
-//                .stream()
-//                .map(Member::getUserReference)
-//                .map(DocumentReference::get)
-//                .collect(Collectors.toList());
-//        ApiFutures.allAsList(userRefs)
-//                .get()
-//                .forEach(m -> minifiedMemberMap.put(
-//                        m.getId(),
-//                        MinifiedMemberBuilder.newBuilder()
-//                                .fromSnapshot(m)
-//                                .setJoinDatetime(memberMap.get(m.getId()).getCreatedTimestamp())
-//                                .setRole(memberMap.get(m.getId()).getRole())
-//                                .build()));
-//        notes = notes.stream()
-//                .peek(note -> note.setAuthor(minifiedMemberMap.get(note.getAuthorId())))
-//                .collect(Collectors.toList());
+        Map<String, DocumentReference> memberReferencesMap = Maps.newHashMap();
+        for (var note : notes) {
+            memberReferencesMap.put(note.getAuthorId(), note.getAuthorReference());
+        }
+
+        Map<String, MinifiedMember> memberMap = Maps.newHashMap();
+        ApiFutures.allAsList(
+                memberReferencesMap
+                        .values()
+                        .stream()
+                        .map(DocumentReference::get)
+                        .collect(Collectors.toList()))
+                .get()
+                .stream()
+                .map(MinifiedMember::new)
+                .forEach(m -> memberMap.put(m.getLocalId(), m));
+
+        notes = notes.stream()
+                .peek(note -> note.setAuthor(memberMap.get(note.getAuthorId())))
+                .collect(Collectors.toList());
 
         return notes.stream()
                 .peek(note -> {
                     note.setAttachmentReferences(null);
                     note.setClassroomReference(null);
                     note.setAuthorReference(null);
+                    note.setAuthorId(null);
+                    note.setClassroomId(null);
                 });
     }
 
@@ -133,18 +133,24 @@ public class NoteService {
         List<BasicFile> files = null;
 
         if (attachments != null && attachments.size() > 0) {
-            fileService.storeAll(attachments, authorSnapshot.getId());
+            fileService.storeAll(attachments, authorSnapshot.getId(), classroomId);
             files = fileService.getFiles()
                     .stream()
-                    .peek(f -> f.setOwnerId(null))
+                    .peek(f -> {
+                        f.setOwnerId(null);
+                        f.setClassroomId(null);
+                    })
                     .collect(Collectors.toList());
         }
 
         MinifiedMember author = MinifiedMemberBuilder.newBuilder()
                 .fromSnapshot(authorSnapshot)
-                .setJoinDatetime(member.getCreatedTimestamp())
-                .setRole(member.getRole())
                 .build();
+
+        // TODO only unlock this block when `getNotes` API returns `joinDatetime` and `role` of author.
+//                .setJoinDatetime(member.getCreatedTimestamp())
+//                .setRole(member.getRole())
+//                .build();
 
         Note note = Note.newBuilder()
                 .setNoteId(repository.getNextId())

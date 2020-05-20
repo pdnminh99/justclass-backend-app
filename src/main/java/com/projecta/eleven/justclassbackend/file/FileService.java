@@ -40,11 +40,11 @@ public class FileService {
         files = Lists.newArrayList();
     }
 
-    public void storeAll(List<MultipartFile> attachments, String authorId) throws IOException, ExecutionException, InterruptedException {
+    public void storeAll(List<MultipartFile> attachments, String authorId, String classroomId) throws IOException, ExecutionException, InterruptedException {
         Timestamp now = Timestamp.now();
 
         files = attachments.stream()
-                .map(attachment -> new BasicFile(null, attachment.getOriginalFilename(), attachment.getContentType(), attachment.getSize(), authorId, now))
+                .map(attachment -> new BasicFile(null, attachment.getOriginalFilename(), attachment.getContentType(), attachment.getSize(), authorId, classroomId, now))
                 .collect(Collectors.toList());
 
         filesReferences = files.stream()
@@ -63,6 +63,7 @@ public class FileService {
 
     public void commit() throws ExecutionException, InterruptedException {
         repository.commit();
+        // TODO fix NullPointerException when fileMap is null.
         files = repository.getFiles();
         filesReferences = repository.getFileReferences();
         repository.flush();

@@ -84,6 +84,7 @@ public class Note implements MapSerializable {
         this.commentsCount = snapshot.get("commentsCount", Integer.class);
         this.content = snapshot.getString("content");
         this.deletedAt = snapshot.getTimestamp("deletedAt");
+        this.createdAt = snapshot.getTimestamp("createdAt");
     }
 
     public static NoteBuilder newBuilder() {
