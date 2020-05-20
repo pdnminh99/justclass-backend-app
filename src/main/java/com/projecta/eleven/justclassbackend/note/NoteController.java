@@ -31,27 +31,26 @@ public class NoteController {
         this.service = service;
     }
 
-    // TODO: check if {localId} param valid.
     @GetMapping(value = "{classroomId}", produces = "application/json;charset=utf-8")
     @ResponseStatus(HttpStatus.OK)
     public List<HashMap<String, Object>> get(
             @PathVariable("classroomId") String classroomId,
-            @RequestParam(value = "pageSize", defaultValue = "20") int pageSize,
+            @RequestParam(value = "pageSize", defaultValue = "0") int pageSize,
             @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
             @Nullable
             @RequestParam("lastRefresh") Long lastRefresh,
-            @Nullable
-            @RequestParam("isMicrosecondsAccuracy") Boolean isMicrosecondsAccuracy
+            @RequestParam(value = "isMicrosecondsAccuracy", defaultValue = "false") boolean isMicrosecondsAccuracy,
+            @RequestParam(value = "excludeDeleted", defaultValue = "true") boolean excludeDeleted
     ) throws ExecutionException, InterruptedException {
         Timestamp lastRefreshAt = null;
 
         if (Objects.nonNull(lastRefresh)) {
-            long epochTime = isMicrosecondsAccuracy != null && isMicrosecondsAccuracy ?
+            long epochTime = isMicrosecondsAccuracy ?
                     lastRefresh :
                     lastRefresh * 1000;
             lastRefreshAt = Timestamp.ofTimeMicroseconds(epochTime);
         }
-        return service.get(classroomId, pageSize, pageNumber, lastRefreshAt)
+        return service.get(classroomId, pageSize, pageNumber, lastRefreshAt, excludeDeleted)
                 .map(note -> note.toMap(true))
                 .collect(Collectors.toList());
     }

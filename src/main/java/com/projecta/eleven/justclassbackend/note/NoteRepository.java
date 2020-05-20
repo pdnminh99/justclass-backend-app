@@ -66,26 +66,25 @@ class NoteRepository {
         }
     }
 
-    public List<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+    public List<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh, boolean excludeDeleted) throws ExecutionException, InterruptedException {
         QueryDocumentSnapshot startIndexDoc = getLastDocumentSnapshot(classroomId, pageSize, pageNumber, lastRefresh);
-        List<QueryDocumentSnapshot> query = startIndexDoc == null ?
-                notesCollection
-                        .whereEqualTo("classroomId", classroomId)
-                        .whereLessThanOrEqualTo("createdAt", lastRefresh)
-                        .orderBy("createdAt", Query.Direction.DESCENDING)
-                        .limit(pageSize)
-                        .get()
-                        .get()
-                        .getDocuments() :
-                notesCollection
-                        .whereEqualTo("classroomId", classroomId)
-                        .whereLessThanOrEqualTo("createdAt", lastRefresh)
-                        .orderBy("createdAt", Query.Direction.DESCENDING)
-                        .startAfter(startIndexDoc)
-                        .limit(pageSize)
-                        .get()
-                        .get()
-                        .getDocuments();
+        Query basicQuery = notesCollection
+                .whereEqualTo("classroomId", classroomId)
+                .whereLessThanOrEqualTo("createdAt", lastRefresh)
+                .orderBy("createdAt", Query.Direction.DESCENDING);
+        if (pageSize > 0) {
+            basicQuery = basicQuery
+                    .limit(pageSize);
+        }
+        if (excludeDeleted) {
+            basicQuery = basicQuery
+                    .whereEqualTo("deletedAt", null);
+        }
+        if (startIndexDoc != null) {
+            basicQuery = basicQuery
+                    .startAfter(startIndexDoc);
+        }
+        List<QueryDocumentSnapshot> query = basicQuery.get().get().getDocuments();
         return query.stream()
                 .map(Note::new)
                 .collect(Collectors.toList());
@@ -127,7 +126,7 @@ class NoteRepository {
         }
         Map<String, Object> updateMap = Maps.newHashMap();
         updateMap.put("deletedAt", Timestamp.now());
-        updateMap.put("attachments", null);
+        updateMap.put("attachmentReferences", null);
         notesCollection.document(note.getId()).update(updateMap);
     }
 }

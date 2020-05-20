@@ -40,13 +40,15 @@ public class NoteService {
         this.fileService = fileService;
     }
 
-    public Stream<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+    public Stream<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh, boolean excludeDeleted) throws ExecutionException, InterruptedException {
         lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
-        notes = repository.get(classroomId, pageSize, pageNumber, lastRefresh);
+        if (pageNumber < 0) {
+            return Stream.empty();
+        }
+        notes = repository.get(classroomId, pageSize, pageNumber, lastRefresh, excludeDeleted);
         if (notes.isEmpty()) {
             return Stream.empty();
         }
-
         // Get attachments.
         for (var note : notes) {
             if (note.getAttachmentReferences() != null) {

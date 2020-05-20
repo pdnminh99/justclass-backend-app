@@ -28,22 +28,21 @@ public class NotificationController {
             @PathVariable String localId,
             @Nullable
             @RequestParam("lastRefresh") Long lastRefresh,
-            @Nullable
-            @RequestParam("isMicrosecondsAccuracy") Boolean isMicrosecondsAccuracy,
-            @RequestParam(value = "pageSize", defaultValue = "20") int pageSize,
-            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber) throws ExecutionException, InterruptedException {
+            @RequestParam(value = "isMicrosecondsAccuracy", defaultValue = "false") boolean isMicrosecondsAccuracy,
+            @RequestParam(value = "pageSize", defaultValue = "0") int pageSize,
+            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+            @RequestParam(value = "excludeDeleted", defaultValue = "true") boolean excludeDeleted) throws ExecutionException, InterruptedException {
         Timestamp lastRefreshAt = null;
 
         if (Objects.nonNull(lastRefresh)) {
-            long epochTime = isMicrosecondsAccuracy != null && isMicrosecondsAccuracy ?
+            long epochTime = isMicrosecondsAccuracy ?
                     lastRefresh :
                     lastRefresh * 1000;
             lastRefreshAt = Timestamp.ofTimeMicroseconds(epochTime);
         }
         return ResponseEntity.ok(
-                service.get(localId, pageSize, pageNumber, lastRefreshAt)
-                        .collect(Collectors.toList())
-        );
+                service.get(localId, pageSize, pageNumber, lastRefreshAt, excludeDeleted)
+                        .collect(Collectors.toList()));
     }
 
 }

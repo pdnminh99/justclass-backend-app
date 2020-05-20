@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -85,28 +84,27 @@ class NotificationRepository {
         }
     }
 
-    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh, boolean excludeDeleted) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             return Lists.newArrayList();
         }
         lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
         QueryDocumentSnapshot startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber, lastRefresh);
-        List<QueryDocumentSnapshot> query = startIndexDoc == null ?
-                notificationsCollection.whereEqualTo("ownerId", ownerId)
-                        .whereLessThanOrEqualTo("invokeTime", lastRefresh)
-                        .orderBy("invokeTime", Query.Direction.DESCENDING)
-                        .limit(pageSize)
-                        .get()
-                        .get()
-                        .getDocuments() :
-                notificationsCollection.whereEqualTo("ownerId", ownerId)
-                        .whereLessThanOrEqualTo("invokeTime", lastRefresh)
-                        .orderBy("invokeTime", Query.Direction.DESCENDING)
-                        .startAfter(startIndexDoc)
-                        .limit(pageSize)
-                        .get()
-                        .get()
-                        .getDocuments();
+        Query basicQuery = notificationsCollection.whereEqualTo("ownerId", ownerId)
+                .whereLessThanOrEqualTo("invokeTime", lastRefresh)
+                .orderBy("invokeTime", Query.Direction.DESCENDING);
+        if (pageSize > 0) {
+            basicQuery = basicQuery.limit(pageSize);
+        }
+        if (excludeDeleted) {
+            basicQuery = basicQuery
+                    .whereEqualTo("deletedAt", null);
+        }
+        if (startIndexDoc != null) {
+            basicQuery = basicQuery
+                    .startAfter(startIndexDoc);
+        }
+        List<QueryDocumentSnapshot> query = basicQuery.get().get().getDocuments();
 
         // Update notifications seen status.
         List<QueryDocumentSnapshot> documentsNotSeen = query.stream()
@@ -148,7 +146,7 @@ class NotificationRepository {
             }
         }
         return results.stream()
-                .sorted(Comparator.comparing(Notification::getInvokeTime))
+                .sorted((a, b) -> -a.getInvokeTime().compareTo(b.getInvokeTime()))
                 .collect(Collectors.toList());
     }
 
