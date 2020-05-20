@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.projecta.eleven.justclassbackend.classroom.*;
 import com.projecta.eleven.justclassbackend.file.BasicFile;
@@ -27,6 +28,8 @@ public class NoteService {
 
     private final FileService fileService;
 
+    private List<Note> notes;
+
     @Autowired
     public NoteService(NoteRepository repository, IClassroomOperationsService classroomService, FileService fileService) {
         this.repository = repository;
@@ -36,8 +39,72 @@ public class NoteService {
 
     public Stream<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
         lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
-        List<Note> notes = repository.get(classroomId, pageSize, pageNumber, lastRefresh);
-        return notes.stream();
+        notes = repository.get(classroomId, pageSize, pageNumber, lastRefresh);
+
+        // Get attachments.
+        for (var note : notes) {
+            note.getAttachmentReferences()
+                    .stream()
+                    .map(DocumentReference::getId)
+                    .forEach(fileService::addFileQuery);
+        }
+        fileService.commit();
+        notes = notes.stream().peek(note -> note.setAttachments(
+                fileService.getFiles()
+                        .stream()
+                        .filter(f -> note
+                                .getAttachmentReferences()
+                                .stream()
+                                .map(DocumentReference::getId)
+                                .anyMatch(m -> f.getFileId().equals(m)))
+                        .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+        fileService.flush();
+
+        // Get authors.
+        // TODO what if user is removed from class?
+//        Map<String, DocumentReference> memberReferencesMap = Maps.newHashMap();
+//        for (var note : notes) {
+//            memberReferencesMap.put(note.getAuthorId(), note.getAuthorReference());
+//        }
+//
+//        Map<String, Member> memberMap = Maps.newHashMap();
+//        ApiFutures.allAsList(
+//                memberReferencesMap
+//                        .values()
+//                        .stream()
+//                        .map(DocumentReference::get)
+//                        .collect(Collectors.toList()))
+//                .get()
+//                .stream()
+//                .map(Member::new)
+//                .forEach(m -> memberMap.put(m.getMemberId(), m));
+//
+//        Map<String, MinifiedMember> minifiedMemberMap = Maps.newHashMap();
+//        var userRefs = memberMap.values()
+//                .stream()
+//                .map(Member::getUserReference)
+//                .map(DocumentReference::get)
+//                .collect(Collectors.toList());
+//        ApiFutures.allAsList(userRefs)
+//                .get()
+//                .forEach(m -> minifiedMemberMap.put(
+//                        m.getId(),
+//                        MinifiedMemberBuilder.newBuilder()
+//                                .fromSnapshot(m)
+//                                .setJoinDatetime(memberMap.get(m.getId()).getCreatedTimestamp())
+//                                .setRole(memberMap.get(m.getId()).getRole())
+//                                .build()));
+//        notes = notes.stream()
+//                .peek(note -> note.setAuthor(minifiedMemberMap.get(note.getAuthorId())))
+//                .collect(Collectors.toList());
+
+        return notes.stream()
+                .peek(note -> {
+                    note.setAttachmentReferences(null);
+                    note.setClassroomReference(null);
+                    note.setAuthorReference(null);
+                });
     }
 
     public Optional<Note> create(

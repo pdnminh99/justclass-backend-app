@@ -72,6 +72,11 @@ public class Note implements MapSerializable {
 
     public Note(DocumentSnapshot snapshot) {
         this.Id = snapshot.getId();
+
+        Object attachmentReferencesObject = snapshot.get("attachmentReferences");
+        if (attachmentReferencesObject instanceof List) {
+            this.attachmentReferences = (List<DocumentReference>) attachmentReferencesObject;
+        }
         this.authorId = snapshot.getString("authorId");
         this.authorReference = snapshot.get("authorReference", DocumentReference.class);
         this.classroomId = snapshot.getString("classroomId");
