@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.classroom;
 
 import com.google.cloud.Timestamp;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
+import com.projecta.eleven.justclassbackend.notification.NotificationNotExistException;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -151,7 +152,7 @@ public class ClassroomController {
     public ResponseEntity<HashMap<String, Object>> acceptInvitation(
             @PathVariable("localId") String localId,
             @PathVariable("notificationId") String notificationId
-    ) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+    ) throws ExecutionException, InterruptedException, InvalidUserInformationException, NotificationNotExistException {
         return service.acceptInvitation(localId, notificationId)
                 .map(classroom -> classroom.toMap(true))
                 .map(ResponseEntity::ok)
@@ -205,9 +206,15 @@ public class ClassroomController {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
     public String handleArgumentTypeMismatchException() {
         return "Request parameter is not valid.";
+    }
+
+    @ExceptionHandler(NotificationNotExistException.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleNotificationNotExistException(NotificationNotExistException exception) {
+        return exception.getMessage();
     }
 }

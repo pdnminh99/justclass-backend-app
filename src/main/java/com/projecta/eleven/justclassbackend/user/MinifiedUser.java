@@ -9,7 +9,7 @@ import java.util.Objects;
 public class MinifiedUser {
 
     @JsonProperty("localId")
-    private final String localId;
+    private String localId;
 
     @JsonProperty("displayName")
     private String displayName;
@@ -36,6 +36,10 @@ public class MinifiedUser {
 
     public String getLocalId() {
         return localId;
+    }
+
+    public void setLocalId(String localId) {
+        this.localId = localId;
     }
 
     public String getDisplayName() {

@@ -3,6 +3,7 @@ package com.projecta.eleven.justclassbackend.notification;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -82,25 +85,45 @@ class NotificationRepository {
         }
     }
 
-    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
+    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             return Lists.newArrayList();
         }
-        QueryDocumentSnapshot startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber);
+        lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
+        QueryDocumentSnapshot startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber, lastRefresh);
         List<QueryDocumentSnapshot> query = startIndexDoc == null ?
                 notificationsCollection.whereEqualTo("ownerId", ownerId)
+                        .whereLessThanOrEqualTo("invokeTime", lastRefresh)
                         .orderBy("invokeTime", Query.Direction.DESCENDING)
                         .limit(pageSize)
                         .get()
                         .get()
                         .getDocuments() :
                 notificationsCollection.whereEqualTo("ownerId", ownerId)
+                        .whereLessThanOrEqualTo("invokeTime", lastRefresh)
                         .orderBy("invokeTime", Query.Direction.DESCENDING)
                         .startAfter(startIndexDoc)
                         .limit(pageSize)
                         .get()
                         .get()
                         .getDocuments();
+
+        // Update notifications seen status.
+        List<QueryDocumentSnapshot> documentsNotSeen = query.stream()
+                .filter(m -> Objects.isNull(m.getTimestamp("seenAt")))
+                .collect(Collectors.toList());
+        if (documentsNotSeen.size() > 0) {
+            var now = Timestamp.now();
+            Map<String, Object> updateMap = Maps.newHashMap();
+            updateMap.put("seenAt", now);
+
+            if (!isBatchActive()) {
+                resetBatch();
+            }
+            documentsNotSeen.forEach(snapshot -> writeBatch.update(snapshot.getReference(), updateMap));
+            writeBatch.commit();
+            writeBatch = null;
+        }
 
         List<T> results = Lists.newArrayList();
         T notification;
@@ -129,11 +152,12 @@ class NotificationRepository {
                 .collect(Collectors.toList());
     }
 
-    private QueryDocumentSnapshot getLastDocumentSnapshot(String ownerId, int pageSize, int pageNumber) throws ExecutionException, InterruptedException {
+    private QueryDocumentSnapshot getLastDocumentSnapshot(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
         if (pageNumber < 1) {
             return null;
         }
         QuerySnapshot querySnapshot = notificationsCollection
+                .whereLessThanOrEqualTo("invokeTime", lastRefresh)
                 .whereEqualTo("ownerId", ownerId)
                 .orderBy("invokeTime", Query.Direction.DESCENDING)
                 .limit(pageNumber * pageSize)
@@ -158,14 +182,19 @@ class NotificationRepository {
     }
 
     public void remove(DocumentReference owner, DocumentReference classroom, Timestamp before, InvitationStatus status) throws ExecutionException, InterruptedException {
+        var now = Timestamp.now();
+        Map<String, Object> updateMap = Maps.newHashMap();
+        updateMap.put("deletedAt", now);
+
         notificationsCollection.whereEqualTo("classroomReference", classroom)
                 .whereEqualTo("ownerReference", owner)
                 .whereEqualTo("invitationStatus", status.toString())
+                .whereEqualTo("deletedAt", null)
                 .whereLessThan("invokeTime", before).get().get()
                 .getDocuments()
                 .stream()
                 .map(DocumentSnapshot::getReference)
-                .forEach(ref -> writeBatch.delete(ref));
+                .forEach(ref -> writeBatch.update(ref, updateMap));
     }
 }
 

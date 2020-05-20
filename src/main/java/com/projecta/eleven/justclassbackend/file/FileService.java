@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +24,7 @@ public class FileService {
     @Autowired
     public FileService(FileRepository repository) {
         this.repository = repository;
-        files = Lists.newArrayList();
-        filesReferences = Lists.newArrayList();
+        flush();
     }
 
     public List<DocumentReference> getFilesReferences() {
@@ -40,7 +40,7 @@ public class FileService {
         files = Lists.newArrayList();
     }
 
-    public void storeAll(List<MultipartFile> attachments, String authorId) throws IOException {
+    public void storeAll(List<MultipartFile> attachments, String authorId) throws IOException, ExecutionException, InterruptedException {
         Timestamp now = Timestamp.now();
 
         files = attachments.stream()
@@ -55,5 +55,16 @@ public class FileService {
         for (var index = 0; index < files.size(); index++) {
             repository.store(files.get(index).getFileId(), attachments.get(index));
         }
+    }
+
+    public void addFileQuery(String fileId) {
+        repository.get(fileId);
+    }
+
+    public void commit() throws ExecutionException, InterruptedException {
+        repository.commit();
+        files = repository.getFiles();
+        filesReferences = repository.getFileReferences();
+        repository.flush();
     }
 }

@@ -23,8 +23,10 @@ public class ClassroomDeletedNotification extends Notification {
             MinifiedUser invoker,
             DocumentReference invokerReference,
             String ownerId,
-            DocumentReference ownerReference) {
-        super(notificationId, invokeTime, invokerId, invoker, invokerReference, ownerId, ownerReference, NotificationType.CLASSROOM_DELETED);
+            DocumentReference ownerReference,
+            Timestamp deletedAt,
+            Timestamp seenAt) {
+        super(notificationId, invokeTime, invokerId, invoker, invokerReference, ownerId, ownerReference, NotificationType.CLASSROOM_DELETED, deletedAt, seenAt);
         this.classroom = classroom;
         this.classroomReference = classroomReference;
     }

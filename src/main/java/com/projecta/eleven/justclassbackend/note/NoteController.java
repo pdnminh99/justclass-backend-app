@@ -1,18 +1,22 @@
 package com.projecta.eleven.justclassbackend.note;
 
+import com.google.cloud.Timestamp;
 import com.google.common.collect.Lists;
+import com.projecta.eleven.justclassbackend.classroom.InvalidClassroomInformationException;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -27,15 +31,27 @@ public class NoteController {
         this.service = service;
     }
 
-    @GetMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
+    @GetMapping(value = "{classroomId}", produces = "application/json;charset=utf-8")
     @ResponseStatus(HttpStatus.OK)
-    public List<BasicNote> get(
-            @PathVariable("localId") String localId,
+    public List<HashMap<String, Object>> get(
             @PathVariable("classroomId") String classroomId,
             @RequestParam(value = "pageSize", defaultValue = "20") int pageSize,
-            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber
-    ) {
-        return service.get(localId, classroomId, pageSize, pageNumber)
+            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+            @Nullable
+            @RequestParam("lastRefresh") Long lastRefresh,
+            @Nullable
+            @RequestParam("isMicrosecondsAccuracy") Boolean isMicrosecondsAccuracy
+    ) throws ExecutionException, InterruptedException {
+        Timestamp lastRefreshAt = null;
+
+        if (Objects.nonNull(lastRefresh)) {
+            long epochTime = isMicrosecondsAccuracy != null && isMicrosecondsAccuracy ?
+                    lastRefresh :
+                    lastRefresh * 1000;
+            lastRefreshAt = Timestamp.ofTimeMicroseconds(epochTime);
+        }
+        return service.get(classroomId, pageSize, pageNumber, lastRefreshAt)
+                .map(note -> note.toMap(true))
                 .collect(Collectors.toList());
     }
 
@@ -80,6 +96,27 @@ public class NoteController {
             @RequestBody String content) {
         // TODO implement this.
         return Lists.newArrayList();
+    }
+
+    @ExceptionHandler({InvalidClassroomInformationException.class})
+    public ResponseEntity<String> handleInvalidClassroomInfo(InvalidClassroomInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({InvalidUserInformationException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class})
+    public ResponseEntity<String> handleInvalidUserInfo(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleArgumentTypeMismatchException() {
+        return "Request parameter is not valid.";
     }
 
 }
