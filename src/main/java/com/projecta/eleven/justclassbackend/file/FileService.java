@@ -63,9 +63,12 @@ public class FileService {
 
     public void commit() throws ExecutionException, InterruptedException {
         repository.commit();
-        // TODO fix NullPointerException when fileMap is null.
         files = repository.getFiles();
         filesReferences = repository.getFileReferences();
         repository.flush();
+    }
+
+    public void delete(String id) {
+        repository.delete(id);
     }
 }

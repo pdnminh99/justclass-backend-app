@@ -75,8 +75,8 @@ public class NoteController {
     public void delete(
             @PathVariable("localId") String localId,
             @PathVariable("noteId") String noteId
-    ) {
-        // TODO implement this.
+    ) throws ExecutionException, InterruptedException {
+        service.delete(localId, noteId);
     }
 
     @GetMapping(value = "comments/{localId}/{noteId}", produces = "application/json;charset=utf-8")
@@ -99,25 +99,31 @@ public class NoteController {
         return Lists.newArrayList();
     }
 
-    @ExceptionHandler({InvalidClassroomInformationException.class})
+    @ExceptionHandler(InvalidClassroomInformationException.class)
     public ResponseEntity<String> handleInvalidClassroomInfo(InvalidClassroomInformationException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
-    @ExceptionHandler({InvalidUserInformationException.class})
+    @ExceptionHandler(InvalidUserInformationException.class)
     public ResponseEntity<String> handleInvalidUserInfo(InvalidUserInformationException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
-    @ExceptionHandler({IllegalArgumentException.class})
+    @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleInvalidUserInfo(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
     public String handleArgumentTypeMismatchException() {
         return "Request parameter is not valid.";
+    }
+
+    @ExceptionHandler(IllegalAccessError.class)
+    @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+    public String handleIllegalAccessError(IllegalAccessError exception) {
+        return exception.getMessage();
     }
 
 }

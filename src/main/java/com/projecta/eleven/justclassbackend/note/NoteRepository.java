@@ -2,6 +2,7 @@ package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,8 @@ class NoteRepository {
     private final CollectionReference notesCollection;
 
     private WriteBatch writeBatch;
+
+    private Note note;
 
     @Autowired
     NoteRepository(Firestore firestore, CollectionReference notesCollection) {
@@ -101,5 +104,30 @@ class NoteRepository {
                 .get();
         return querySnapshot.getDocuments()
                 .get(querySnapshot.size() - 1);
+    }
+
+    public Note get(String noteId) throws ExecutionException, InterruptedException {
+        DocumentSnapshot snapshot = notesCollection.document(noteId)
+                .get()
+                .get();
+        if (snapshot.exists()) {
+            note = new Note(snapshot);
+        }
+        return note;
+    }
+
+    public void flush() {
+        writeBatch = null;
+        note = null;
+    }
+
+    public void delete(Note note) {
+        if (note == null || note.getId() == null || note.getId().trim().length() == 0) {
+            return;
+        }
+        Map<String, Object> updateMap = Maps.newHashMap();
+        updateMap.put("deletedAt", Timestamp.now());
+        updateMap.put("attachments", null);
+        notesCollection.document(note.getId()).update(updateMap);
     }
 }

@@ -179,5 +179,29 @@ public class NoteService {
         return Optional.of(note);
     }
 
+    public void delete(String localId, String noteId) throws ExecutionException, InterruptedException {
+        if (localId == null || localId.trim().length() == 0 || noteId == null || noteId.trim().length() == 0) {
+            throw new IllegalArgumentException("`localId` or `noteId` is not valid.");
+        }
+        Note note = repository.get(noteId);
+        if (note == null || note.getDeletedAt() != null) {
+            repository.flush();
+            return;
+        }
+        Optional<Member> member = classroomService.getMember(localId, note.getClassroomId());
+        if (member.isEmpty() || member.get().getRole() != MemberRoles.OWNER && !member.get().getUserId().equals(localId)) {
+            repository.flush();
+            throw new IllegalAccessError("User with id [" + localId + "] does not have permission to modify note with id [" + noteId + "].");
+        }
+        // Delete files that are attached to the note.
+        if (note.getAttachmentReferences() != null && note.getAttachmentReferences().size() > 0) {
+            note.getAttachmentReferences().forEach(a -> fileService.delete(a.getId()));
+            fileService.commit();
+        }
+        // Delete this note.
+        repository.delete(note);
+        repository.flush();
+    }
+
     // TODO comment post, Check if student have permission to post Comment.
 }
