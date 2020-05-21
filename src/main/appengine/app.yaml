@@ -5,11 +5,13 @@ entrypoint: java -jar just-class-backend.jar
 
 automatic_scaling:
   max_instances: 2
-  min_instances: 0
+  min_instances: 1
+
+inbound_services:
+  - warmup
 
 handlers:
 
 env_variables:
   envi: "true"
   GOOGLE_CLOUD_PROJECT: ""
-  JAVA_TOOL_OPTIONS: "-XX:MaxRAM=256m -XX:ActiveProcessorCount=2 -Xmx32m"
