@@ -199,6 +199,7 @@ public class Note implements MapSerializable {
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         HashMap<String, Object> map = Maps.newHashMap();
 
+        ifFieldNotNullThenPutToMap("noteId", getId(), map);
         if (getAuthor() != null) {
             ifFieldNotNullThenPutToMap("author", getAuthor().toMap(isTimestampInMilliseconds), map);
         }
