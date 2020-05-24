@@ -8,11 +8,10 @@ import com.google.common.collect.Maps;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,6 +25,16 @@ public class NotificationService {
     @Autowired
     public NotificationService(NotificationRepository repository) {
         this.repository = repository;
+    }
+
+    @Scheduled(fixedDelay = 43200000)
+    public void cleanOldDeletedNotifications() throws ExecutionException, InterruptedException {
+        var calendar = Calendar.getInstance();
+        calendar.setTime(Timestamp.now().toDate());
+        calendar.add(Calendar.DATE, -1);
+
+        var oneWeekBefore = Timestamp.of(calendar.getTime());
+        repository.removeDeletedNotificationsBefore(oneWeekBefore);
     }
 
     public void add(Notification notification) {
@@ -116,5 +125,13 @@ public class NotificationService {
     public void update(Notification notification) {
         repository.update(notification);
         repository.commit();
+    }
+
+    public int getNotificationsCount(String localId, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+        if (localId == null || localId.trim().length() == 0) {
+            return 0;
+        }
+        lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
+        return repository.countNew(localId, lastRefresh);
     }
 }

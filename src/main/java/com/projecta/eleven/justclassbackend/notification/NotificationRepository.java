@@ -194,6 +194,35 @@ class NotificationRepository {
                 .map(DocumentSnapshot::getReference)
                 .forEach(ref -> writeBatch.update(ref, updateMap));
     }
+
+    public int countNew(String localId, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+        assert localId != null;
+        assert localId.trim().length() > 0;
+        assert lastRefresh != null;
+
+        return notificationsCollection.whereEqualTo("ownerId", localId)
+                .whereEqualTo("deletedAt", null)
+                .whereEqualTo("seenAt", null)
+                .whereLessThanOrEqualTo("invokeTime", lastRefresh)
+                .orderBy("invokeTime", Query.Direction.DESCENDING)
+                .get()
+                .get()
+                .size();
+    }
+
+    public void removeDeletedNotificationsBefore(Timestamp oneWeekBefore) throws ExecutionException, InterruptedException {
+        if (!isBatchActive()) {
+            resetBatch();
+        }
+        notificationsCollection.whereLessThanOrEqualTo("deletedAt", oneWeekBefore)
+                .get()
+                .get()
+                .getDocuments()
+                .stream()
+                .map(DocumentSnapshot::getReference)
+                .forEach(doc -> writeBatch.delete(doc));
+        commit();
+    }
 }
 
 

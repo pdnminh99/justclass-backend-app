@@ -157,13 +157,10 @@ public class Notification implements MapSerializable {
         map.put("deletedAt", getDeletedAt() != null && isTimestampInMilliseconds ?
                 getDeletedAt().toDate().getTime() :
                 getDeletedAt());
+        map.put("seenAt", getSeenAt() != null && isTimestampInMilliseconds ?
+                getSeenAt().toDate().getTime() :
+                getSeenAt());
 
-//        ifFieldNotNullThenPutToMap("deletedAt", getDeletedAt(), map);
-        ifFieldNotNullThenPutToMap("seenAt",
-                getSeenAt() != null && isTimestampInMilliseconds ?
-                        getSeenAt().toDate().getTime() :
-                        getSeenAt(),
-                map);
         return map;
     }
 
