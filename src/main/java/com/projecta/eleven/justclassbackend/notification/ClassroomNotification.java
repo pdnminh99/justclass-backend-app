@@ -8,13 +8,13 @@ import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 
 import java.util.HashMap;
 
-public class ClassroomDeletedNotification extends Notification {
+public class ClassroomNotification extends Notification {
 
     private DocumentReference classroomReference;
 
     private MinifiedClassroom classroom;
 
-    public ClassroomDeletedNotification(
+    public ClassroomNotification(
             String notificationId,
             Timestamp invokeTime,
             MinifiedClassroom classroom,
@@ -24,14 +24,15 @@ public class ClassroomDeletedNotification extends Notification {
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
+            NotificationType notificationType,
             Timestamp deletedAt,
             Timestamp seenAt) {
-        super(notificationId, invokeTime, invokerId, invoker, invokerReference, ownerId, ownerReference, NotificationType.CLASSROOM_DELETED, deletedAt, seenAt);
+        super(notificationId, invokeTime, invokerId, invoker, invokerReference, ownerId, ownerReference, notificationType, deletedAt, seenAt);
         this.classroom = classroom;
         this.classroomReference = classroomReference;
     }
 
-    public ClassroomDeletedNotification(DocumentSnapshot snapshot) {
+    public ClassroomNotification(DocumentSnapshot snapshot) {
         super(snapshot);
 
         HashMap<String, Object> classroom = (HashMap<String, Object>) snapshot.getData().get("classroom");

@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Repository
-class NoteRepository {
+public class NoteRepository {
 
     private final Firestore firestore;
 
@@ -128,5 +128,16 @@ class NoteRepository {
         updateMap.put("deletedAt", Timestamp.now());
         updateMap.put("attachmentReferences", null);
         notesCollection.document(note.getId()).update(updateMap);
+    }
+
+    public void deleteByClassroom(String classroomId) throws ExecutionException, InterruptedException {
+        if (!isBatchActive()) {
+            resetBatch();
+        }
+        notesCollection.whereEqualTo("classroomId", classroomId)
+                .get()
+                .get()
+                .getDocuments()
+                .forEach(note -> writeBatch.delete(note.getReference()));
     }
 }

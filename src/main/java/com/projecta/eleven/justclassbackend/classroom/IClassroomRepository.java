@@ -41,6 +41,10 @@ interface IClassroomRepository {
 
     void updateMember(Member member);
 
+    void delete(String classroomId);
+
+    void deleteMember(String memberId);
+
     void commitAsync();
 
     void commitSync() throws ExecutionException, InterruptedException;

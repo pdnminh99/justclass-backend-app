@@ -78,4 +78,12 @@ public class FileService {
     public void delete(String id) {
         repository.delete(id);
     }
+
+    public void deleteByClassroom(String classroomId) throws ExecutionException, InterruptedException {
+        repository.getByClassroomId(classroomId);
+        repository.deleteBlobs();
+
+        repository.commit();
+        repository.flush();
+    }
 }

@@ -138,7 +138,7 @@ class NotificationRepository {
                     results.add(notification);
                     break;
                 case CLASSROOM_DELETED:
-                    notification = (T) new ClassroomDeletedNotification(snap);
+                    notification = (T) new ClassroomNotification(snap);
                     results.add(notification);
                     break;
                 default:

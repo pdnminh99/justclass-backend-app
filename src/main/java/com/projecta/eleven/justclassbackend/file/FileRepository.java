@@ -159,4 +159,37 @@ class FileRepository {
     public ReadChannel getBlob(String fileId) {
         return storage.reader("justclass-da0b0.appspot.com", getStorageDirectory(fileId));
     }
+
+    public void getByClassroomId(String classroomId) throws ExecutionException, InterruptedException {
+        if (fileMap == null) {
+            fileMap = Maps.newHashMap();
+            fileReferencesMap = Maps.newHashMap();
+        }
+        filesCollection.whereEqualTo("classroomId", classroomId)
+                .get()
+                .get()
+                .getDocuments()
+                .forEach(c -> {
+                    fileReferencesMap.put(c.getId(), c.getReference());
+                    fileMap.put(c.getId(), new BasicFile(c));
+                });
+    }
+
+    public void deleteBlobs() {
+        if (getFiles() == null || getFiles().size() == 0) {
+            return;
+        }
+        if (!isStorageBatchActive()) {
+            resetStorageBatch();
+        }
+        if (!isBatchActive()) {
+            resetBatch();
+        }
+        getFiles().stream()
+                .map(BasicFile::getFileId)
+                .map(this::getStorageDirectory)
+                .map(d -> BlobId.of("justclass-da0b0.appspot.com", d))
+                .forEach(b -> storageBatch.delete(b));
+        getFileReferences().forEach(ref -> batch.delete(ref));
+    }
 }

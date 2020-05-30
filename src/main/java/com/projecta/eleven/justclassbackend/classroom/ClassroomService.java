@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.classroom;
 
+import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -7,9 +8,11 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.google.common.collect.Lists;
+import com.projecta.eleven.justclassbackend.file.FileService;
 import com.projecta.eleven.justclassbackend.invitation.Invitation;
 import com.projecta.eleven.justclassbackend.invitation.InvitationService;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
+import com.projecta.eleven.justclassbackend.note.NoteRepository;
 import com.projecta.eleven.justclassbackend.notification.*;
 import com.projecta.eleven.justclassbackend.user.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,18 +36,12 @@ public class ClassroomService implements IClassroomOperationsService {
 
     private final InvitationService invitationService;
 
-    private final List<MinifiedMember> members = new ArrayList<>();
+    private final NoteRepository noteRepository;
 
-    @Autowired
-    public ClassroomService(IClassroomRepository repository,
-                            NotificationService notificationService,
-                            InvitationService invitationService,
-                            IUserOperations userService) {
-        this.repository = repository;
-        this.notificationService = notificationService;
-        this.invitationService = invitationService;
-        this.userService = userService;
-    }
+    private final FileService fileService;
+
+    private final List<MinifiedMember> members = Lists.newArrayList();
+    private final List<InvitationWrapper> inviteesAlreadyInClass = Lists.newArrayList();
 
     @Override
     public Stream<Classroom> get(String hostId, MemberRoles role, Timestamp lastRequest)
@@ -264,7 +261,19 @@ public class ClassroomService implements IClassroomOperationsService {
         }
     }
 
-    private final List<InvitationWrapper> inviteesAlreadyInClass = new ArrayList<>();
+    @Autowired
+    public ClassroomService(IClassroomRepository repository,
+                            NotificationService notificationService,
+                            InvitationService invitationService,
+                            IUserOperations userService,
+                            NoteRepository noteRepository, FileService fileService) {
+        this.repository = repository;
+        this.notificationService = notificationService;
+        this.invitationService = invitationService;
+        this.userService = userService;
+        this.noteRepository = noteRepository;
+        this.fileService = fileService;
+    }
 
     private void validateClassroomUpdateRequestInput(Classroom classroom, String localId) throws InvalidClassroomInformationException, InvalidUserInformationException {
         if (Objects.isNull(classroom) || Objects.isNull(classroom.getClassroomId()) || classroom.getClassroomId().trim().length() == 0) {
@@ -363,28 +372,34 @@ public class ClassroomService implements IClassroomOperationsService {
                 .collect(Collectors.toList());
 
         var now = Timestamp.now();
-        members.stream().map(m -> new ClassroomDeletedNotification(
-                null,
-                now,
-                classroom,
-                member.getClassroomReference(),
-                invoker.getLocalId(),
-                invoker,
-                member.getUserReference(),
-                m.getUserId(),
-                m.getUserReference(),
-                null,
-                null
-        )).forEach(notificationService::add);
+        members.stream().filter(m -> !m.getUserId().equals(localId))
+                .map(m -> new ClassroomNotification(
+                        null,
+                        now,
+                        classroom,
+                        member.getClassroomReference(),
+                        localId,
+                        invoker,
+                        member.getUserReference(),
+                        m.getUserId(),
+                        m.getUserReference(),
+                        NotificationType.CLASSROOM_DELETED,
+                        null,
+                        null
+                )).forEach(notificationService::add);
 
         // Perform DELETE task.
-        collaboratorsByClassroom.add(classroomReference);
-        ApiFutures.allAsList(
-                collaboratorsByClassroom
-                        .stream()
-                        .map(DocumentReference::delete)
-                        .collect(Collectors.toList())
-        );
+        repository.delete(classroomId);
+        collaboratorsByClassroom.forEach(col -> repository.deleteMember(col.getId()));
+
+        // Delete all associate notes.
+
+        noteRepository.deleteByClassroom(classroomId);
+        fileService.deleteByClassroom(classroomId);
+
+        noteRepository.commit();
+        fileService.commit();
+        repository.commitAsync();
         notificationService.send();
 
         return Optional.of(true);
@@ -875,7 +890,7 @@ public class ClassroomService implements IClassroomOperationsService {
     }
 
     @Override
-    public Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+    public Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException, InvalidClassroomInformationException {
 //        if (localId == null || localId.trim().length() == 0 || publicCode == null || publicCode.trim().length() == 0) {
 //            throw new IllegalArgumentException("LocalId is null or empty; Or public code is null or empty.");
 //        }
@@ -895,18 +910,19 @@ public class ClassroomService implements IClassroomOperationsService {
                 .get();
 
         if (oldMemberSnapshot.exists()) {
-            var oldMemberInstance = new Member(oldMemberSnapshot);
-            var classroomInstance = new Classroom(classroomRef.get().get());
-            var updateMap = new HashMap<String, Object>();
-
-            classroomInstance.setRole(oldMemberInstance.getRole());
-            classroomInstance.setLastAccess(oldMemberInstance.getLastAccess());
-
-            updateMap.put("lastAccess", now);
-            oldMemberSnapshot.getReference()
-                    .update(updateMap);
-            getMembersMetadataForClassroom(classroomInstance, oldMemberInstance);
-            return Optional.of(classroomInstance);
+            throw new InvalidClassroomInformationException("User with id [" + localId + "] already a member of classroom with id [" + classroomRef.getId() + "].");
+//            var oldMemberInstance = new Member(oldMemberSnapshot);
+//            var classroomInstance = new Classroom(classroomRef.get().get());
+//            var updateMap = new HashMap<String, Object>();
+//
+//            classroomInstance.setRole(oldMemberInstance.getRole());
+//            classroomInstance.setLastAccess(oldMemberInstance.getLastAccess());
+//
+//            updateMap.put("lastAccess", now);
+//            oldMemberSnapshot.getReference()
+//                    .update(updateMap);
+//            getMembersMetadataForClassroom(classroomInstance, oldMemberInstance);
+//            return Optional.of(classroomInstance);
         }
 
         // Found no new classroom, attempt to create new Member.
@@ -1240,6 +1256,49 @@ public class ClassroomService implements IClassroomOperationsService {
     @Override
     public void denyInvitation(String localId, String notificationId) {
         // TODO implement this.
+    }
+
+    @Override
+    public void removeMember(String invokerId, String classroomId, String memberId) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        List<ApiFuture<DocumentSnapshot>> queries = Lists.newArrayList(
+                repository.getMember(classroomId, invokerId),
+                repository.getMember(classroomId, memberId)
+        ).stream().map(DocumentReference::get).collect(Collectors.toList());
+        List<DocumentSnapshot> snapshots = ApiFutures.allAsList(queries).get();
+        var now = Timestamp.now();
+
+        if (!snapshots.get(0).exists()) {
+            throw new InvalidUserInformationException("User with id [" + invokerId + "] does not exist, or not part of classroom with Id [" + classroomId + "].");
+        }
+        if (!snapshots.get(1).exists()) {
+            throw new InvalidUserInformationException("User with id [" + memberId + "] does not exist, or not part of classroom with Id [" + classroomId + "].");
+        }
+        var owner = new Member(snapshots.get(0));
+        if (owner.getRole() != MemberRoles.OWNER) {
+            throw new InvalidUserInformationException("User with id [" + invokerId + "] does not have permission to remove other users.");
+        }
+
+        DocumentReference classroomRef = owner.getClassroomReference();
+        var classroom = new MinifiedClassroom(classroomRef.get().get());
+        var invoker = new MinifiedUser(snapshots.get(0));
+
+        // Perform delete operation
+        snapshots.get(1).getReference().delete();
+        var notification = new ClassroomNotification(
+                null,
+                now,
+                classroom,
+                classroomRef,
+                invokerId,
+                invoker,
+                snapshots.get(0).getReference(),
+                memberId,
+                snapshots.get(1).getReference(),
+                NotificationType.KICKED,
+                null,
+                null);
+        notificationService.add(notification);
+        notificationService.send();
     }
 
     private void getMembersMetadataForClassroom(Classroom classroom, Member member) throws ExecutionException, InterruptedException {
