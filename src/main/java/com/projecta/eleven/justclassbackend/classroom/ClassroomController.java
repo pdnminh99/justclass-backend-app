@@ -148,6 +148,11 @@ public class ClassroomController {
                 .collect(Collectors.toList()));
     }
 
+    @DeleteMapping("members/{localId}/{classroomId}/{memberId}")
+    public void kick(@PathVariable String localId, @PathVariable String classroomId, @PathVariable String memberId) {
+        // TODO implement this
+    }
+
     @GetMapping(value = "accept/{localId}/{notificationId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> acceptInvitation(
             @PathVariable("localId") String localId,

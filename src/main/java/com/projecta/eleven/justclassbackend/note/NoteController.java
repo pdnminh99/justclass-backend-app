@@ -89,7 +89,7 @@ public class NoteController {
         return Lists.newArrayList();
     }
 
-    @PostMapping("comments/{localId}/{noteId}")
+    @PostMapping(value = "comments/{localId}/{noteId}", produces = "application/json;charset=utf-8")
     public List<Map<String, Object>> createComment(
             @PathVariable("localId") String localId,
             @PathVariable("noteId") String noteId,

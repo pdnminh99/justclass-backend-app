@@ -1,10 +1,8 @@
 package com.projecta.eleven.justclassbackend.file;
 
 import com.google.api.core.ApiFutures;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteBatch;
+import com.google.cloud.ReadChannel;
+import com.google.cloud.firestore.*;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
@@ -118,6 +116,7 @@ class FileRepository {
                             .collect(Collectors.toList()))
                     .get()
                     .stream()
+                    .filter(DocumentSnapshot::exists)
                     .map(BasicFile::new)
                     .forEach(file -> fileMap.put(file.getFileId(), file));
         }
@@ -155,5 +154,9 @@ class FileRepository {
         }
         BlobId blobId = BlobId.of("justclass-da0b0.appspot.com", getStorageDirectory(id));
         storageBatch.delete(blobId);
+    }
+
+    public ReadChannel getBlob(String fileId) {
+        return storage.reader("justclass-da0b0.appspot.com", getStorageDirectory(fileId));
     }
 }

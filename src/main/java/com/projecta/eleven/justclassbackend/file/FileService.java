@@ -1,5 +1,6 @@
 package com.projecta.eleven.justclassbackend.file;
 
+import com.google.cloud.ReadChannel;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.common.collect.Lists;
@@ -55,6 +56,12 @@ public class FileService {
         for (var index = 0; index < files.size(); index++) {
             repository.store(files.get(index).getFileId(), attachments.get(index));
         }
+    }
+
+    public ReadChannel downloadFile(String fileId) throws ExecutionException, InterruptedException {
+        repository.get(fileId);
+        commit();
+        return repository.getBlob(fileId);
     }
 
     public void addFileQuery(String fileId) {
