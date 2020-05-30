@@ -51,7 +51,7 @@ public class NoteRepository {
             note.setId(nextId);
         }
         Map<String, Object> map = note.toMap();
-        map.remove("Id");
+        map.remove("noteId");
         map.remove("attachments");
         map.remove("author");
 
@@ -139,5 +139,17 @@ public class NoteRepository {
                 .get()
                 .getDocuments()
                 .forEach(note -> writeBatch.delete(note.getReference()));
+    }
+
+    public void update(Note note) {
+        Map<String, Object> map = note.toMap();
+        map.remove("noteId");
+        map.remove("attachments");
+        map.remove("author");
+        if (note.getAttachmentReferences() != null && note.getAttachmentReferences().size() == 0) {
+            map.put("attachmentReferences", null);
+        }
+        notesCollection.document(note.getId())
+                .update(map);
     }
 }

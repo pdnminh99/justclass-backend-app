@@ -5,6 +5,7 @@ import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.classroom.*;
 import com.projecta.eleven.justclassbackend.file.BasicFile;
 import com.projecta.eleven.justclassbackend.file.FileService;
@@ -14,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -203,6 +201,79 @@ public class NoteService {
         // Delete this note.
         repository.delete(note);
         repository.flush();
+    }
+
+    public HashMap<String, Object> edit(String localId, String noteId, String content, List<String> deletedAttachments, List<MultipartFile> attachments) throws ExecutionException, InterruptedException, InvalidUserInformationException, IOException {
+        Note note = repository.get(noteId);
+        if (note == null) {
+            throw new IllegalArgumentException("Not with id [" + noteId + "] not found.");
+        }
+        if (!localId.equals(note.getAuthorId())) {
+            throw new InvalidUserInformationException("User with id [" + localId + "] does not have permission to edit this note.");
+        }
+        if ((content == null || content.equals(note.getContent())) && (deletedAttachments == null || deletedAttachments.size() == 0) && (attachments == null || attachments.size() == 0)) {
+            throw new IllegalArgumentException("No changes found.");
+        }
+        List<DocumentReference> finalAttachments = note.getAttachmentReferences();
+        List<BasicFile> finalFiles = null;
+
+        if (finalAttachments != null) {
+            finalAttachments.forEach(f -> fileService.addFileQuery(f.getId()));
+            fileService.commit();
+
+            finalFiles = fileService.getFiles();
+            fileService.flush();
+
+            if (deletedAttachments != null && deletedAttachments.size() > 0) {
+                List<String> finalDeletedAttachments = deletedAttachments.stream()
+                        .filter(del -> note
+                                .getAttachmentReferences()
+                                .stream()
+                                .map(DocumentReference::getId)
+                                .anyMatch(m -> m.equals(del)))
+                        .collect(Collectors.toList());
+                finalAttachments = note.getAttachmentReferences().stream()
+                        .filter(a -> finalDeletedAttachments.stream().noneMatch(d -> a.getId().equals(d)))
+                        .collect(Collectors.toList());
+                finalFiles = finalFiles.stream()
+                        .filter(f -> finalDeletedAttachments.stream().noneMatch(a -> a.equals(f.getFileId())))
+                        .collect(Collectors.toList());
+
+                finalDeletedAttachments.forEach(fileService::delete);
+            }
+        }
+        finalFiles = Objects.requireNonNullElse(finalFiles, Lists.newArrayList());
+        finalAttachments = Objects.requireNonNullElse(finalAttachments, Lists.newArrayList());
+
+        if (attachments != null && attachments.size() > 0) {
+            fileService.storeAll(attachments, localId, note.getClassroomId());
+            finalAttachments.addAll(fileService.getFilesReferences());
+            finalFiles.addAll(fileService.getFiles());
+        } else fileService.commit();
+        if (content != null && !content.equals(note.getContent())) {
+            note.setContent(content);
+        }
+        note.setAttachmentReferences(finalAttachments);
+        // Update note.
+        repository.update(note);
+        fileService.flush();
+
+        finalFiles = finalFiles.stream()
+                .peek(f -> {
+                    f.setClassroomId(null);
+                    f.setOwnerId(null);
+                })
+                .collect(Collectors.toList());
+        note.setAttachments(finalFiles);
+        note.setAttachmentReferences(null);
+        note.setAuthorReference(null);
+        note.setClassroomReference(null);
+        note.setClassroomId(null);
+
+        // No need to send authorId to client. Since `author` field already has this field.
+        note.setAuthorId(null);
+
+        return note.toMap(true);
     }
 
     // TODO comment post, Check if student have permission to post Comment.

@@ -405,9 +405,9 @@ public class ClassroomService implements IClassroomOperationsService {
         return Optional.of(true);
     }
 
-    private final List<InvitationWrapper> inviteesNotInClass = new ArrayList<>();
+    private final List<InvitationWrapper> inviteesNotInClass = Lists.newArrayList();
 
-    private List<Invitation> invitations = new ArrayList<>();
+    private List<Invitation> invitations = Lists.newArrayList();
 
     @Override
     public Optional<Classroom> update(Classroom classroom, String localId, Boolean requestNewPublicCode)

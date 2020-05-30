@@ -55,6 +55,20 @@ public class NoteController {
                 .collect(Collectors.toList());
     }
 
+    @PatchMapping(value = "{localId}/{noteId}", produces = "application/json;charset=utf-8")
+    public HashMap<String, Object> edit(
+            @PathVariable String localId,
+            @PathVariable String noteId,
+            @Nullable
+            @RequestParam String content,
+            @Nullable
+            @RequestParam List<String> deletedAttachments,
+            @Nullable
+            @RequestParam List<MultipartFile> attachments
+    ) throws InterruptedException, ExecutionException, InvalidUserInformationException, IOException {
+        return service.edit(localId, noteId, content, deletedAttachments, attachments);
+    }
+
     @PostMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> create(
             @PathVariable("localId") String localId,
