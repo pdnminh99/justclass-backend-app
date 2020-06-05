@@ -94,10 +94,10 @@ public class NoteController {
 
     @GetMapping(value = "comments/{localId}/{noteId}", produces = "application/json;charset=utf-8")
     public List<Map<String, Object>> getComments(
-            @PathVariable("localId") String localId,
-            @PathVariable("noteId") String noteId,
-            @RequestParam(value = "pageSize", defaultValue = "20") int pageSize,
-            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber
+            @PathVariable String localId,
+            @PathVariable String noteId,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(defaultValue = "0") int pageNumber
     ) {
         // TODO implement this.
         return Lists.newArrayList();
@@ -105,8 +105,8 @@ public class NoteController {
 
     @PostMapping(value = "comments/{localId}/{noteId}", produces = "application/json;charset=utf-8")
     public List<Map<String, Object>> createComment(
-            @PathVariable("localId") String localId,
-            @PathVariable("noteId") String noteId,
+            @PathVariable String localId,
+            @PathVariable String noteId,
             @RequestBody String content) {
         // TODO implement this.
         return Lists.newArrayList();

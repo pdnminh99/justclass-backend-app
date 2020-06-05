@@ -211,6 +211,9 @@ public class NoteService {
         if (!localId.equals(note.getAuthorId())) {
             throw new InvalidUserInformationException("User with id [" + localId + "] does not have permission to edit this note.");
         }
+
+        // TODO: What if this user is kicked, or drop out of this class. Check whether or not this user is still class.
+
         if ((content == null || content.equals(note.getContent())) && (deletedAttachments == null || deletedAttachments.size() == 0) && (attachments == null || attachments.size() == 0)) {
             throw new IllegalArgumentException("No changes found.");
         }
