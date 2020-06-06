@@ -26,6 +26,12 @@ public class NotificationController {
         this.service = service;
     }
 
+    @GetMapping("clear")
+    @ResponseStatus(HttpStatus.OK)
+    public void clear() throws ExecutionException, InterruptedException {
+        service.cleanOldDeletedNotifications();
+    }
+
     @GetMapping(value = "{localId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<List<HashMap<String, Object>>> get(
             @PathVariable String localId,

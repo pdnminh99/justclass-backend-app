@@ -1,0 +1,4 @@
+cron:
+  - description: "Clean up old notifications"
+    url: /api/v1/notification/clear
+    schedule: every 24 hours

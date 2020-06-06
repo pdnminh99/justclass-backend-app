@@ -195,6 +195,9 @@ public class ClassroomService implements IClassroomOperationsService {
             currentMillis = System.currentTimeMillis();
             crc.update(longToBytes(currentMillis));
             newPublicCode = Long.toHexString(crc.getValue());
+            if (newPublicCode.length() == 7) {
+                newPublicCode = "0" + newPublicCode;
+            }
             isCorrect = !repository.isPublicCodeAlreadyExist(newPublicCode);
         }
 

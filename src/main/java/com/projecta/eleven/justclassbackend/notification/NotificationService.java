@@ -8,7 +8,6 @@ import com.google.common.collect.Maps;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -27,13 +26,14 @@ public class NotificationService {
         this.repository = repository;
     }
 
-    @Scheduled(fixedDelay = 43200000)
     public void cleanOldDeletedNotifications() throws ExecutionException, InterruptedException {
         var calendar = Calendar.getInstance();
         calendar.setTime(Timestamp.now().toDate());
         calendar.add(Calendar.DATE, -1);
 
         var oneWeekBefore = Timestamp.of(calendar.getTime());
+        System.err.println("> Clean up deleted notifications before: " + oneWeekBefore.toString());
+
         repository.removeDeletedNotificationsBefore(oneWeekBefore);
     }
 
