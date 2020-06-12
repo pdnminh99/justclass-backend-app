@@ -1,21 +1,22 @@
 package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
-import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.classroom.InvalidClassroomInformationException;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -92,24 +93,29 @@ public class NoteController {
         service.delete(localId, noteId);
     }
 
-    @GetMapping(value = "comments/{localId}/{noteId}", produces = "application/json;charset=utf-8")
-    public List<Map<String, Object>> getComments(
+    @GetMapping(value = "comment/{localId}/{noteId}", produces = "application/json;charset=utf-8")
+    public List<Comment> getComments(
             @PathVariable String localId,
-            @PathVariable String noteId,
-            @RequestParam(defaultValue = "20") int pageSize,
-            @RequestParam(defaultValue = "0") int pageNumber
-    ) {
-        // TODO implement this.
-        return Lists.newArrayList();
+            @PathVariable String noteId
+    ) throws ExecutionException, InterruptedException {
+        return service.getComments(localId, noteId);
     }
 
-    @PostMapping(value = "comments/{localId}/{noteId}", produces = "application/json;charset=utf-8")
-    public List<Map<String, Object>> createComment(
+    @PostMapping(value = "comment/{localId}/{noteId}",
+            consumes = MediaType.TEXT_PLAIN_VALUE,
+            produces = "application/json;charset=utf-8")
+    public Comment createComment(
             @PathVariable String localId,
             @PathVariable String noteId,
-            @RequestBody String content) {
-        // TODO implement this.
-        return Lists.newArrayList();
+            @NotNull
+            @NotEmpty
+            @RequestBody String content) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        return service.comment(localId, noteId, content);
+    }
+
+    @DeleteMapping("comment/{localId}/{commentId}")
+    public void deleteComment(@PathVariable String localId, @PathVariable String commentId) throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        service.deleteComment(localId, commentId);
     }
 
     @ExceptionHandler(InvalidClassroomInformationException.class)

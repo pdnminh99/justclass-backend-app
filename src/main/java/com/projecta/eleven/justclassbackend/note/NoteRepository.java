@@ -2,8 +2,10 @@ package com.projecta.eleven.justclassbackend.note;
 
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,15 +20,12 @@ public class NoteRepository {
 
     private final CollectionReference notesCollection;
 
+    private final CollectionReference commentsCollection;
+
     private WriteBatch writeBatch;
 
     private Note note;
-
-    @Autowired
-    NoteRepository(Firestore firestore, CollectionReference notesCollection) {
-        this.firestore = firestore;
-        this.notesCollection = notesCollection;
-    }
+    private List<Comment> comments;
 
     public String getNextId() {
         return notesCollection.document().getId();
@@ -115,9 +114,15 @@ public class NoteRepository {
         return note;
     }
 
-    public void flush() {
-        writeBatch = null;
-        note = null;
+    @Autowired
+    NoteRepository(Firestore firestore,
+                   @Qualifier("notesCollection")
+                           CollectionReference notesCollection,
+                   @Qualifier("commentsCollection")
+                           CollectionReference commentsCollection) {
+        this.firestore = firestore;
+        this.notesCollection = notesCollection;
+        this.commentsCollection = commentsCollection;
     }
 
     public void delete(Note note) {
@@ -151,5 +156,64 @@ public class NoteRepository {
         }
         notesCollection.document(note.getId())
                 .update(map);
+    }
+
+    public void flush() {
+        writeBatch = null;
+        note = null;
+        comments = null;
+    }
+
+    public void createComment(Comment comment) {
+        comment.setCommentId(commentsCollection.document().getId());
+
+        commentsCollection.document(comment.getCommentId())
+                .set(comment);
+    }
+
+    public List<Comment> getComments(String noteId) throws ExecutionException, InterruptedException {
+        comments = commentsCollection.whereEqualTo("noteId", noteId)
+                .get()
+                .get()
+                .getDocuments()
+                .stream()
+                .map(m -> m.toObject(Comment.class))
+                .collect(Collectors.toList());
+        return comments;
+    }
+
+    public Comment getComment(String commentId) throws ExecutionException, InterruptedException {
+        Comment comment = commentsCollection.document(commentId)
+                .get()
+                .get()
+                .toObject(Comment.class);
+        if (comment == null) {
+            return null;
+        }
+        if (comments != null) {
+            comments.add(comment);
+        } else comments = Lists.newArrayList(comment);
+        return comment;
+    }
+
+    public void deleteComment(String commentId) throws ExecutionException, InterruptedException {
+        Comment comment = comments.stream()
+                .filter(m -> m.getCommentId().equals(commentId))
+                .findFirst()
+                .orElse(getComment(commentId));
+        Note note = get(comment.getNoteId());
+        assert note != null;
+        assert note.getCommentsCount() != null;
+
+        int commentsCount = note.getCommentsCount();
+        commentsCount -= 1;
+
+        Map<String, Object> updateMap = Maps.newHashMap();
+        updateMap.put("commentsCount", commentsCount);
+
+        notesCollection.document(note.getId())
+                .update(updateMap);
+        commentsCollection.document(commentId)
+                .delete();
     }
 }

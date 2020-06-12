@@ -1,6 +1,7 @@
 package com.projecta.eleven.justclassbackend.note;
 
 import com.google.api.client.util.Maps;
+import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -9,7 +10,9 @@ import com.google.common.collect.Lists;
 import com.projecta.eleven.justclassbackend.classroom.*;
 import com.projecta.eleven.justclassbackend.file.BasicFile;
 import com.projecta.eleven.justclassbackend.file.FileService;
+import com.projecta.eleven.justclassbackend.user.IUserOperations;
 import com.projecta.eleven.justclassbackend.user.InvalidUserInformationException;
+import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,14 +30,24 @@ public class NoteService {
 
     private final IClassroomOperationsService classroomService;
 
+    private final IUserOperations userService;
+
     private final FileService fileService;
 
     private List<Note> notes;
 
+    private Note note;
+
+    private Member member;
+
     @Autowired
-    public NoteService(NoteRepository repository, IClassroomOperationsService classroomService, FileService fileService) {
+    public NoteService(NoteRepository repository,
+                       IClassroomOperationsService classroomService,
+                       IUserOperations userService,
+                       FileService fileService) {
         this.repository = repository;
         this.classroomService = classroomService;
+        this.userService = userService;
         this.fileService = fileService;
     }
 
@@ -279,5 +292,122 @@ public class NoteService {
         return note.toMap(true);
     }
 
-    // TODO comment post, Check if student have permission to post Comment.
+    public void getNote(String localId, String noteId) throws ExecutionException, InterruptedException {
+        note = repository.get(noteId);
+        if (note == null) {
+            repository.flush();
+            throw new IllegalArgumentException("Note with id [" + noteId + "] not found.");
+        }
+        member = classroomService.getMember(localId, note.getClassroomId())
+                .orElseThrow(() -> {
+                    String classroomId = note.getClassroomId();
+                    note = null;
+                    repository.flush();
+                    return new IllegalArgumentException("User with id [" + localId + "] not found. Or not part of classroom with id [" + classroomId + "].");
+                });
+    }
+
+    public List<Comment> getComments(String localId, String noteId) throws ExecutionException, InterruptedException {
+        getNote(localId, noteId);
+        List<Comment> comments = repository.getComments(noteId)
+                .stream()
+                .sorted(Comparator.comparing(Comment::getCreatedAtByEpoch))
+                .collect(Collectors.toList());
+
+        Map<String, MinifiedUser> userMaps = Maps.newHashMap();
+        comments.forEach(c -> userMaps.put(c.getAuthorId(), c.getAuthor()));
+
+        List<String> users = new ArrayList<>(userMaps.keySet());
+        List<ApiFuture<DocumentSnapshot>> snaps = userService.getUsersReferences(users)
+                .map(DocumentReference::get)
+                .collect(Collectors.toList());
+
+        ApiFutures.allAsList(snaps)
+                .get()
+                .stream()
+                .map(MinifiedUser::new)
+                .forEach(u -> userMaps.put(u.getLocalId(), u));
+
+        for (Comment c : comments) {
+            String authorId = c.getAuthorId();
+            c.setAuthor(userMaps.get(authorId));
+        }
+
+        note = null;
+        repository.flush();
+        return comments;
+    }
+
+    public Comment comment(String localId, String noteId, String content) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        var now = Timestamp.now();
+        var comment = new Comment(null,
+                noteId,
+                null,
+                content,
+                null,
+                now);
+        note = repository.get(noteId);
+
+        getNote(localId, noteId);
+        assert note != null;
+
+        if (note.getDeletedAt() != null) {
+            note = null;
+            repository.flush();
+            throw new IllegalArgumentException("Note with id [" + noteId + "] is deleted.");
+        }
+
+        if (member.getRole() == MemberRoles.STUDENT) {
+            var classroom = new Classroom(member.getClassroomReference().get().get());
+
+            if (classroom.getStudentsNotePermission() == NotePermissions.VIEW) {
+                note = null;
+                repository.flush();
+                throw new InvalidUserInformationException("Student with id [" + localId + "] does not have permission to post comment.");
+            }
+        }
+        comment.setAuthor(new MinifiedUser(member.getUserReference().get().get()));
+        comment.setClassroomId(note.getClassroomId());
+
+        Integer currentCommentsCount = note.getCommentsCount();
+        if (currentCommentsCount != null) {
+            currentCommentsCount += 1;
+            note.setCommentsCount(currentCommentsCount);
+        }
+        repository.update(note);
+        repository.createComment(comment);
+        repository.flush();
+        note = null;
+        return comment;
+    }
+
+    public void deleteComment(String localId, String commentId) throws ExecutionException, InterruptedException, InvalidUserInformationException {
+        Comment comment = repository.getComment(commentId);
+        if (comment == null) {
+            repository.flush();
+            throw new IllegalArgumentException("Comment with id [" + commentId + "] not found.");
+        }
+        note = repository.get(comment.getNoteId());
+        assert note != null;
+        if (note.getDeletedAt() != null) {
+            note = null;
+            repository.flush();
+            throw new IllegalArgumentException("Comment with id [" + commentId + "] belongs to a deleted note.");
+        }
+        Member member = classroomService.getMember(localId, comment.getClassroomId())
+                .orElseThrow(() -> {
+                    String classroomId = note.getClassroomId();
+                    note = null;
+                    repository.flush();
+                    return new IllegalArgumentException("User with id [" + localId + "] not found. Or not part of classroom with id [" + classroomId + "].");
+                });
+        if (member.getRole() != MemberRoles.OWNER || !localId.equals(comment.getAuthorId())) {
+            note = null;
+            repository.flush();
+            throw new InvalidUserInformationException("User with id [" + localId + "] does not have permission to delete comment with id [" + commentId + "].");
+        }
+        note = null;
+        repository.deleteComment(commentId);
+        repository.flush();
+    }
 }

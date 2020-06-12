@@ -55,7 +55,7 @@ public class UserService implements IUserOperations {
 
     @Override
     public Stream<DocumentReference> getUsersReferences(List<String> localIds) {
-        return null;
+        return localIds.stream().map(repository::getUserReference);
     }
 
     @Override
