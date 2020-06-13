@@ -2,3 +2,6 @@ cron:
   - description: "Clean up old notifications"
     url: /api/v1/notification/clear
     schedule: every 24 hours
+  - description: "Clean up old notes"
+    url: /api/v1/note/clear
+    schedule: every 24 hours

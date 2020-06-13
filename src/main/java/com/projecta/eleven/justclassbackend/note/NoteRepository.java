@@ -22,10 +22,24 @@ public class NoteRepository {
 
     private final CollectionReference commentsCollection;
 
+    private final DocumentReference systemsCollection;
+
     private WriteBatch writeBatch;
 
     private Note note;
+
     private List<Comment> comments;
+
+    @Autowired
+    NoteRepository(Firestore firestore,
+                   @Qualifier("notesCollection") CollectionReference notesCollection,
+                   @Qualifier("commentsCollection") CollectionReference commentsCollection,
+                   @Qualifier("systemsCollection") DocumentReference systemsCollection) {
+        this.firestore = firestore;
+        this.notesCollection = notesCollection;
+        this.commentsCollection = commentsCollection;
+        this.systemsCollection = systemsCollection;
+    }
 
     public String getNextId() {
         return notesCollection.document().getId();
@@ -112,17 +126,6 @@ public class NoteRepository {
             note = new Note(snapshot);
         }
         return note;
-    }
-
-    @Autowired
-    NoteRepository(Firestore firestore,
-                   @Qualifier("notesCollection")
-                           CollectionReference notesCollection,
-                   @Qualifier("commentsCollection")
-                           CollectionReference commentsCollection) {
-        this.firestore = firestore;
-        this.notesCollection = notesCollection;
-        this.commentsCollection = commentsCollection;
     }
 
     public void delete(Note note) {
@@ -215,5 +218,29 @@ public class NoteRepository {
                 .update(updateMap);
         commentsCollection.document(commentId)
                 .delete();
+    }
+
+    public void removeDeletedNotesBefore(Timestamp oneDayBefore) throws ExecutionException, InterruptedException {
+        if (!isBatchActive()) {
+            resetBatch();
+        }
+        List<QueryDocumentSnapshot> a = notesCollection.whereLessThanOrEqualTo("deletedAt", oneDayBefore)
+                .get()
+                .get()
+                .getDocuments();
+        List<String> markedNIDs = a.stream().map(DocumentSnapshot::getId).collect(Collectors.toList());
+
+        if (!markedNIDs.isEmpty()) {
+            a.stream().map(DocumentSnapshot::getReference).forEach(doc -> writeBatch.delete(doc));
+            commentsCollection.whereIn("noteId", markedNIDs).get().get()
+                    .getDocuments()
+                    .stream()
+                    .map(DocumentSnapshot::getReference)
+                    .forEach(d -> writeBatch.delete(d));
+        }
+        Map<String, Object> updateMap = Maps.newHashMap();
+        updateMap.put("notesRefreshAt", Timestamp.now());
+        writeBatch.set(systemsCollection, updateMap);
+        commit();
     }
 }

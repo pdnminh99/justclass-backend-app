@@ -35,13 +35,13 @@ public class NoteController {
     @GetMapping(value = "{classroomId}", produces = "application/json;charset=utf-8")
     @ResponseStatus(HttpStatus.OK)
     public List<HashMap<String, Object>> get(
-            @PathVariable("classroomId") String classroomId,
-            @RequestParam(value = "pageSize", defaultValue = "0") int pageSize,
-            @RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+            @PathVariable String classroomId,
+            @RequestParam(defaultValue = "0") int pageSize,
+            @RequestParam(defaultValue = "0") int pageNumber,
             @Nullable
-            @RequestParam("lastRefresh") Long lastRefresh,
-            @RequestParam(value = "isMicrosecondsAccuracy", defaultValue = "false") boolean isMicrosecondsAccuracy,
-            @RequestParam(value = "excludeDeleted", defaultValue = "true") boolean excludeDeleted
+            @RequestParam Long lastRefresh,
+            @RequestParam(defaultValue = "false") boolean isMicrosecondsAccuracy,
+            @RequestParam(defaultValue = "true") boolean excludeDeleted
     ) throws ExecutionException, InterruptedException {
         Timestamp lastRefreshAt = null;
 
@@ -72,10 +72,10 @@ public class NoteController {
 
     @PostMapping(value = "{localId}/{classroomId}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> create(
-            @PathVariable("localId") String localId,
-            @PathVariable("classroomId") String classroomId,
+            @PathVariable String localId,
+            @PathVariable String classroomId,
             @Nullable
-            @RequestParam("content") String content,
+            @RequestParam String content,
             @Nullable
             @RequestBody List<MultipartFile> attachments
     ) throws ExecutionException, InterruptedException, InvalidUserInformationException, IOException {
@@ -87,8 +87,8 @@ public class NoteController {
 
     @DeleteMapping("{localId}/{noteId}")
     public void delete(
-            @PathVariable("localId") String localId,
-            @PathVariable("noteId") String noteId
+            @PathVariable String localId,
+            @PathVariable String noteId
     ) throws ExecutionException, InterruptedException {
         service.delete(localId, noteId);
     }
@@ -116,6 +116,12 @@ public class NoteController {
     @DeleteMapping("comment/{localId}/{commentId}")
     public void deleteComment(@PathVariable String localId, @PathVariable String commentId) throws InterruptedException, ExecutionException, InvalidUserInformationException {
         service.deleteComment(localId, commentId);
+    }
+
+    @GetMapping("clear")
+    @ResponseStatus(HttpStatus.OK)
+    public void cleanDeletedNotes() throws ExecutionException, InterruptedException {
+        service.cleanDeletedNotes();
     }
 
     @ExceptionHandler(InvalidClassroomInformationException.class)

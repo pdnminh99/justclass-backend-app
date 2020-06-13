@@ -51,6 +51,17 @@ public class NoteService {
         this.fileService = fileService;
     }
 
+    public void cleanDeletedNotes() throws ExecutionException, InterruptedException {
+        var calendar = Calendar.getInstance();
+        calendar.setTime(Timestamp.now().toDate());
+        calendar.add(Calendar.DATE, -1);
+
+        var oneDayBefore = Timestamp.of(calendar.getTime());
+        System.err.println("> Clean up deleted notes before: " + oneDayBefore.toString());
+
+        repository.removeDeletedNotesBefore(oneDayBefore);
+    }
+
     public Stream<Note> get(String classroomId, int pageSize, int pageNumber, Timestamp lastRefresh, boolean excludeDeleted) throws ExecutionException, InterruptedException {
         lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
         if (pageNumber < 0) {

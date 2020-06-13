@@ -23,6 +23,8 @@ class NotificationRepository {
 
     private final CollectionReference notificationsCollection;
 
+    private final DocumentReference systemsCollection;
+
     private final FirebaseMessaging fcmDelivery;
 
     private WriteBatch writeBatch;
@@ -31,7 +33,9 @@ class NotificationRepository {
     NotificationRepository(
             Firestore firestore,
             @Qualifier("notificationsCollection") CollectionReference notificationsCollection,
+            @Qualifier("systemsCollection") DocumentReference systemsCollection,
             FirebaseMessaging fcmDelivery) {
+        this.systemsCollection = systemsCollection;
         this.fcmDelivery = fcmDelivery;
         this.firestore = firestore;
         this.notificationsCollection = notificationsCollection;
@@ -221,6 +225,10 @@ class NotificationRepository {
                 .stream()
                 .map(DocumentSnapshot::getReference)
                 .forEach(doc -> writeBatch.delete(doc));
+
+        Map<String, Object> updateMap = Maps.newHashMap();
+        updateMap.put("notificationsRefreshAt", Timestamp.now());
+        writeBatch.set(systemsCollection, updateMap);
         commit();
     }
 }
