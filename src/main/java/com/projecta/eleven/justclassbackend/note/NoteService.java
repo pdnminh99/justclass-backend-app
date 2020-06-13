@@ -401,7 +401,7 @@ public class NoteService {
                     repository.flush();
                     return new IllegalArgumentException("User with id [" + localId + "] not found. Or not part of classroom with id [" + classroomId + "].");
                 });
-        if (member.getRole() != MemberRoles.OWNER || !localId.equals(comment.getAuthorId())) {
+        if (member.getRole() != MemberRoles.OWNER && !localId.equals(comment.getAuthorId())) {
             note = null;
             repository.flush();
             throw new InvalidUserInformationException("User with id [" + localId + "] does not have permission to delete comment with id [" + commentId + "].");
