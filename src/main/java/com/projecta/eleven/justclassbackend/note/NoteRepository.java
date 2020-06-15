@@ -147,6 +147,11 @@ public class NoteRepository {
                 .get()
                 .getDocuments()
                 .forEach(note -> writeBatch.delete(note.getReference()));
+        commentsCollection.whereEqualTo("classroomId", classroomId)
+                .get()
+                .get()
+                .getDocuments()
+                .forEach(comment -> writeBatch.delete(comment.getReference()));
     }
 
     public void update(Note note) {
