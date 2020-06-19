@@ -37,8 +37,19 @@ public class NotificationService {
         repository.removeDeletedNotificationsBefore(oneWeekBefore);
     }
 
+    public boolean checkDuplicateId(String newId) {
+        return this.notifications.stream()
+                .anyMatch(n -> n.getNotificationId().equals(newId));
+    }
+
     public void add(Notification notification) {
         if (notification != null) {
+            String newId;
+            do {
+                newId = repository.generateId();
+            } while (checkDuplicateId(newId));
+            notification.setNotificationId(newId);
+
             notifications.add(notification);
             repository.insert(notification);
         }

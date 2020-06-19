@@ -3,10 +3,13 @@ package com.projecta.eleven.justclassbackend.notification;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.common.collect.Maps;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import com.projecta.eleven.justclassbackend.utils.MapSerializable;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class Notification implements MapSerializable {
     private String notificationId;
@@ -162,6 +165,30 @@ public class Notification implements MapSerializable {
                 getSeenAt());
 
         return map;
+    }
+
+    public Map<String, String> toMessage() {
+        Map<String, String> message = Maps.newHashMap();
+
+        message.put("notificationId", getNotificationId());
+        if (getInvoker() != null) {
+            message.put("invokerName", Objects.requireNonNullElse(getInvoker().getDisplayName(), "[unknown]"));
+        }
+        if (getNotificationType() != null) {
+            message.put("type", getNotificationType().toString());
+        }
+        if (getInvokeTime() != null) {
+            message.put("invokeTime", String.valueOf(getInvokeTime().toDate().getTime()));
+        }
+        return message;
+    }
+
+    public String getMessageTitle() {
+        return "...";
+    }
+
+    public String getMessageBody() {
+        return "...";
     }
 
     public Timestamp getDeletedAt() {

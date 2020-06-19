@@ -356,7 +356,7 @@ public class ClassroomService implements IClassroomOperationsService {
         DocumentReference classroomReference = member.getClassroomReference();
         var classroom = new MinifiedClassroom(classroomReference.get().get());
         var invoker = MinifiedUserBuilder.newBuilder()
-                .fromSnapshot(classroomReference.get().get())
+                .fromSnapshot(member.getUserReference().get().get())
                 .build();
 
         // No need to check classroomReference for
@@ -1283,7 +1283,7 @@ public class ClassroomService implements IClassroomOperationsService {
 
         DocumentReference classroomRef = owner.getClassroomReference();
         var classroom = new MinifiedClassroom(classroomRef.get().get());
-        var invoker = new MinifiedUser(snapshots.get(0));
+        var invoker = new MinifiedUser(owner.getUserReference().get().get());
 
         // Perform delete operation
         snapshots.get(1).getReference().delete();

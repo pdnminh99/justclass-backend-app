@@ -26,7 +26,7 @@ public enum NotificationType {
                 return NotificationType.CLASSROOM_DELETED;
             case "CLASSROOM_INFO_CHANGED":
                 return NotificationType.CLASSROOM_INFO_CHANGED;
-            case "KICK":
+            case "KICKED":
                 return NotificationType.KICKED;
             default:
                 return null;

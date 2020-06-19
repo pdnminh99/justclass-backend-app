@@ -9,6 +9,7 @@ import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class InviteNotification extends Notification {
 
@@ -143,5 +144,55 @@ public class InviteNotification extends Notification {
         }
 
         return map;
+    }
+
+    @Override
+    public Map<String, String> toMessage() {
+        Map<String, String> message = super.toMessage();
+        MinifiedClassroom classroom = getClassroom();
+
+        message.put("classroomId", classroom.getClassroomId());
+        message.put("subject", classroom.getSubject());
+        message.put("title", classroom.getTitle());
+        message.put("role", getRole().toString());
+        return message;
+    }
+
+    @Override
+    public String getMessageTitle() {
+        return getClassroom() != null ?
+                getClassroom().getTitle() :
+                "[No title]";
+    }
+
+    @Override
+    public String getMessageBody() {
+        String invokerName = getInvoker().getDisplayName();
+        String classroomTitle = getClassroom().getTitle();
+        MemberRoles role = getRole();
+        String message;
+
+        switch (getNotificationType()) {
+            case INVITATION:
+                message = invokerName + " invites you to join [" + classroomTitle + "]";
+                if (role == null) {
+                    message += ".";
+                }
+                return role == MemberRoles.COLLABORATOR ?
+                        message + " as collaborator." :
+                        message + " as student.";
+            case ROLE_CHANGE:
+                switch (role) {
+                    case OWNER:
+                        return "You were promoted as owner of classroom [" + classroomTitle + "]";
+                    case COLLABORATOR:
+                        return "You were promoted as collaborator of classroom [" + classroomTitle + "]";
+                    case STUDENT:
+                    default:
+                        return "You were promoted as student of classroom [" + classroomTitle + "]";
+                }
+            default:
+                return "...";
+        }
     }
 }

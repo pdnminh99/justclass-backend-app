@@ -5,6 +5,7 @@ import com.google.cloud.firestore.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.Message;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,18 +26,20 @@ class NotificationRepository {
 
     private final DocumentReference systemsCollection;
 
-    private final FirebaseMessaging fcmDelivery;
+    private final FirebaseMessaging firebaseMessaging;
 
     private WriteBatch writeBatch;
+
+    private List<Message> messages = Lists.newArrayList();
 
     @Autowired
     NotificationRepository(
             Firestore firestore,
             @Qualifier("notificationsCollection") CollectionReference notificationsCollection,
             @Qualifier("systemsCollection") DocumentReference systemsCollection,
-            FirebaseMessaging fcmDelivery) {
+            FirebaseMessaging firebaseMessaging) {
+        this.firebaseMessaging = firebaseMessaging;
         this.systemsCollection = systemsCollection;
-        this.fcmDelivery = fcmDelivery;
         this.firestore = firestore;
         this.notificationsCollection = notificationsCollection;
         this.writeBatch = firestore.batch();
@@ -50,7 +53,14 @@ class NotificationRepository {
         writeBatch = firestore.batch();
     }
 
+    public String generateId() {
+        return notificationsCollection.document().getId();
+    }
+
     public void insert(Notification notification) {
+        if (notification == null || notification.getNotificationId() == null) {
+            return;
+        }
         if (!isBatchActive()) {
             resetBatch();
         }
@@ -58,13 +68,29 @@ class NotificationRepository {
         map.remove("notificationId");
         map.remove("invoker");
 
-        writeBatch.create(notificationsCollection.document(), map);
+        Message messageBuilder = Message.builder()
+                .putAllData(notification.toMessage())
+                .setTopic(notification.getOwnerId())
+                .setNotification(
+                        com.google.firebase.messaging.Notification
+                                .builder()
+                                .setTitle(notification.getMessageTitle())
+                                .setBody(notification.getMessageBody())
+                                .build()
+                )
+                .build();
+        messages.add(messageBuilder);
+        writeBatch.create(notificationsCollection.document(notification.getNotificationId()), map);
     }
 
     public void commit() {
         if (isBatchActive()) {
             writeBatch.commit();
             writeBatch = null;
+        }
+        if (messages.size() > 0) {
+            firebaseMessaging.sendAllAsync(messages);
+            messages = Lists.newArrayList();
         }
     }
 
@@ -142,6 +168,7 @@ class NotificationRepository {
                     results.add(notification);
                     break;
                 case CLASSROOM_DELETED:
+                case KICKED:
                     notification = (T) new ClassroomNotification(snap);
                     results.add(notification);
                     break;
