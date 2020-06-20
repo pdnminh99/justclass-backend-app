@@ -1277,6 +1277,8 @@ public class ClassroomService implements IClassroomOperationsService {
             throw new InvalidUserInformationException("User with id [" + memberId + "] does not exist, or not part of classroom with Id [" + classroomId + "].");
         }
         var owner = new Member(snapshots.get(0));
+        var memberToRemove = new Member(snapshots.get(1));
+
         if (owner.getRole() != MemberRoles.OWNER) {
             throw new InvalidUserInformationException("User with id [" + invokerId + "] does not have permission to remove other users.");
         }
@@ -1294,9 +1296,9 @@ public class ClassroomService implements IClassroomOperationsService {
                 classroomRef,
                 invokerId,
                 invoker,
-                snapshots.get(0).getReference(),
+                owner.getUserReference(),
                 memberId,
-                snapshots.get(1).getReference(),
+                memberToRemove.getUserReference(),
                 NotificationType.KICKED,
                 null,
                 null);
