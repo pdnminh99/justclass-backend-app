@@ -20,12 +20,15 @@ public class BasicFile implements MapSerializable {
 
     private String ownerId;
 
-    public BasicFile(String fileId, String name, String type, Long size, String ownerId, Timestamp createdAt) {
+    private String classroomId;
+
+    public BasicFile(String fileId, String name, String type, Long size, String ownerId, String classroomId, Timestamp createdAt) {
         this.fileId = fileId;
         this.name = name;
         this.type = type;
         this.size = size;
         this.ownerId = ownerId;
+        this.classroomId = classroomId;
         this.createdAt = createdAt;
     }
 
@@ -35,6 +38,7 @@ public class BasicFile implements MapSerializable {
         this.type = m.getString("type");
         this.size = m.getLong("size");
         this.ownerId = m.getString("ownerId");
+        this.classroomId = m.getString("classroomId");
         this.createdAt = m.getTimestamp("createdAt");
     }
 
@@ -78,6 +82,7 @@ public class BasicFile implements MapSerializable {
         ifFieldNotNullThenPutToMap("name", getName(), map);
         ifFieldNotNullThenPutToMap("type", getType(), map);
         ifFieldNotNullThenPutToMap("size", getSize(), map);
+        ifFieldNotNullThenPutToMap("classroomId", getClassroomId(), map);
         if (getCreatedAt() != null) {
             ifFieldNotNullThenPutToMap("createdAt", isTimestampInMilliseconds ?
                     getCreatedAt().toDate().getTime() :
@@ -101,5 +106,13 @@ public class BasicFile implements MapSerializable {
 
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public String getClassroomId() {
+        return classroomId;
+    }
+
+    public void setClassroomId(String classroomId) {
+        this.classroomId = classroomId;
     }
 }

@@ -84,6 +84,7 @@ public class Note implements MapSerializable {
         this.commentsCount = snapshot.get("commentsCount", Integer.class);
         this.content = snapshot.getString("content");
         this.deletedAt = snapshot.getTimestamp("deletedAt");
+        this.createdAt = snapshot.getTimestamp("createdAt");
     }
 
     public static NoteBuilder newBuilder() {
@@ -198,6 +199,7 @@ public class Note implements MapSerializable {
     public HashMap<String, Object> toMap(boolean isTimestampInMilliseconds) {
         HashMap<String, Object> map = Maps.newHashMap();
 
+        ifFieldNotNullThenPutToMap("noteId", getId(), map);
         if (getAuthor() != null) {
             ifFieldNotNullThenPutToMap("author", getAuthor().toMap(isTimestampInMilliseconds), map);
         }

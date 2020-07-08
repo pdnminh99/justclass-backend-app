@@ -10,9 +10,7 @@ import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,8 +26,30 @@ public class NotificationService {
         this.repository = repository;
     }
 
+    public void cleanOldDeletedNotifications() throws ExecutionException, InterruptedException {
+        var calendar = Calendar.getInstance();
+        calendar.setTime(Timestamp.now().toDate());
+        calendar.add(Calendar.DATE, -1);
+
+        var oneWeekBefore = Timestamp.of(calendar.getTime());
+        System.err.println("> Clean up deleted notifications before: " + oneWeekBefore.toString());
+
+        repository.removeDeletedNotificationsBefore(oneWeekBefore);
+    }
+
+    public boolean checkDuplicateId(String newId) {
+        return this.notifications.stream()
+                .anyMatch(n -> n.getNotificationId().equals(newId));
+    }
+
     public void add(Notification notification) {
         if (notification != null) {
+            String newId;
+            do {
+                newId = repository.generateId();
+            } while (checkDuplicateId(newId));
+            notification.setNotificationId(newId);
+
             notifications.add(notification);
             repository.insert(notification);
         }
@@ -48,16 +68,16 @@ public class NotificationService {
         }
     }
 
-    public Stream<HashMap<String, Object>> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+    public Stream<HashMap<String, Object>> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh, boolean excludeDeleted) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             throw new IllegalArgumentException("LocalId is null or empty.");
         }
-        if (pageSize < 1 || pageNumber < 0) {
+        if (pageNumber < 0) {
             return Stream.empty();
         }
 
         // Query for invokerInfo.
-        notifications = repository.get(ownerId, pageSize, pageNumber, lastRefresh);
+        notifications = repository.get(ownerId, pageSize, pageNumber, lastRefresh, excludeDeleted);
         getInvokers();
 
         List<HashMap<String, Object>> maps = notifications
@@ -116,5 +136,13 @@ public class NotificationService {
     public void update(Notification notification) {
         repository.update(notification);
         repository.commit();
+    }
+
+    public int getNotificationsCount(String localId, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+        if (localId == null || localId.trim().length() == 0) {
+            return 0;
+        }
+        lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
+        return repository.countNew(localId, lastRefresh);
     }
 }

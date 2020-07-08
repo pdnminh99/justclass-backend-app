@@ -98,7 +98,7 @@ public class ClassroomController {
     @PutMapping(value = "{localId}/{publicCode}", produces = "application/json;charset=utf-8")
     public ResponseEntity<HashMap<String, Object>> join(
             @PathVariable("localId") String localId,
-            @PathVariable("publicCode") String publicCode) throws InterruptedException, ExecutionException, InvalidUserInformationException {
+            @PathVariable String publicCode) throws InterruptedException, ExecutionException, InvalidUserInformationException, InvalidClassroomInformationException {
         return service.join(localId, publicCode)
                 .map(classroom -> classroom.toMap(true))
                 .map(ResponseEntity::ok)
@@ -146,6 +146,11 @@ public class ClassroomController {
         return ResponseEntity.ok(service.getMembers(localId, classroomId)
                 .map(m -> m.toMap(true))
                 .collect(Collectors.toList()));
+    }
+
+    @DeleteMapping("members/{localId}/{classroomId}/{memberId}")
+    public void remove(@PathVariable String localId, @PathVariable String classroomId, @PathVariable String memberId) throws InterruptedException, ExecutionException, InvalidUserInformationException {
+        service.removeMember(localId, classroomId, memberId);
     }
 
     @GetMapping(value = "accept/{localId}/{notificationId}", produces = "application/json;charset=utf-8")

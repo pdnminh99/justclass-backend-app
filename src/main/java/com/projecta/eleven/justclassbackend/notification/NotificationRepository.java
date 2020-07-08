@@ -5,12 +5,12 @@ import com.google.cloud.firestore.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.Message;
 import com.projecta.eleven.justclassbackend.invitation.InvitationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,16 +24,22 @@ class NotificationRepository {
 
     private final CollectionReference notificationsCollection;
 
-    private final FirebaseMessaging fcmDelivery;
+    private final DocumentReference systemsCollection;
+
+    private final FirebaseMessaging firebaseMessaging;
 
     private WriteBatch writeBatch;
+
+    private List<Message> messages = Lists.newArrayList();
 
     @Autowired
     NotificationRepository(
             Firestore firestore,
             @Qualifier("notificationsCollection") CollectionReference notificationsCollection,
-            FirebaseMessaging fcmDelivery) {
-        this.fcmDelivery = fcmDelivery;
+            @Qualifier("systemsCollection") DocumentReference systemsCollection,
+            FirebaseMessaging firebaseMessaging) {
+        this.firebaseMessaging = firebaseMessaging;
+        this.systemsCollection = systemsCollection;
         this.firestore = firestore;
         this.notificationsCollection = notificationsCollection;
         this.writeBatch = firestore.batch();
@@ -47,7 +53,14 @@ class NotificationRepository {
         writeBatch = firestore.batch();
     }
 
+    public String generateId() {
+        return notificationsCollection.document().getId();
+    }
+
     public void insert(Notification notification) {
+        if (notification == null || notification.getNotificationId() == null) {
+            return;
+        }
         if (!isBatchActive()) {
             resetBatch();
         }
@@ -55,13 +68,29 @@ class NotificationRepository {
         map.remove("notificationId");
         map.remove("invoker");
 
-        writeBatch.create(notificationsCollection.document(), map);
+        Message messageBuilder = Message.builder()
+                .putAllData(notification.toMessage())
+                .setTopic(notification.getOwnerId())
+                .setNotification(
+                        com.google.firebase.messaging.Notification
+                                .builder()
+                                .setTitle(notification.getMessageTitle())
+                                .setBody(notification.getMessageBody())
+                                .build()
+                )
+                .build();
+        messages.add(messageBuilder);
+        writeBatch.create(notificationsCollection.document(notification.getNotificationId()), map);
     }
 
     public void commit() {
         if (isBatchActive()) {
             writeBatch.commit();
             writeBatch = null;
+        }
+        if (messages.size() > 0) {
+            firebaseMessaging.sendAllAsync(messages);
+            messages = Lists.newArrayList();
         }
     }
 
@@ -85,28 +114,27 @@ class NotificationRepository {
         }
     }
 
-    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+    public <T extends Notification> List<T> get(String ownerId, int pageSize, int pageNumber, Timestamp lastRefresh, boolean excludeDeleted) throws ExecutionException, InterruptedException {
         if (ownerId == null || ownerId.trim().length() == 0) {
             return Lists.newArrayList();
         }
         lastRefresh = Objects.requireNonNullElse(lastRefresh, Timestamp.now());
         QueryDocumentSnapshot startIndexDoc = getLastDocumentSnapshot(ownerId, pageSize, pageNumber, lastRefresh);
-        List<QueryDocumentSnapshot> query = startIndexDoc == null ?
-                notificationsCollection.whereEqualTo("ownerId", ownerId)
-                        .whereLessThanOrEqualTo("invokeTime", lastRefresh)
-                        .orderBy("invokeTime", Query.Direction.DESCENDING)
-                        .limit(pageSize)
-                        .get()
-                        .get()
-                        .getDocuments() :
-                notificationsCollection.whereEqualTo("ownerId", ownerId)
-                        .whereLessThanOrEqualTo("invokeTime", lastRefresh)
-                        .orderBy("invokeTime", Query.Direction.DESCENDING)
-                        .startAfter(startIndexDoc)
-                        .limit(pageSize)
-                        .get()
-                        .get()
-                        .getDocuments();
+        Query basicQuery = notificationsCollection.whereEqualTo("ownerId", ownerId)
+                .whereLessThanOrEqualTo("invokeTime", lastRefresh)
+                .orderBy("invokeTime", Query.Direction.DESCENDING);
+        if (pageSize > 0) {
+            basicQuery = basicQuery.limit(pageSize);
+        }
+        if (excludeDeleted) {
+            basicQuery = basicQuery
+                    .whereEqualTo("deletedAt", null);
+        }
+        if (startIndexDoc != null) {
+            basicQuery = basicQuery
+                    .startAfter(startIndexDoc);
+        }
+        List<QueryDocumentSnapshot> query = basicQuery.get().get().getDocuments();
 
         // Update notifications seen status.
         List<QueryDocumentSnapshot> documentsNotSeen = query.stream()
@@ -140,7 +168,8 @@ class NotificationRepository {
                     results.add(notification);
                     break;
                 case CLASSROOM_DELETED:
-                    notification = (T) new ClassroomDeletedNotification(snap);
+                case KICKED:
+                    notification = (T) new ClassroomNotification(snap);
                     results.add(notification);
                     break;
                 default:
@@ -148,7 +177,7 @@ class NotificationRepository {
             }
         }
         return results.stream()
-                .sorted(Comparator.comparing(Notification::getInvokeTime))
+                .sorted((a, b) -> -a.getInvokeTime().compareTo(b.getInvokeTime()))
                 .collect(Collectors.toList());
     }
 
@@ -195,6 +224,39 @@ class NotificationRepository {
                 .stream()
                 .map(DocumentSnapshot::getReference)
                 .forEach(ref -> writeBatch.update(ref, updateMap));
+    }
+
+    public int countNew(String localId, Timestamp lastRefresh) throws ExecutionException, InterruptedException {
+        assert localId != null;
+        assert localId.trim().length() > 0;
+        assert lastRefresh != null;
+
+        return notificationsCollection.whereEqualTo("ownerId", localId)
+                .whereEqualTo("deletedAt", null)
+                .whereEqualTo("seenAt", null)
+                .whereLessThanOrEqualTo("invokeTime", lastRefresh)
+                .orderBy("invokeTime", Query.Direction.DESCENDING)
+                .get()
+                .get()
+                .size();
+    }
+
+    public void removeDeletedNotificationsBefore(Timestamp oneWeekBefore) throws ExecutionException, InterruptedException {
+        if (!isBatchActive()) {
+            resetBatch();
+        }
+        notificationsCollection.whereLessThanOrEqualTo("deletedAt", oneWeekBefore)
+                .get()
+                .get()
+                .getDocuments()
+                .stream()
+                .map(DocumentSnapshot::getReference)
+                .forEach(doc -> writeBatch.delete(doc));
+
+        Map<String, Object> updateMap = Maps.newHashMap();
+        updateMap.put("notificationsRefreshAt", Timestamp.now());
+        writeBatch.set(systemsCollection, updateMap);
+        commit();
     }
 }
 

@@ -174,12 +174,16 @@ class ClassroomRepository implements IClassroomRepository {
         return writeBatch != null;
     }
 
+    private void resetBatch() {
+        writeBatch = firestore.batch();
+    }
+
     private boolean verifyMemberInput(Member member) {
         if (member == null) {
             return false;
         }
         if (!isBatchActive()) {
-            writeBatch = firestore.batch();
+            resetBatch();
         }
         String memberId = member.getMemberId();
         return memberId != null && memberId.trim().length() != 0;
@@ -208,6 +212,22 @@ class ClassroomRepository implements IClassroomRepository {
                 membersCollection.document(memberId),
                 member.toMap()
         );
+    }
+
+    @Override
+    public void delete(String classroomId) {
+        if (!isBatchActive()) {
+            resetBatch();
+        }
+        writeBatch.delete(classroomsCollection.document(classroomId));
+    }
+
+    @Override
+    public void deleteMember(String memberId) {
+        if (!isBatchActive()) {
+            resetBatch();
+        }
+        writeBatch.delete(membersCollection.document(memberId));
     }
 
     @Override

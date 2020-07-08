@@ -26,7 +26,7 @@ public interface IClassroomOperationsService {
 
     Stream<MinifiedMember> invite(String localId, String classroomId, List<Invitation> invitations) throws ExecutionException, InterruptedException, InvalidClassroomInformationException, InvalidUserInformationException;
 
-    Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException;
+    Optional<Classroom> join(String localId, String publicCode) throws ExecutionException, InterruptedException, InvalidUserInformationException, InvalidClassroomInformationException;
 
     Stream<MinifiedMember> getMembers(String invokerId, String classroomId) throws ExecutionException, InterruptedException, InvalidClassroomInformationException;
 
@@ -38,4 +38,5 @@ public interface IClassroomOperationsService {
 
     void denyInvitation(String localId, String notificationId);
 
+    void removeMember(String invokerId, String classroomId, String memberId) throws ExecutionException, InterruptedException, InvalidUserInformationException;
 }

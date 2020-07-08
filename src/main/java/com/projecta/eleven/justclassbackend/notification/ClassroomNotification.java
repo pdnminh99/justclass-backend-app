@@ -7,14 +7,16 @@ import com.projecta.eleven.justclassbackend.classroom.MinifiedClassroom;
 import com.projecta.eleven.justclassbackend.user.MinifiedUser;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
-public class ClassroomDeletedNotification extends Notification {
+public class ClassroomNotification extends Notification {
 
     private DocumentReference classroomReference;
 
     private MinifiedClassroom classroom;
 
-    public ClassroomDeletedNotification(
+    public ClassroomNotification(
             String notificationId,
             Timestamp invokeTime,
             MinifiedClassroom classroom,
@@ -24,14 +26,15 @@ public class ClassroomDeletedNotification extends Notification {
             DocumentReference invokerReference,
             String ownerId,
             DocumentReference ownerReference,
+            NotificationType notificationType,
             Timestamp deletedAt,
             Timestamp seenAt) {
-        super(notificationId, invokeTime, invokerId, invoker, invokerReference, ownerId, ownerReference, NotificationType.CLASSROOM_DELETED, deletedAt, seenAt);
+        super(notificationId, invokeTime, invokerId, invoker, invokerReference, ownerId, ownerReference, notificationType, deletedAt, seenAt);
         this.classroom = classroom;
         this.classroomReference = classroomReference;
     }
 
-    public ClassroomDeletedNotification(DocumentSnapshot snapshot) {
+    public ClassroomNotification(DocumentSnapshot snapshot) {
         super(snapshot);
 
         HashMap<String, Object> classroom = (HashMap<String, Object>) snapshot.getData().get("classroom");
@@ -75,5 +78,42 @@ public class ClassroomDeletedNotification extends Notification {
             map.put("classroom", classroomInfoMap);
         }
         return map;
+    }
+
+    @Override
+    public Map<String, String> toMessage() {
+        Map<String, String> message = super.toMessage();
+        MinifiedClassroom classroom = getClassroom();
+
+        message.put("classroomId", classroom.getClassroomId());
+        message.put("title", classroom.getTitle());
+        message.put("subject", classroom.getSubject());
+
+        return message;
+    }
+
+    @Override
+    public String getMessageTitle() {
+        return getClassroom() != null ?
+                getClassroom().getTitle() :
+                "[No title]";
+    }
+
+    @Override
+    public String getMessageBody() {
+        String invokerName = Objects.requireNonNullElse(getInvoker().getDisplayName(), "[unknown]");
+
+        switch (getNotificationType()) {
+            case CLASSROOM_DELETED:
+                return "This classroom just got deleted by " + invokerName + ".";
+            case KICKED:
+                return "You were remove by [" + invokerName + "].";
+            case CLASSROOM_INFO_CHANGED:
+                return "Classroom info updated.";
+            case ROLE_CHANGE:
+            case INVITATION:
+            default:
+                return "...";
+        }
     }
 }

@@ -4,7 +4,8 @@ public enum NotificationType {
     INVITATION("INVITATION"),
     ROLE_CHANGE("ROLE_CHANGE"),
     CLASSROOM_DELETED("CLASSROOM_DELETED"),
-    CLASSROOM_INFO_CHANGED("CLASSROOM_INFO_CHANGED");
+    CLASSROOM_INFO_CHANGED("CLASSROOM_INFO_CHANGED"),
+    KICKED("KICKED");
 
     private final String notify;
 
@@ -25,6 +26,8 @@ public enum NotificationType {
                 return NotificationType.CLASSROOM_DELETED;
             case "CLASSROOM_INFO_CHANGED":
                 return NotificationType.CLASSROOM_INFO_CHANGED;
+            case "KICKED":
+                return NotificationType.KICKED;
             default:
                 return null;
         }
