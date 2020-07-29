@@ -107,7 +107,7 @@ public class ClassroomNotification extends Notification {
             case CLASSROOM_DELETED:
                 return "This classroom just got deleted by " + invokerName + ".";
             case KICKED:
-                return "You were remove by [" + invokerName + "].";
+                return "You were removed by [" + invokerName + "].";
             case CLASSROOM_INFO_CHANGED:
                 return "Classroom info updated.";
             case ROLE_CHANGE:

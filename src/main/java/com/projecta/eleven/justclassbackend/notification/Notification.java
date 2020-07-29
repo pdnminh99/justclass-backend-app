@@ -170,6 +170,7 @@ public class Notification implements MapSerializable {
     public Map<String, String> toMessage() {
         Map<String, String> message = Maps.newHashMap();
 
+        message.put("click_action", "FLUTTER_NOTIFICATION_CLICK");
         message.put("notificationId", getNotificationId());
         if (getInvoker() != null) {
             message.put("invokerName", Objects.requireNonNullElse(getInvoker().getDisplayName(), "[unknown]"));

@@ -229,20 +229,37 @@ public class NoteRepository {
         if (!isBatchActive()) {
             resetBatch();
         }
-        List<QueryDocumentSnapshot> a = notesCollection.whereLessThanOrEqualTo("deletedAt", oneDayBefore)
+        List<QueryDocumentSnapshot> a = notesCollection
+                .whereLessThanOrEqualTo("deletedAt", oneDayBefore)
                 .get()
                 .get()
                 .getDocuments();
         List<String> markedNIDs = a.stream().map(DocumentSnapshot::getId).collect(Collectors.toList());
 
         if (!markedNIDs.isEmpty()) {
-            a.stream().map(DocumentSnapshot::getReference).forEach(doc -> writeBatch.delete(doc));
-            commentsCollection.whereIn("noteId", markedNIDs).get().get()
-                    .getDocuments()
-                    .stream()
-                    .map(DocumentSnapshot::getReference)
-                    .forEach(d -> writeBatch.delete(d));
+            boolean isDone = false;
+            List<String> nextNotesToRemove = Lists.newArrayList();
+
+            while (!isDone) {
+                nextNotesToRemove.clear();
+                int count = 0;
+                while (count < Math.min(markedNIDs.size(), 10)) {
+                    String item = markedNIDs.get(0);
+                    nextNotesToRemove.add(item);
+                    markedNIDs.remove(0);
+                    count++;
+                }
+                commentsCollection.whereIn("noteId", nextNotesToRemove).get().get()
+                        .getDocuments()
+                        .stream()
+                        .map(DocumentSnapshot::getReference)
+                        .forEach(d -> writeBatch.delete(d));
+                if (markedNIDs.size() == 0) {
+                    isDone = true;
+                }
+            }
         }
+        a.stream().map(DocumentSnapshot::getReference).forEach(doc -> writeBatch.delete(doc));
         Map<String, Object> updateMap = Maps.newHashMap();
         updateMap.put("notesRefreshAt", Timestamp.now());
         writeBatch.set(systemsCollection, updateMap);
